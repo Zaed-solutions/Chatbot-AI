@@ -17,7 +17,7 @@ fun NavigationHost(
     NavHost(
         modifier = modifier,
         navController = navController,
-        startDestination = Route.DefaultRoute,
+        startDestination = Route.MainChatRoute,
         enterTransition = {
             fadeIn(
                 animationSpec = tween(
