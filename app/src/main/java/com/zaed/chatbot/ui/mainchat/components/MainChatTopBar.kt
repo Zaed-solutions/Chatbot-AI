@@ -8,6 +8,8 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -19,6 +21,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Segment
 import androidx.compose.material.icons.filled.Segment
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -31,6 +34,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -46,10 +50,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.zaed.chatbot.R
 import com.zaed.chatbot.ui.components.gradientBackground
 import com.zaed.chatbot.ui.mainchat.MainChatUiAction
 import com.zaed.chatbot.ui.theme.ChatbotTheme
-import com.zaed.projecttemplate.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -101,7 +105,7 @@ fun MainChatTopBar(
             )
             Text(
                 text = stringResource(id = R.string.app_name),
-                style = MaterialTheme.typography.headlineMedium,
+                style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(start = 8.dp)
             )
@@ -131,29 +135,27 @@ fun MainChatTopBar(
                     isModelMenuExpanded = !isModelMenuExpanded
                 }
             ) {
-                FilterChip(
+                Surface(
                     modifier = Modifier
                         .padding(start = 8.dp)
-                        .height(24.dp),
-                    border = null,
-                    selected = false,
-                    onClick = {
-                        isModelMenuExpanded = !isModelMenuExpanded
-                    },
-                    colors = FilterChipDefaults.filterChipColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainer,
-                    ),
+                        .height(24.dp)
+                        .clickable { isModelMenuExpanded = !isModelMenuExpanded },
+                    tonalElevation = 4.dp,
+                    color = MaterialTheme.colorScheme.surfaceContainer,
                     shape = MaterialTheme.shapes.large,
-                    label = {
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ){
                         Text(
                             text = stringResource(id = selectedModel.nameRes),
                             style = MaterialTheme.typography.labelSmall
                         )
-                    },
-                    trailingIcon = {
                         ExposedDropdownMenuDefaults.TrailingIcon(expanded = isModelMenuExpanded)
                     }
-                )
+                }
                 ExposedDropdownMenu(
                     expanded = isModelMenuExpanded,
                     onDismissRequest = { isModelMenuExpanded = false }
@@ -177,16 +179,17 @@ fun MainChatTopBar(
                 }
             }
             Box(
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
                     .wrapContentSize(Alignment.TopEnd)
             ) {
                 IconButton(
                     onClick = { isOptionsMenuExpanded = !isOptionsMenuExpanded },
                     modifier = Modifier
                         .padding(start = 8.dp)
-                        .size(24.dp)) {
+                        .size(24.dp)
+                ) {
                     Icon(
-                        imageVector = Icons.Default.Segment,
+                        imageVector = Icons.AutoMirrored.Filled.Segment,
                         contentDescription = null,
                     )
                 }
