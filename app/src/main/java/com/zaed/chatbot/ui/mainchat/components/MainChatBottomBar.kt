@@ -5,17 +5,12 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
@@ -175,19 +170,7 @@ fun MainChatBottomBar(
                                 .fillMaxWidth()
                                 .heightIn(min = 32.dp)
                         )
-                        LazyRow(
-                            contentPadding = PaddingValues(horizontal = 8.dp),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            items(attachments) { attachment ->
-                                PreviewedAttachmentItem(
-                                    modifier = Modifier.animateItem(),
-                                    attachment = attachment,
-                                    onDeleteAttachment = { onDeleteAttachment(it) }
-                                )
-                            }
-                        }
+                        PreviewedAttachments(attachments = attachments, onDeleteAttachment = onDeleteAttachment)
                     }
                     IconButton(
                         enabled = text.isBlank(),
@@ -227,6 +210,11 @@ fun MainChatBottomBar(
 @Composable
 private fun MainChatBottomBarPreview() {
     ChatbotTheme {
-        MainChatBottomBar()
+        MainChatBottomBar(
+            attachments = listOf(
+                MessageAttachment(name = "Test1.txt"),
+                MessageAttachment(name = "Test2.txt"),
+            )
+        )
     }
 }

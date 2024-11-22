@@ -27,6 +27,7 @@ import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import coil.compose.rememberAsyncImagePainter
 import com.zaed.chatbot.data.FileType
@@ -37,13 +38,15 @@ import com.zaed.chatbot.ui.theme.ChatbotTheme
 fun PreviewedAttachmentItem(
     modifier: Modifier = Modifier,
     attachment: MessageAttachment = MessageAttachment(),
+    size: Dp = 64.dp,
+    isRemovable: Boolean = true,
     onDeleteAttachment: (Uri) -> Unit = {},
 ) {
     Surface(
-        modifier = modifier.size(80.dp),
+        modifier = modifier.size(size),
         shape = MaterialTheme.shapes.medium,
         border = BorderStroke(width = 0.5.dp, color = MaterialTheme.colorScheme.surfaceVariant),
-        tonalElevation = 4.dp,
+        tonalElevation = 0.1.dp,
     ) {
         Box(
             modifier = Modifier.fillMaxSize(),
@@ -81,25 +84,27 @@ fun PreviewedAttachmentItem(
                     )
                 }
             }
-            IconButton(
-                onClick = { onDeleteAttachment(attachment.uri) },
-                modifier = Modifier
-                    .padding(top = 8.dp, end = 8.dp)
-                    .size(16.dp)
-                    .align(Alignment.TopEnd)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Close,
-                    contentDescription = "delete",
-                    tint = MaterialTheme.colorScheme.onPrimary,
+            if(isRemovable){
+                IconButton(
+                    onClick = { onDeleteAttachment(attachment.uri) },
                     modifier = Modifier
+                        .padding(top = 4.dp, end = 4.dp)
                         .size(16.dp)
-                        .background(
-                            color = MaterialTheme.colorScheme.primary,
-                            shape = CircleShape
-                        )
-                        .padding(2.dp)
-                )
+                        .align(Alignment.TopEnd)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "delete",
+                        tint = MaterialTheme.colorScheme.onPrimary,
+                        modifier = Modifier
+                            .size(16.dp)
+                            .background(
+                                color = MaterialTheme.colorScheme.primary,
+                                shape = CircleShape
+                            )
+                            .padding(2.dp)
+                    )
+                }
             }
         }
     }
@@ -112,7 +117,7 @@ private fun PreviewedAttachmentItemPreview() {
         PreviewedAttachmentItem(
             attachment = MessageAttachment(
                 name =" testtest.pptx",
-                type = FileType.IMAGE
+                type = FileType.ALL
             )
         )
     }
