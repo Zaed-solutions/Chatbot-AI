@@ -1,3 +1,10 @@
 <resources>
-    <string name="app_name">Project Template</string>
+    <string name="app_name">Chatbot AI</string>
+    <string name="pro">PRO</string>
+    <string name="gpt_4o_mini">GPT-4o Mini</string>
+    <string name="gpt_4o">GPT-4o</string>
+    <string name="ai_art_generator">AI Art Generator</string>
+    <string name="smart_and_fast">Smart &amp; Fast</string>
+    <string name="newest_and_fastest">Newest &amp; Fastest</string>
+    <string name="create_images">Create Images</string>
 </resources>
