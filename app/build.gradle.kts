@@ -4,7 +4,6 @@ plugins {
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.kotlinx.serialization)
     alias(libs.plugins.realm)
-    alias(libs.plugins.firebase)
 }
 
 android {
