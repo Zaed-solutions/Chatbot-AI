@@ -1,0 +1,5 @@
+package com.zaed.chatbot.ui.components
+
+enum class ChatMode {
+    DEFAULT,
+}
