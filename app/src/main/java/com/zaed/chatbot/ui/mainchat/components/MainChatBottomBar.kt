@@ -35,7 +35,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.zaed.chatbot.R
-import com.zaed.chatbot.data.MessageAttachment
+import com.zaed.chatbot.data.model.MessageAttachment
 import com.zaed.chatbot.ui.theme.ChatbotTheme
 
 @Composable
@@ -46,9 +46,9 @@ fun MainChatBottomBar(
     attachments: List<MessageAttachment> = emptyList(),
     onRecordVoice: () -> Unit = {},
     onDeleteAttachment: (Uri) -> Unit = {},
-    onUploadImage: () -> Unit = {},
+    onAddImage: () -> Unit = {},
     onOpenCamera: () -> Unit = {},
-    onUploadFile: () -> Unit = {},
+    onAddFile: () -> Unit = {},
 ) {
     var isExpanded by remember { mutableStateOf(false) }
     var text by remember { mutableStateOf("") }
@@ -59,7 +59,7 @@ fun MainChatBottomBar(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
+                .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 16.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             AnimatedContent(targetState = isExpanded, label = "Attachment buttons") { state ->
@@ -68,7 +68,7 @@ fun MainChatBottomBar(
                         Row {
                             IconButton(
                                 onClick = {
-                                    onUploadImage()
+                                    onAddImage()
                                     isExpanded = false
                                 }
                             ) {
@@ -106,7 +106,7 @@ fun MainChatBottomBar(
                             }
                             IconButton(
                                 onClick = {
-                                    onUploadFile()
+                                    onAddFile()
                                     isExpanded = false
                                 }
                             ) {

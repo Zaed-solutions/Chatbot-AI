@@ -10,7 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.zaed.chatbot.data.ChatQuery
+import com.zaed.chatbot.data.model.ChatQuery
 import com.zaed.chatbot.ui.theme.ChatbotTheme
 
 @Composable

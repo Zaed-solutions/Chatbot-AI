@@ -12,7 +12,7 @@ private val makeMoneySuggestion = listOf(
 )
 private val haveFunSuggestions = listOf(
     Suggestion(R.string.share_trivia_facts, R.string.for_fun, R.string.share_trivia_facts_prompt),
-    Suggestion(R.string.roleplay_a_cahracter, R.string.for_creativity, R.string.roleplay_a_character_prompt),
+    Suggestion(R.string.roleplay_a_character, R.string.for_creativity, R.string.roleplay_a_character_prompt),
     Suggestion(R.string.play_word_games, R.string.for_entertainment, R.string.play_word_games_prompt),
     Suggestion(R.string.tell_a_joke, R.string.for_fun, R.string.tell_a_joke_prompt),
     Suggestion(R.string.suggest_fun_activities, R.string.for_enjoyment, R.string.suggest_fun_activities_prompt),

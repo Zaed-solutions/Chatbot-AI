@@ -45,7 +45,7 @@
     <string name="share_trivia_facts">Share trivia facts</string>
     <string name="for_fun">for fun</string>
     <string name="share_trivia_facts_prompt">Share some interesting fun trivia facts with me.</string>
-    <string name="roleplay_a_cahracter">Roleplay a character</string>
+    <string name="roleplay_a_character">Roleplay a character</string>
     <string name="for_creativity">for creativity</string>
     <string name="roleplay_a_character_prompt">Roleplay a character with me and be creative.</string>
     <string name="play_word_games">Play word games</string>
@@ -56,4 +56,27 @@
     <string name="suggest_fun_activities">Suggest fun activities</string>
     <string name="for_enjoyment">for enjoyment</string>
     <string name="suggest_fun_activities_prompt">Suggest some fun activities for me to do.</string>
+    <string name="restore">Restore</string>
+    <string name="unlock_unlimited_access">Unlock Unlimited Access</string>
+    <string name="answers_from_gpt_4o">Answers From GPT-4o</string>
+    <string name="infinite_image_generations">Infinite Image Generations</string>
+    <string name="no_limits">No Limits</string>
+    <string name="advanced_ai_capabilities">Advanced AI Capabilities</string>
+    <string name="faster_more_accurate_answers">Faster &amp; more accurate answers</string>
+    <string name="create_stunning_visuals">Create stunning visuals</string>
+    <string name="have_unlimited_dialogues">Have unlimited dialogues</string>
+    <string name="upload_file_images_to_ask">Upload files &amp; images to ask</string>
+    <string name="enable_free_trial">Enable Free Trial</string>
+    <string name="weekly_subscription_cost">£%.2f / Week</string>
+    <string name="life_time_subscription_cost">£%.2f / Lifetime</string>
+    <string name="auto_renewal">Auto Renewal</string>
+    <string name="save_70">Save 70%</string>
+    <string name="billed_once">Billed Once</string>
+    <string name="continue_">Continue</string>
+    <string name="cancel_anytime">Cancel Anytime</string>
+    <string name="privacy_terms">Privacy | Terms</string>
+    <string name="new_chat">New Chat</string>
+    <string name="personalization">Personalization</string>
+    <string name="history">History</string>
+    <string name="settings">Settings</string>
 </resources>

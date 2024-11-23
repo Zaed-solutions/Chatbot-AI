@@ -1,92 +1,227 @@
 package com.zaed.chatbot.ui.mainchat
 
+import android.net.Uri
+import android.util.Log
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
-import com.zaed.chatbot.data.ChatQuery
-import com.zaed.chatbot.data.MessageAttachment
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.zaed.chatbot.data.model.ChatQuery
+import com.zaed.chatbot.data.model.FileType
+import com.zaed.chatbot.data.model.MessageAttachment
 import com.zaed.chatbot.ui.mainchat.components.ChatModel
 import com.zaed.chatbot.ui.mainchat.components.EmptyChat
 import com.zaed.chatbot.ui.mainchat.components.MainChatBottomBar
 import com.zaed.chatbot.ui.mainchat.components.MainChatTopBar
+import com.zaed.chatbot.ui.mainchat.components.ProSubscriptionBottomSheet
 import com.zaed.chatbot.ui.mainchat.components.QueryList
 import com.zaed.chatbot.ui.theme.ChatbotTheme
+import com.zaed.chatbot.ui.util.createImageFile
+import com.zaed.chatbot.ui.util.getFileNameFromUri
 import org.koin.androidx.compose.koinViewModel
-
+private val TAG = "MainChatScreen"
 @Composable
 fun MainChatScreen(
     modifier: Modifier = Modifier,
-    viewModel: MainChatViewModel = koinViewModel()
+    viewModel: MainChatViewModel = koinViewModel(),
+    chatId: String = "",
+    onNavigateToHistoryScreen: () -> Unit = {},
+    onNavigateToPersonalizationScreen: () -> Unit = {},
+    onNavigateToSettingsScreen: () -> Unit = {},
+    onNavigateToPrivacyAndTerms: () -> Unit = {},
 ) {
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+    LaunchedEffect(true){
+        viewModel.init(chatId)
+    }
+    val context = LocalContext.current
+    val imagePicker = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+        uri?.let {
+            val attachment = MessageAttachment(uri = it, type = FileType.IMAGE)
+            viewModel.handleAction(MainChatUiAction.OnAddAttachment(attachment))
+        }
+    }
+    val filePicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        uri?.let {
+            val fileName = getFileNameFromUri(context, it)
+            val attachment = MessageAttachment(name = fileName?:"", uri = it, type = FileType.ALL)
+            viewModel.handleAction(MainChatUiAction.OnAddAttachment(attachment))
+        }
+    }
+    var photoUri by remember { mutableStateOf<Uri?>(null) }
+    val cameraCaptureLauncher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { success ->
+        if (success && photoUri != null) {
+            val attachment = MessageAttachment(uri = photoUri?:Uri.EMPTY, type = FileType.IMAGE)
+            viewModel.handleAction(MainChatUiAction.OnAddAttachment(attachment))
+        } else {
+            Log.d(TAG, "Image capture failed.")
+        }
+    }
+    MainChatScreenContent(
+        modifier =modifier,
+        onAction = { action ->
+            when (action) {
+                MainChatUiAction.OnAddFileClicked -> {
+                    filePicker.launch("*/*")
+                }
+                MainChatUiAction.OnAddImageClicked -> {
+                    imagePicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                }
+                MainChatUiAction.OnHistoryClicked -> {
+                    onNavigateToHistoryScreen()
+                }
+                MainChatUiAction.OnOpenCameraClicked -> {
+                    photoUri = createImageFile(context)
+                    cameraCaptureLauncher.launch(photoUri?:Uri.EMPTY)
+                }
+                MainChatUiAction.OnPersonalizationClicked -> {
+                    onNavigateToPersonalizationScreen()
+                }
+                MainChatUiAction.OnPrivacyTermsClicked -> {
+                    onNavigateToPrivacyAndTerms()
+                }
+                MainChatUiAction.OnRecordVoiceClicked -> {
+                    //TODO(implement voice recording)
+                }
+                MainChatUiAction.OnSettingsClicked -> {
+                    onNavigateToSettingsScreen()
+                }
+                else -> viewModel.handleAction(action)
+            }
+        },
+        isChatEmpty = state.queries.isEmpty(),
+        isPro = state.isPro,
+        monthlyCost = state.monthlyCost,
+        lifetimeCost = state.lifetimeCost,
+        queries = state.queries,
+        selectedModel = state.selectedModel,
+        attachments = state.attachments
+
+    )
 
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainChatScreenContent(
     modifier: Modifier = Modifier,
     onAction: (MainChatUiAction) -> Unit = {},
     isChatEmpty: Boolean = true,
+    isPro: Boolean = false,
+    monthlyCost: Double = 0.0,
+    lifetimeCost: Double = 0.0,
     queries: List<ChatQuery> = emptyList(),
     selectedModel: ChatModel = ChatModel.GPT_4O_MINI,
     attachments: List<MessageAttachment> = emptyList()
 ) {
+    var isBottomSheetVisible by remember { mutableStateOf(isPro) }
+    val bottomSheetState = rememberModalBottomSheetState()
     Scaffold(
         topBar = {
             MainChatTopBar(
                 modifier = Modifier.fillMaxWidth(),
                 selectedModel = selectedModel,
-                onAction = onAction
+                onAction = onAction,
+                onProClicked = { isBottomSheetVisible = true }
             )
         },
         bottomBar = {
-             MainChatBottomBar(
-                 modifier = Modifier.fillMaxWidth(),
-                 onSend = { /*TODO*/ },
-                 onUpdateText = {/*TODO*/},
-                 attachments = attachments,
-                 onRecordVoice = {/*TODO*/},
-                 onDeleteAttachment = {/*TODO*/},
-                 onUploadImage = {/*TODO*/},
-                 onOpenCamera = {/*TODO*/},
-                 onUploadFile = {/*TODO*/}
-             )
+            MainChatBottomBar(
+                modifier = Modifier.fillMaxWidth(),
+                onSend = { onAction(MainChatUiAction.OnSendPrompt) },
+                onUpdateText = { text -> onAction(MainChatUiAction.OnUpdatePrompt(text)) },
+                attachments = attachments,
+                onRecordVoice = { onAction(MainChatUiAction.OnRecordVoiceClicked) },
+                onDeleteAttachment = { uri -> onAction(MainChatUiAction.OnDeleteAttachment(uri)) },
+                onAddImage = { onAction(MainChatUiAction.OnAddImageClicked) },
+                onOpenCamera = { onAction(MainChatUiAction.OnOpenCameraClicked) },
+                onAddFile = { onAction(MainChatUiAction.OnAddFileClicked) }
+            )
         },
         modifier = modifier,
     ) { innerPadding ->
-        AnimatedContent(
+        Box(
             modifier = Modifier.padding(innerPadding),
-            targetState = isChatEmpty
-        ) { state ->
-            when{
-                state -> {
-                    EmptyChat(
-                        modifier = Modifier.fillMaxSize(),
-                        selectedModel = selectedModel,
-                        onUseAIArtGenerator = { /*TODO*/},
-                        onSuggestingClicked = {/*TODO*/})
+        ) {
+            AnimatedContent(
+                targetState = isChatEmpty
+            ) { state ->
+                when {
+                    state -> {
+                        EmptyChat(
+                            modifier = Modifier.fillMaxSize(),
+                            selectedModel = selectedModel,
+                            onUseAIArtGenerator = { onAction(MainChatUiAction.OnChangeModel(ChatModel.AI_ART_GENERATOR)) },
+                            onSuggestingClicked = { suggestionPrompt ->
+                                onAction(MainChatUiAction.OnSendSuggestion(suggestionPrompt))
+                            })
+                    }
+
+                    else -> {
+                        QueryList(
+                            queries = queries
+                        )
+                    }
                 }
-                else -> {
-                    QueryList(
-                        queries = queries
+
+            }
+            AnimatedVisibility(visible = isBottomSheetVisible) {
+                ModalBottomSheet(
+                    sheetState = bottomSheetState,
+                    onDismissRequest = { isBottomSheetVisible = false }
+                ) {
+                    ProSubscriptionBottomSheet(
+                        modifier = Modifier.fillMaxWidth(),
+                        onDismiss = {isBottomSheetVisible = false},
+                        onRestore = { onAction(MainChatUiAction.OnRestoreSubscription) },
+                        monthlyCost = monthlyCost,
+                        lifetimeCost = lifetimeCost,
+                        onContinue = { isFreeTrialEnabled, isLifetimeSelected -> onAction(MainChatUiAction.OnUpgradeSubscription(isFreeTrialEnabled, isLifetimeSelected)) },
+                        onPrivacyTermsClicked = { onAction(MainChatUiAction.OnPrivacyTermsClicked) },
                     )
                 }
             }
-
         }
     }
 
 }
 
-@Preview(showSystemUi = true, showBackground = true)
+@Preview(showSystemUi = false, showBackground = true)
 @Composable
 private fun MainChatScreenContentPreview() {
     ChatbotTheme {
-        MainChatScreenContent()
+        val queries = listOf<ChatQuery>(
+            ChatQuery(prompt = "Hello there! tell me a joke", response = "Sure! Here's one for you:\n" +
+                    "Why don't skeletons fight each other?\n" +
+                    "Because they don’t have the guts! \uD83D\uDE04"),
+            ChatQuery(
+                prompt = "not funny another one",
+                response = "Alright, let me try again:\n" +
+                        "Why did the scarecrow win an award?\n" +
+                        "Because he was outstanding in his field! \uD83C\uDF3E\uD83D\uDE02")
+        )
+        MainChatScreenContent(
+            isChatEmpty = false,
+            queries = queries.reversed()
+        )
     }
 }

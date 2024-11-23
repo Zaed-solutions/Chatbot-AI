@@ -48,7 +48,7 @@ fun ChatModelItem(
                     .size(height = 24.dp, width = 16.dp)
             )
         } else {
-            Spacer(modifier = Modifier.size(24.dp))
+            Spacer(modifier = Modifier.size(16.dp))
         }
         Column(
             modifier = Modifier.weight(1f).padding(start = 8.dp)

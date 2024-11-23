@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.waterfallPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
@@ -30,8 +29,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import coil.compose.rememberAsyncImagePainter
-import com.zaed.chatbot.data.FileType
-import com.zaed.chatbot.data.MessageAttachment
+import com.zaed.chatbot.data.model.FileType
+import com.zaed.chatbot.data.model.MessageAttachment
 import com.zaed.chatbot.ui.theme.ChatbotTheme
 
 @Composable

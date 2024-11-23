@@ -15,12 +15,13 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.zaed.chatbot.R
-import com.zaed.chatbot.data.MessageAttachment
+import com.zaed.chatbot.data.model.MessageAttachment
 import com.zaed.chatbot.ui.theme.ChatbotTheme
 
 @Composable
@@ -41,7 +42,7 @@ fun MessageItem(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
-                imageVector = if (isPrompt) Icons.Default.Person else Icons.Outlined.CatchingPokemon,
+                painter = painterResource(id = if(isPrompt) R.drawable.ic_profile else R.drawable.ic_openai),
                 contentDescription = "Message Icon",
                 modifier = Modifier.size(20.dp),
             )
@@ -65,6 +66,8 @@ fun MessageItem(
                 attachmentSize = 80.dp,
                 isAttachmentRemovable = false
             )
+        } else if(hasAttachments){
+            //TODO: Display response images
         }
     }
 }

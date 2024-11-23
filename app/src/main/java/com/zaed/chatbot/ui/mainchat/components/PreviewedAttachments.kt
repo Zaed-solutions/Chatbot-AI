@@ -10,7 +10,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.zaed.chatbot.data.MessageAttachment
+import com.zaed.chatbot.data.model.MessageAttachment
 
 @Composable
 fun PreviewedAttachments(

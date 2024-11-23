@@ -1,6 +1,5 @@
 package com.zaed.chatbot.ui.mainchat.components
 
-import android.widget.Toast
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
@@ -22,14 +21,11 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Segment
-import androidx.compose.material.icons.filled.Segment
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -61,6 +57,8 @@ fun MainChatTopBar(
     modifier: Modifier = Modifier,
     selectedModel: ChatModel = ChatModel.GPT_4O_MINI,
     onAction: (MainChatUiAction) -> Unit = {},
+    onChangeModel: (ChatModel) -> Unit = {},
+    onProClicked: () -> Unit = {}
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "pro button infinite transition")
     val animatedAngle by infiniteTransition.animateFloat(
@@ -99,7 +97,7 @@ fun MainChatTopBar(
         ) {
             //App Icon and Name
             Icon(
-                painterResource(id = R.drawable.ic_launcher_foreground),
+                painterResource(id = R.drawable.ic_openai),
                 contentDescription = "App Icon",
                 modifier = Modifier.size(24.dp)
             )
@@ -118,7 +116,8 @@ fun MainChatTopBar(
                     .gradientBackground(
                         colors = gradientColors,
                         angle = animatedAngle
-                    ),
+                    )
+                    .clickable { onProClicked() },
                 contentAlignment = Alignment.Center
             ) {
                 Text(
@@ -129,12 +128,7 @@ fun MainChatTopBar(
                 )
             }
             //Model Drop Down Menu
-            ExposedDropdownMenuBox(
-                expanded = isModelMenuExpanded,
-                onExpandedChange = {
-                    isModelMenuExpanded = !isModelMenuExpanded
-                }
-            ) {
+            Box{
                 Surface(
                     modifier = Modifier
                         .padding(start = 8.dp)
@@ -148,7 +142,7 @@ fun MainChatTopBar(
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalAlignment = Alignment.CenterVertically
-                    ){
+                    ) {
                         Text(
                             text = stringResource(id = selectedModel.nameRes),
                             style = MaterialTheme.typography.labelSmall
@@ -156,14 +150,14 @@ fun MainChatTopBar(
                         ExposedDropdownMenuDefaults.TrailingIcon(expanded = isModelMenuExpanded)
                     }
                 }
-                ExposedDropdownMenu(
+                DropdownMenu(
                     expanded = isModelMenuExpanded,
                     onDismissRequest = { isModelMenuExpanded = false }
                 ) {
                     ChatModel.entries.forEach { item ->
                         DropdownMenuItem(
                             onClick = {
-                                //TODO call onAction
+                                onChangeModel(item)
                                 isModelMenuExpanded = false
                             },
                             text = {
@@ -232,7 +226,6 @@ fun MainChatTopBar(
         HorizontalDivider(thickness = 0.5.dp, modifier = Modifier.padding(top = 8.dp))
     }
 }
-
 
 
 @Preview(showSystemUi = true, showBackground = true)
