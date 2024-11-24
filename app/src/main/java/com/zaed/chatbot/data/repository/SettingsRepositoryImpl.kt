@@ -5,6 +5,10 @@ class SettingsRepositoryImpl(
 ) : SettingsRepository {
 
     override fun setDefaultChatMode(chatModel: String) {
-        TODO("Not yet implemented")
+//        TODO("Not yet implemented")
+    }
+
+    override fun setDefaultFontScale(fontScale: Float) {
+//        TODO("Not yet implemented")
     }
 }

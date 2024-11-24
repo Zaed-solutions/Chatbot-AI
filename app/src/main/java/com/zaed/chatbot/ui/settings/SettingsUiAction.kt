@@ -21,5 +21,6 @@ sealed interface SettingsUiAction {
         SettingsUiAction
     data object OnCancelSubscription: SettingsUiAction
     data object OnPrivacyTermsClicked: SettingsUiAction
+    data class OnSetFontScale(val fontScale: Float): SettingsUiAction
 
 }

@@ -45,10 +45,12 @@ import com.zaed.chatbot.ui.util.Constants
 
 @Composable
 fun FaqSupportScreen(
+    modifier: Modifier = Modifier,
     onNavigateBack: () -> Unit
 ) {
     val context = LocalContext.current
     FaqSupportScreenContent(
+        modifier = modifier,
         onBackPressed = onNavigateBack,
         onContactUsClicked = {
             val emailIntent = Intent(Intent.ACTION_SENDTO).apply {

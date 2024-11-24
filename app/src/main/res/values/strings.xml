@@ -105,4 +105,6 @@
     <string name="default_chat_mode">Default Chat Mode</string>
     <string name="have_more_questions">Have more questions?</string>
     <string name="contact_us">Contact Us</string>
+    <string name="font_size">Font Size</string>
+    <string name="text_preview">Text Preview</string>
 </resources>

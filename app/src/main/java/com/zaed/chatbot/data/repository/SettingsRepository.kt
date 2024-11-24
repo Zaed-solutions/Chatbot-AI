@@ -4,4 +4,5 @@ import com.zaed.chatbot.ui.mainchat.components.ChatModel
 
 interface SettingsRepository {
     fun setDefaultChatMode(chatModel: String)
+    fun setDefaultFontScale(fontScale: Float)
 }

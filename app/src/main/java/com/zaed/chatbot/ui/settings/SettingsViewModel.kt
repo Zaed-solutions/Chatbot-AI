@@ -16,7 +16,14 @@ class SettingsViewModel(
     fun handleAction(action: SettingsUiAction) {
         when(action){
             is SettingsUiAction.OnSetDefaultChatMode -> setDefaultMode(action.chatModel)
+            is SettingsUiAction.OnSetFontScale -> setFontScale(action.fontScale)
             else -> Unit
+        }
+    }
+
+    private fun setFontScale(fontScale: Float) {
+        viewModelScope.launch {
+            settingsRepo.setDefaultFontScale(fontScale)
         }
     }
 
