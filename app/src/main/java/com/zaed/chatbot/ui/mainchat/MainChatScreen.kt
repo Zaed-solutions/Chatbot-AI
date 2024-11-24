@@ -134,7 +134,7 @@ fun MainChatScreenContent(
     attachments: List<MessageAttachment> = emptyList()
 ) {
     var isBottomSheetVisible by remember { mutableStateOf(isPro) }
-    val bottomSheetState = rememberModalBottomSheetState()
+    val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     Scaffold(
         topBar = {
             MainChatTopBar(
@@ -190,7 +190,7 @@ fun MainChatScreenContent(
                     onDismissRequest = { isBottomSheetVisible = false }
                 ) {
                     ProSubscriptionBottomSheet(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier.fillMaxSize(),
                         onDismiss = {isBottomSheetVisible = false},
                         onRestore = { onAction(MainChatUiAction.OnRestoreSubscription) },
                         monthlyCost = monthlyCost,
