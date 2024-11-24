@@ -99,4 +99,6 @@ dependencies {
     implementation(libs.androidx.ui.text.google.fonts)
     //Lottie
     implementation(libs.lottie.compose)
+    //DataStore
+    implementation("androidx.datastore:datastore-preferences:1.1.1")
 }

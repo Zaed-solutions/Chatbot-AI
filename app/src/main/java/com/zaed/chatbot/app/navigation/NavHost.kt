@@ -4,12 +4,12 @@ import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.compiler.plugins.kotlin.EmptyFunctionMetrics.composable
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.zaed.chatbot.ui.mainchat.MainChatScreen
 import com.zaed.chatbot.ui.settings.SettingsScreen
 import com.zaed.chatbot.ui.settings.faq.FaqSupportScreen
 import com.zaed.chatbot.ui.settings.font.FontScaleScreen
@@ -21,9 +21,6 @@ import com.zaed.chatbot.ui.settings.promocode.PromoCodeScreen
 import com.zaed.chatbot.ui.settings.rate.RateUsScreen
 import com.zaed.chatbot.ui.settings.restore.RestorePurchaseScreen
 import com.zaed.chatbot.ui.settings.terms.TermsOfUseScreen
-import androidx.navigation.compose.composable
-import androidx.navigation.toRoute
-import com.zaed.chatbot.ui.mainchat.MainChatScreen
 
 @Composable
 fun NavigationHost(
@@ -54,14 +51,12 @@ fun NavigationHost(
     ) {
         composable<Route.MainChatRoute> {
             MainChatScreen(
-                onNavigateToPersonalizationScreen = {/*TODO*/},
-                onNavigateToHistoryScreen = {/*TODO*/},
-                onNavigateToSettingsScreen = {/*TODO*/},
-                onNavigateToPrivacyAndTerms = {/*TODO*/}
+                onNavigateToPersonalizationScreen = {/*TODO*/ },
+                onNavigateToHistoryScreen = {/*TODO*/ },
+                onNavigateToSettingsScreen = { navController.navigate(Route.SettingsRoute) },
+                onNavigateToPrivacyAndTerms = {/*TODO*/ }
             )
         }
-    }
-}
         composable<Route.SettingsRoute> {
             SettingsScreen(
                 onNavigateBack = { navController.popBackStack() },
@@ -138,7 +133,6 @@ fun NavigationHost(
                 onNavigateBack = { navController.popBackStack() }
             )
         }
-
     }
 }
 

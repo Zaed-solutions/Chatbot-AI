@@ -33,8 +33,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.zaed.chatbot.R
 import com.zaed.chatbot.ui.theme.ChatbotTheme
-import com.zaed.projecttemplate.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

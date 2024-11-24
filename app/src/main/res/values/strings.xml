@@ -79,7 +79,6 @@
     <string name="personalization">Personalization</string>
     <string name="history">History</string>
     <string name="settings">Settings</string>
-    <string name="app_name">Project Template</string>
     <string name="english" translatable="false">English</string>
     <string name="arabic" translatable="false">العربية</string>
     <string name="spanish" translatable="false">Español</string>
@@ -101,4 +100,9 @@
     <string name="faq_4_body">"\n                            If you have any questions, concerns, or need assistance with our app, our dedicated customer support team is here to help. You can reach us by sending an email to us. Our support team is available to provide prompt and personalized assistance to address any issues or inquiries you may have. \n                            When contacting our customer support, please provide as much detail as possible regarding your question or concern. This will enable us to better understand your specific situation and provide you with accurate and helpful support.\n                        "</string>
     <string name="faq_5_title">Is my personal information secure?</string>
     <string name="faq_5_body">"\n                            Yes! Protecting your personal information is of utmost importance to us. We understand the significance of privacy and take appropriate measures to safeguard your data. You can see our Privacy Policy in the settings menu.\n                        "</string>
+    <string name="you_can_select_your_ai_model_as_your_default">You can select your AI model as your default</string>
+    <string name="paid">Paid</string>
+    <string name="default_chat_mode">Default Chat Mode</string>
+    <string name="have_more_questions">Have more questions?</string>
+    <string name="contact_us">Contact Us</string>
 </resources>

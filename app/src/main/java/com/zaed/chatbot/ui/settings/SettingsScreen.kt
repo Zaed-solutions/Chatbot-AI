@@ -41,10 +41,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.zaed.chatbot.ui.theme.ChatbotTheme
+import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun SettingsScreen(
-    onNavigateBack: () -> Unit,
+    viewModel: SettingsViewModel = koinViewModel(),
+    onNavigateBack: () -> Unit = {},
     onNavigateToFontScale: () -> Unit = {},
     onNavigateToChatMode: () -> Unit = {},
     onNavigateToLanguage: () -> Unit = {},
@@ -58,8 +60,8 @@ fun SettingsScreen(
 ) {
     SettingsScreenContent(
         onNavigateBack = onNavigateBack,
-        action = { it ->
-            when (it) {
+        action = { action ->
+            when (action) {
                 SettingsUiAction.OnDefaultChatModeClicked -> onNavigateToChatMode()
                 SettingsUiAction.OnLanguageClicked -> onNavigateToLanguage()
                 SettingsUiAction.OnFontSizeClicked -> onNavigateToFontScale()
@@ -70,6 +72,7 @@ fun SettingsScreen(
                 SettingsUiAction.OnTermsOfUseClicked -> onNavigateToTermsOfUse()
                 SettingsUiAction.OnPrivacyPolicyClicked -> onNavigateToPrivacyPolicy()
                 SettingsUiAction.OnCommunityGuidelinesClicked -> onNavigateToCommunityGuidelines()
+                else -> viewModel.handleAction(action)
             }
         },
     )
@@ -269,6 +272,6 @@ enum class SettingItems(
 @Composable
 fun SettingsScreenPreview() {
     ChatbotTheme {
-        SettingsScreen({})
+        SettingsScreen()
     }
 }

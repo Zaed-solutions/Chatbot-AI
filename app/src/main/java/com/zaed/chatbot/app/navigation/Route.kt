@@ -36,5 +36,6 @@ sealed interface Route {
     @Serializable
     data object CommunityGuidelinesRoute : Route
 
+    @Serializable
     data object MainChatRoute : Route
 }
