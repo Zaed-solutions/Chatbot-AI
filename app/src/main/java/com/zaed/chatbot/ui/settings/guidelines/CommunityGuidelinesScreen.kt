@@ -46,7 +46,7 @@ fun CommunityGuidelinesScreen(
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBackIos, contentDescription = stringResource(R.string.back))
                     }
-                }, scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+                }
             )
         }
     ) {

@@ -107,4 +107,63 @@
     <string name="contact_us">Contact Us</string>
     <string name="font_size">Font Size</string>
     <string name="text_preview">Text Preview</string>
+    <string name="privacy_policy_tnc">
+        Privacy Policy\n
+        Effective Date: Nov 26, 2024\n
+        Welcome to [Your App Name]! Your privacy is important to us. This Privacy Policy outlines how we collect, use, and protect your personal information while using our chatbot AI app.\n\n
+
+        1. Information We Collect\n
+        - Personal Information: We may collect your name, email address, or other contact details if you choose to provide them for support or feedback purposes.\n
+        - Usage Data: We collect anonymous usage data, such as interactions with the chatbot, error reports, and device information, to improve the app\'s functionality and performance.\n
+        - Conversations: We may temporarily store chatbot conversations for processing and to enhance AI training, but these are not linked to your identity unless explicitly stated.\n\n
+
+        2. How We Use Your Information\n
+        - To provide and improve the chatbot\'s services.\n
+        - To respond to customer inquiries and provide support.\n
+        - To analyze app performance and enhance user experience.\n
+        - To comply with legal obligations.\n\n
+
+        3. Sharing Your Information\n
+        We do not share your personal information with third parties, except:\n
+        - When required by law or legal proceedings.\n
+        - With trusted service providers who assist in app operation (e.g., cloud storage), under strict confidentiality agreements.\n\n
+
+        4. Data Retention\n
+        Your data is retained only for as long as necessary to fulfill the purposes outlined in this Privacy Policy, unless a longer retention period is required or permitted by law.\n\n
+
+        5. Security\n
+        We implement industry-standard security measures to protect your information. However, no method of transmission or storage is completely secure, and we cannot guarantee absolute security.\n\n
+
+        6. Your Rights\n
+        You may request access to, correction of, or deletion of your personal information by contacting us at [Your Support Email].\n\n
+
+        7. Updates to This Privacy Policy\n
+        We may update this policy from time to time. The revised policy will be posted in the app with the effective date.\n\n
+
+        Terms and Conditions\n
+        Effective Date: [Insert Date]\n
+        1. Acceptance of Terms\n
+        By using [Your App Name], you agree to these Terms and Conditions. If you do not agree, please do not use the app.\n\n
+
+        2. Use of the App\n
+        - The app is provided "as-is" without any warranties.\n
+        - You agree not to misuse the chatbot, including providing harmful or illegal input.\n
+        - You are responsible for any content you input into the chatbot.\n\n
+
+        3. Intellectual Property\n
+        All content, trademarks, and intellectual property associated with the app are owned by [Your Company Name] or its licensors. Unauthorized use is prohibited.\n\n
+
+        4. Limitations of Liability\n
+        [Your Company Name] is not liable for any damages arising from the use or inability to use the app, including but not limited to indirect, incidental, or consequential damages.\n\n
+
+        5. Changes to Terms\n
+        We may modify these Terms and Conditions at any time. Continued use of the app indicates acceptance of the updated terms.\n\n
+
+        6. Governing Law\n
+        These Terms and Conditions are governed by the laws of [Your Country/State]. Any disputes shall be resolved in the courts of [Your Jurisdiction].\n\n
+
+        Contact Us\n
+        If you have any questions or concerns about these Terms or the Privacy Policy, please contact us at [Your Support Email].
+    </string>
+    <string name="privacy_policy_t_c"><![CDATA[Privacy Policy | T&C]]></string>
 </resources>
