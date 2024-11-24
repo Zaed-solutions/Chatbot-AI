@@ -11,4 +11,8 @@ class SettingsRepositoryImpl(
     override fun setDefaultFontScale(fontScale: Float) {
 //        TODO("Not yet implemented")
     }
+
+    override fun setDefaultLanguage(languageCode: String) {
+//        TODO("Not yet implemented")
+    }
 }

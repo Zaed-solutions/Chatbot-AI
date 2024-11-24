@@ -17,7 +17,14 @@ class SettingsViewModel(
         when(action){
             is SettingsUiAction.OnSetDefaultChatMode -> setDefaultMode(action.chatModel)
             is SettingsUiAction.OnSetFontScale -> setFontScale(action.fontScale)
+            is SettingsUiAction.OnSetLanguage -> setLanguage(action.languageCode)
             else -> Unit
+        }
+    }
+
+    private fun setLanguage(languageCode: String) {
+        viewModelScope.launch {
+            settingsRepo.setDefaultLanguage(languageCode)
         }
     }
 

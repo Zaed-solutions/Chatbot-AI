@@ -14,7 +14,7 @@ import com.zaed.chatbot.ui.settings.SettingsScreen
 import com.zaed.chatbot.ui.settings.faq.FaqSupportScreen
 import com.zaed.chatbot.ui.settings.font.FontScaleScreen
 import com.zaed.chatbot.ui.settings.guidelines.CommunityGuidelinesScreen
-import com.zaed.chatbot.ui.settings.language.ChangeLanguageScreen
+import com.zaed.chatbot.ui.settings.language.LanguageScreen
 import com.zaed.chatbot.ui.settings.mode.ChatModeScreen
 import com.zaed.chatbot.ui.settings.privacy.PrivacyPolicyScreen
 import com.zaed.chatbot.ui.settings.promocode.PromoCodeScreen
@@ -83,20 +83,17 @@ fun NavigationHost(
             ChatModeScreen(
                 onNavigateBack = { navController.popBackStack() }
             )
-            // Chat Mode Screen
         }
         composable<Route.ChangeLanguageRoute> {
-            ChangeLanguageScreen(
+            LanguageScreen(
                 onNavigateBack = { navController.popBackStack() },
                 onLanguageSelected = onLanguageSelected
             )
-            // Language Screen
         }
         composable<Route.PromoCodeRoute> {
             PromoCodeScreen(
                 onNavigateBack = { navController.popBackStack() }
             )
-            // Promo Code Screen
         }
         composable<Route.RateUsRoute> {
             RateUsScreen(
