@@ -18,17 +18,8 @@ sealed interface Route {
     data object PromoCodeRoute : Route
 
     @Serializable
-    data object RateUsRoute : Route
-
-    @Serializable
-    data object RestorePurchaseRoute : Route
-
-
-    @Serializable
     data object FaqSupportRoute : Route
 
-    @Serializable
-    data object TermsOfUseRoute : Route
 
     @Serializable
     data object PrivacyPolicyRoute : Route

@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Book
 import androidx.compose.material.icons.filled.Chat
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Language
@@ -51,10 +50,7 @@ fun SettingsScreen(
     onNavigateToChatMode: () -> Unit = {},
     onNavigateToLanguage: () -> Unit = {},
     onNavigateToPromoCode: () -> Unit = {},
-    onNavigateToRateUs: () -> Unit = {},
-    onNavigateToRestorePurchase: () -> Unit = {},
     onNavigateToFaqSupport: () -> Unit = {},
-    onNavigateToTermsOfUse: () -> Unit = {},
     onNavigateToPrivacyPolicy: () -> Unit = {},
     onNavigateToCommunityGuidelines: () -> Unit = {},
 ) {
@@ -66,10 +62,13 @@ fun SettingsScreen(
                 SettingsUiAction.OnLanguageClicked -> onNavigateToLanguage()
                 SettingsUiAction.OnFontSizeClicked -> onNavigateToFontScale()
                 SettingsUiAction.OnPromoCodeClicked -> onNavigateToPromoCode()
-                SettingsUiAction.OnRateUsClicked -> onNavigateToRateUs()
-                SettingsUiAction.OnRestorePurchaseClicked -> onNavigateToRestorePurchase()
+                SettingsUiAction.OnRateUsClicked -> {
+                    /*TODO*/
+                }
+                SettingsUiAction.OnRestorePurchaseClicked -> {
+                    /*TODO*/
+                }
                 SettingsUiAction.OnFaqSupportClicked -> onNavigateToFaqSupport()
-                SettingsUiAction.OnTermsOfUseClicked -> onNavigateToTermsOfUse()
                 SettingsUiAction.OnPrivacyPolicyClicked -> onNavigateToPrivacyPolicy()
                 SettingsUiAction.OnCommunityGuidelinesClicked -> onNavigateToCommunityGuidelines()
                 else -> viewModel.handleAction(action)
@@ -107,6 +106,27 @@ fun SettingsScreenContent(
             modifier = Modifier
                 .padding(it)
         ) {
+            SettingItems(
+                items = SettingItems.entries,
+                action = { a ->
+                    action(a)
+                }
+            )
+        }
+    }
+}
+
+@Composable
+private fun SettingItems(
+    items: List<SettingItems> = emptyList(),
+    action: (SettingsUiAction) -> Unit = {},
+) {
+    val groupedItems = items.groupBy { it.category }
+
+    LazyColumn(
+        modifier = Modifier.fillMaxSize()
+    ) {
+        item {
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -129,26 +149,7 @@ fun SettingsScreenContent(
                     modifier = Modifier.padding(vertical = 8.dp, horizontal = 8.dp)
                 )
             }
-            SettingItem(
-                items = SettingItems.entries,
-                action = { a ->
-                    action(a)
-                }
-            )
         }
-    }
-}
-
-@Composable
-private fun SettingItem(
-    items: List<SettingItems> = emptyList(),
-    action: (SettingsUiAction) -> Unit = {},
-) {
-    val groupedItems = items.groupBy { it.category }
-
-    LazyColumn(
-        modifier = Modifier.fillMaxSize()
-    ) {
         // Iterate over each group
         // Create a card for each item in the group
         itemsIndexed(groupedItems.entries.toList()) { index, items ->
@@ -247,14 +248,8 @@ enum class SettingItems(
         SettingsUiAction.OnFaqSupportClicked,
         SettingsCategory.CATEGORY_4
     ),
-    TERMS_OF_USE(
-        "Terms of Use",
-        Icons.Default.Book,
-        SettingsUiAction.OnTermsOfUseClicked,
-        SettingsCategory.CATEGORY_5
-    ),
     PRIVACY_POLICY(
-        "Privacy Policy",
+        "Privacy Policy | T&C",
         Icons.Default.PrivacyTip,
         SettingsUiAction.OnPrivacyPolicyClicked,
         SettingsCategory.CATEGORY_5

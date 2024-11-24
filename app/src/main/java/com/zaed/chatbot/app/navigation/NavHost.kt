@@ -18,9 +18,6 @@ import com.zaed.chatbot.ui.settings.language.LanguageScreen
 import com.zaed.chatbot.ui.settings.mode.ChatModeScreen
 import com.zaed.chatbot.ui.settings.privacy.PrivacyPolicyScreen
 import com.zaed.chatbot.ui.settings.promocode.PromoCodeScreen
-import com.zaed.chatbot.ui.settings.rate.RateUsScreen
-import com.zaed.chatbot.ui.settings.restore.RestorePurchaseScreen
-import com.zaed.chatbot.ui.settings.terms.TermsOfUseScreen
 
 @Composable
 fun NavigationHost(
@@ -64,10 +61,7 @@ fun NavigationHost(
                 onNavigateToChatMode = { navController.navigate(Route.ChangeChatModeRoute) },
                 onNavigateToLanguage = { navController.navigate(Route.ChangeLanguageRoute) },
                 onNavigateToPromoCode = { navController.navigate(Route.PromoCodeRoute) },
-                onNavigateToRateUs = { navController.navigate(Route.RateUsRoute) },
-                onNavigateToRestorePurchase = { navController.navigate(Route.RestorePurchaseRoute) },
                 onNavigateToFaqSupport = { navController.navigate(Route.FaqSupportRoute) },
-                onNavigateToTermsOfUse = { navController.navigate(Route.TermsOfUseRoute) },
                 onNavigateToPrivacyPolicy = { navController.navigate(Route.PrivacyPolicyRoute) },
                 onNavigateToCommunityGuidelines = { navController.navigate(Route.CommunityGuidelinesRoute) }
             )
@@ -95,29 +89,12 @@ fun NavigationHost(
                 onNavigateBack = { navController.popBackStack() }
             )
         }
-        composable<Route.RateUsRoute> {
-            RateUsScreen(
-                onNavigateBack = { navController.popBackStack() }
-            )
-            // Rate Us Screen
-        }
-        composable<Route.RestorePurchaseRoute> {
-            RestorePurchaseScreen(
-                onNavigateBack = { navController.popBackStack() }
-            )
-            // Restore Purchase Screen
-        }
+
         composable<Route.FaqSupportRoute> {
             FaqSupportScreen(
                 onNavigateBack = { navController.popBackStack() }
             )
             // FAQ & Support Screen
-        }
-        composable<Route.TermsOfUseRoute> {
-            TermsOfUseScreen(
-                onNavigateBack = { navController.popBackStack() }
-            )
-            // Terms of Use Screen
         }
         composable<Route.PrivacyPolicyRoute> {
             PrivacyPolicyScreen(
