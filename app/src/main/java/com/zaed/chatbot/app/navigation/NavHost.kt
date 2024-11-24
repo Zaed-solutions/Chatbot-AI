@@ -10,7 +10,16 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.zaed.chatbot.ui.settings.SettingsScreen
+import com.zaed.chatbot.ui.settings.faq.FaqSupportScreen
 import com.zaed.chatbot.ui.settings.font.FontScaleScreen
+import com.zaed.chatbot.ui.settings.guidelines.CommunityGuidelinesScreen
+import com.zaed.chatbot.ui.settings.language.ChangeLanguageScreen
+import com.zaed.chatbot.ui.settings.mode.ChatModeScreen
+import com.zaed.chatbot.ui.settings.privacy.PrivacyPolicyScreen
+import com.zaed.chatbot.ui.settings.promocode.PromoCodeScreen
+import com.zaed.chatbot.ui.settings.rate.RateUsScreen
+import com.zaed.chatbot.ui.settings.restore.RestorePurchaseScreen
+import com.zaed.chatbot.ui.settings.terms.TermsOfUseScreen
 
 @Composable
 fun NavigationHost(
@@ -18,6 +27,7 @@ fun NavigationHost(
     navController: NavHostController,
     fontScale: Float,
     onFontScaleChanged: (Float) -> Unit,
+    onLanguageSelected: (String) -> Unit
 ) {
     NavHost(
         modifier = modifier,
@@ -41,7 +51,16 @@ fun NavigationHost(
         composable<Route.SettingsRoute> {
             SettingsScreen(
                 onNavigateBack = { navController.popBackStack() },
-                onNavigateToFontScale = { navController.navigate(Route.ChangeFontScaleRoute) }
+                onNavigateToFontScale = { navController.navigate(Route.ChangeFontScaleRoute) },
+                onNavigateToChatMode = { navController.navigate(Route.ChangeChatModeRoute) },
+                onNavigateToLanguage = { navController.navigate(Route.ChangeLanguageRoute) },
+                onNavigateToPromoCode = { navController.navigate(Route.PromoCodeRoute) },
+                onNavigateToRateUs = { navController.navigate(Route.RateUsRoute) },
+                onNavigateToRestorePurchase = { navController.navigate(Route.RestorePurchaseRoute) },
+                onNavigateToFaqSupport = { navController.navigate(Route.FaqSupportRoute) },
+                onNavigateToTermsOfUse = { navController.navigate(Route.TermsOfUseRoute) },
+                onNavigateToPrivacyPolicy = { navController.navigate(Route.PrivacyPolicyRoute) },
+                onNavigateToCommunityGuidelines = { navController.navigate(Route.CommunityGuidelinesRoute) }
             )
         }
         composable<Route.ChangeFontScaleRoute> {
@@ -51,5 +70,61 @@ fun NavigationHost(
                 onNavigateBack = { navController.popBackStack() }
             )
         }
+        composable<Route.ChangeChatModeRoute> {
+            ChatModeScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+            // Chat Mode Screen
+        }
+        composable<Route.ChangeLanguageRoute> {
+            ChangeLanguageScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onLanguageSelected = onLanguageSelected
+            )
+            // Language Screen
+        }
+        composable<Route.PromoCodeRoute> {
+            PromoCodeScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+            // Promo Code Screen
+        }
+        composable<Route.RateUsRoute> {
+            RateUsScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+            // Rate Us Screen
+        }
+        composable<Route.RestorePurchaseRoute> {
+            RestorePurchaseScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+            // Restore Purchase Screen
+        }
+        composable<Route.FaqSupportRoute> {
+            FaqSupportScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+            // FAQ & Support Screen
+        }
+        composable<Route.TermsOfUseRoute> {
+            TermsOfUseScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+            // Terms of Use Screen
+        }
+        composable<Route.PrivacyPolicyRoute> {
+            PrivacyPolicyScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+            // Privacy Policy Screen
+        }
+        composable<Route.CommunityGuidelinesRoute> {
+            CommunityGuidelinesScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
     }
 }
+

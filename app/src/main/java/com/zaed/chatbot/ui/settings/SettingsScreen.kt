@@ -2,7 +2,6 @@ package com.zaed.chatbot.ui.settings
 
 import android.content.res.Configuration
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -12,11 +11,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AirplaneTicket
 import androidx.compose.material.icons.filled.Book
-import androidx.compose.material.icons.filled.Cancel
 import androidx.compose.material.icons.filled.Chat
-import androidx.compose.material.icons.filled.GifBox
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Loop
 import androidx.compose.material.icons.filled.People
@@ -27,6 +24,7 @@ import androidx.compose.material.icons.filled.Support
 import androidx.compose.material.icons.filled.Title
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -34,9 +32,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -49,22 +45,31 @@ import com.zaed.chatbot.ui.theme.ChatbotTheme
 @Composable
 fun SettingsScreen(
     onNavigateBack: () -> Unit,
-    onNavigateToFontScale: () -> Unit = {}
+    onNavigateToFontScale: () -> Unit = {},
+    onNavigateToChatMode: () -> Unit = {},
+    onNavigateToLanguage: () -> Unit = {},
+    onNavigateToPromoCode: () -> Unit = {},
+    onNavigateToRateUs: () -> Unit = {},
+    onNavigateToRestorePurchase: () -> Unit = {},
+    onNavigateToFaqSupport: () -> Unit = {},
+    onNavigateToTermsOfUse: () -> Unit = {},
+    onNavigateToPrivacyPolicy: () -> Unit = {},
+    onNavigateToCommunityGuidelines: () -> Unit = {},
 ) {
     SettingsScreenContent(
         onNavigateBack = onNavigateBack,
-        action = {it->
+        action = { it ->
             when (it) {
-                SettingsUiAction.OnDefaultChatModeClicked -> {}
-                SettingsUiAction.OnLanguageClicked -> {}
+                SettingsUiAction.OnDefaultChatModeClicked -> onNavigateToChatMode()
+                SettingsUiAction.OnLanguageClicked -> onNavigateToLanguage()
                 SettingsUiAction.OnFontSizeClicked -> onNavigateToFontScale()
-                SettingsUiAction.OnPromoCodeClicked -> {}
-                SettingsUiAction.OnRateUsClicked -> {}
-                SettingsUiAction.OnRestorePurchaseClicked -> {}
-                SettingsUiAction.OnFaqSupportClicked -> {}
-                SettingsUiAction.OnTermsOfUseClicked -> {}
-                SettingsUiAction.OnPrivacyPolicyClicked -> {}
-                SettingsUiAction.OnCommunityGuidelinesClicked -> {}
+                SettingsUiAction.OnPromoCodeClicked -> onNavigateToPromoCode()
+                SettingsUiAction.OnRateUsClicked -> onNavigateToRateUs()
+                SettingsUiAction.OnRestorePurchaseClicked -> onNavigateToRestorePurchase()
+                SettingsUiAction.OnFaqSupportClicked -> onNavigateToFaqSupport()
+                SettingsUiAction.OnTermsOfUseClicked -> onNavigateToTermsOfUse()
+                SettingsUiAction.OnPrivacyPolicyClicked -> onNavigateToPrivacyPolicy()
+                SettingsUiAction.OnCommunityGuidelinesClicked -> onNavigateToCommunityGuidelines()
             }
         },
     )
@@ -79,7 +84,7 @@ fun SettingsScreenContent(
 ) {
     Scaffold(
         topBar = {
-            TopAppBar(
+            CenterAlignedTopAppBar(
                 title = {
                     Text(
                         text = "Settings",
@@ -88,7 +93,7 @@ fun SettingsScreenContent(
                 },
                 actions = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Default.Cancel, contentDescription = "Back")
+                        Icon(Icons.Default.Close, contentDescription = "Back")
                     }
                 }
             )
@@ -99,36 +104,31 @@ fun SettingsScreenContent(
             modifier = Modifier
                 .padding(it)
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.primary
+                )
             ) {
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(24.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer
-                    )
-                ) {
-                    Text(
-                        text = "Become Unlimited",
-                        style = MaterialTheme.typography.headlineMedium,
-                        modifier = Modifier.padding(16.dp)
-                    )
-                    Text(
-                        text = "Answers from GPT-4o",
-                        modifier = Modifier.padding(8.dp)
-                    )
-                    Text(
-                        text = "Infinite Art Generations",
-                        modifier = Modifier.padding(8.dp)
-                    )
-                }
+                Text(
+                    text = "Become Unlimited",
+                    style = MaterialTheme.typography.headlineMedium,
+                    modifier = Modifier.padding(vertical = 16.dp, horizontal = 8.dp)
+                )
+                Text(
+                    text = "Answers from GPT-4o",
+                    modifier = Modifier.padding(bottom = 8.dp, start = 8.dp, end = 8.dp)
+                )
+                Text(
+                    text = "Infinite Art Generations",
+                    modifier = Modifier.padding(vertical = 8.dp, horizontal = 8.dp)
+                )
             }
             SettingItem(
                 items = SettingItems.entries,
-                action = {a->
+                action = { a ->
                     action(a)
                 }
             )
@@ -157,7 +157,7 @@ private fun SettingItem(
                 ),
                 border = CardDefaults.outlinedCardBorder()
             ) {
-                items.value.forEach {item->
+                items.value.forEach { item ->
                     Row(
                         modifier = Modifier
                             .padding(16.dp)
