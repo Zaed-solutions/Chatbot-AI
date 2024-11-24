@@ -7,11 +7,11 @@ plugins {
 }
 
 android {
-    namespace = "com.zaed.projecttemplate"
+    namespace = "com.zaed.chatbot"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.zaed.projecttemplate"
+        applicationId = "com.zaed.chatbot"
         minSdk = 24
         targetSdk = 34
         versionCode = 1
@@ -41,9 +41,6 @@ android {
     }
     buildFeatures {
         compose = true
-    }
-    composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.1"
     }
     packaging {
         resources {

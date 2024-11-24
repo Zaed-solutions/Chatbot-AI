@@ -4,6 +4,7 @@ import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.compiler.plugins.kotlin.EmptyFunctionMetrics.composable
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
@@ -20,6 +21,9 @@ import com.zaed.chatbot.ui.settings.promocode.PromoCodeScreen
 import com.zaed.chatbot.ui.settings.rate.RateUsScreen
 import com.zaed.chatbot.ui.settings.restore.RestorePurchaseScreen
 import com.zaed.chatbot.ui.settings.terms.TermsOfUseScreen
+import androidx.navigation.compose.composable
+import androidx.navigation.toRoute
+import com.zaed.chatbot.ui.mainchat.MainChatScreen
 
 @Composable
 fun NavigationHost(
@@ -32,7 +36,7 @@ fun NavigationHost(
     NavHost(
         modifier = modifier,
         navController = navController,
-        startDestination = Route.SettingsRoute,
+        startDestination = Route.MainChatRoute,
         enterTransition = {
             fadeIn(
                 animationSpec = tween(
@@ -48,6 +52,16 @@ fun NavigationHost(
             )
         }
     ) {
+        composable<Route.MainChatRoute> {
+            MainChatScreen(
+                onNavigateToPersonalizationScreen = {/*TODO*/},
+                onNavigateToHistoryScreen = {/*TODO*/},
+                onNavigateToSettingsScreen = {/*TODO*/},
+                onNavigateToPrivacyAndTerms = {/*TODO*/}
+            )
+        }
+    }
+}
         composable<Route.SettingsRoute> {
             SettingsScreen(
                 onNavigateBack = { navController.popBackStack() },
