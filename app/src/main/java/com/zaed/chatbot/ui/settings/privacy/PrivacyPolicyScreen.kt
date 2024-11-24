@@ -32,7 +32,9 @@ fun PrivacyPolicyScreen(
         TopAppBar(title = {
             Text(
                 text = stringResource(R.string.privacy_policy_t_c),
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.SemiBold,
+                style = MaterialTheme.typography.titleLarge,
+                fontSize = 20.sp,
             )
         }, navigationIcon = {
             IconButton(onClick = onNavigateBack) {

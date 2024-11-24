@@ -166,4 +166,8 @@
         If you have any questions or concerns about these Terms or the Privacy Policy, please contact us at [Your Support Email].
     </string>
     <string name="privacy_policy_t_c"><![CDATA[Privacy Policy | T&C]]></string>
+    <string name="submit">Submit</string>
+    <string name="promo_code">Promo Code</string>
+    <string name="if_you_received_a_referral_code_you_can_enter_the_code_here">If you received a referral code, you can enter the code here!</string>
+    <string name="enter_promo_code">Enter Promo Code</string>
 </resources>
