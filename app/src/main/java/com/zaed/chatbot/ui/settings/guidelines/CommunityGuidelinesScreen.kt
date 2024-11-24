@@ -5,18 +5,25 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBackIos
+import androidx.compose.material.icons.filled.ArrowBackIos
 import androidx.compose.material.icons.filled.Cancel
+import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.zaed.chatbot.R
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -26,18 +33,20 @@ fun CommunityGuidelinesScreen(
 ) {
     Scaffold(
         topBar = {
-            TopAppBar(
+            CenterAlignedTopAppBar(
                 title = {
                     Text(
                         text = stringResource(R.string.community_guidelines),
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.SemiBold,
+                        style = MaterialTheme.typography.titleLarge,
+                        fontSize = 20.sp,
                     )
                 },
-                actions = {
+                navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Default.Cancel, contentDescription = stringResource(R.string.back))
+                        Icon(Icons.AutoMirrored.Filled.ArrowBackIos, contentDescription = stringResource(R.string.back))
                     }
-                }
+                }, scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
             )
         }
     ) {
@@ -45,7 +54,9 @@ fun CommunityGuidelinesScreen(
             .padding(it)
             .padding(16.dp)
             .verticalScroll(rememberScrollState())) {
-            Text(text = stringResource(R.string.community_guide_lines).trimIndent())
+            Text(
+                text = stringResource(R.string.community_guide_lines).trimIndent(),
+                style = MaterialTheme.typography.bodySmall,)
         }
     }
 
