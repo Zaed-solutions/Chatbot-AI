@@ -2,6 +2,7 @@ package com.zaed.chatbot.ui.mainchat.components
 
 import android.net.Uri
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -22,6 +23,7 @@ import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
@@ -41,6 +43,7 @@ import com.zaed.chatbot.ui.theme.ChatbotTheme
 @Composable
 fun MainChatBottomBar(
     modifier: Modifier = Modifier,
+    isLoading : Boolean = false,
     onSend: () -> Unit = {},
     onUpdateText: (String) -> Unit = {},
     attachments: List<MessageAttachment> = emptyList(),
@@ -49,9 +52,9 @@ fun MainChatBottomBar(
     onAddImage: () -> Unit = {},
     onOpenCamera: () -> Unit = {},
     onAddFile: () -> Unit = {},
+    prompt: String,
 ) {
     var isExpanded by remember { mutableStateOf(false) }
-    var text by remember { mutableStateOf("") }
     Column(
         modifier = modifier.fillMaxWidth()
     ) {
@@ -105,10 +108,13 @@ fun MainChatBottomBar(
                                 )
                             }
                             IconButton(
+                                //Todo: add file picker
+                                enabled = false,
                                 onClick = {
                                     onAddFile()
                                     isExpanded = false
-                                }
+                                },
+
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.FileOpen,
@@ -160,9 +166,8 @@ fun MainChatBottomBar(
                         verticalArrangement = Arrangement.Top
                     ) {
                         BasicTextField(
-                            value = text,
+                            value = prompt,
                             onValueChange = {
-                                text = it
                                 onUpdateText(it)
                             },
                             textStyle = MaterialTheme.typography.bodyMedium,
@@ -172,30 +177,34 @@ fun MainChatBottomBar(
                         )
                         PreviewedAttachments(attachments = attachments, onDeleteAttachment = onDeleteAttachment)
                     }
-                    IconButton(
-                        enabled = text.isBlank(),
-                        onClick = { onRecordVoice() },
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Mic,
-                            contentDescription = "Record Voice",
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(24.dp)
-                        )
+                    AnimatedVisibility(visible = prompt.isBlank()) {
+                        IconButton(
+                            enabled = prompt.isBlank(),
+                            onClick = { onRecordVoice() },
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Mic,
+                                contentDescription = "Record Voice",
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(24.dp)
+                            )
 
+                        }
                     }
                 }
             }
             IconButton(
+                enabled =!isLoading ,
                 onClick = {
                     onSend()
-                    text = ""
-                }
+                },
+                colors = IconButtonDefaults.iconButtonColors(
+                    contentColor = MaterialTheme.colorScheme.primary,
+                )
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.Send,
                     contentDescription = "Send",
-                    tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier
                         .padding(start = 8.dp)
                         .size(24.dp)
@@ -214,7 +223,8 @@ private fun MainChatBottomBarPreview() {
             attachments = listOf(
                 MessageAttachment(name = "Test1.txt"),
                 MessageAttachment(name = "Test2.txt"),
-            )
+            ),
+            prompt = "prompt"
         )
     }
 }

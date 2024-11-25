@@ -5,8 +5,12 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -17,15 +21,22 @@ import com.zaed.chatbot.ui.theme.ChatbotTheme
 fun QueryList(
     modifier: Modifier = Modifier,
     queries: List<ChatQuery>,
+    lazyListState: LazyListState = rememberLazyListState()
 ) {
+    LaunchedEffect (queries.size){
+        lazyListState.animateScrollToItem(0)
+    }
     LazyColumn(
         modifier = modifier,
+        state = lazyListState,
         contentPadding = PaddingValues(vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
         reverseLayout = true
     ) {
-        items(queries) { query ->
-            QueryItem(query = query)
+        itemsIndexed(queries, key = { _, query -> query.createdAtEpochSeconds }) { _, query ->
+            QueryItem(
+                query = query,
+            )
         }
     }
 }
@@ -35,7 +46,7 @@ fun QueryItem(
     modifier: Modifier = Modifier,
     query: ChatQuery,
 ) {
-    Column (
+    Column(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
@@ -43,11 +54,14 @@ fun QueryItem(
             modifier = Modifier.fillMaxWidth(),
             message = query.prompt,
             hasAttachments = query.promptAttachments.isNotEmpty(),
-            attachments = query.promptAttachments
+            attachments = query.promptAttachments,
+            animating = false,
         )
         MessageItem(
             isPrompt = false,
+            isLoading = query.isLoading,
             message = query.response,
+            animating = query.animateResponse,
             hasAttachments = query.responseAttachments.isNotEmpty(),
             attachments = query.responseAttachments
         )
@@ -61,7 +75,10 @@ private fun QueryListPreview() {
         QueryList(
             queries = listOf(
                 ChatQuery(prompt = "Hello there!", response = "Hello! How can I help you?"),
-                ChatQuery(prompt = "I need help with my account", response = "Sure! What do you need help with?"),
+                ChatQuery(
+                    prompt = "I need help with my account",
+                    response = "Sure! What do you need help with?"
+                ),
             )
         )
     }
