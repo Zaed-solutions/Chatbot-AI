@@ -2,12 +2,14 @@ package com.zaed.chatbot.ui.theme
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Typography
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
@@ -162,95 +164,7 @@ private val highContrastLightColorScheme = lightColorScheme(
     surfaceContainerHigh = surfaceContainerHighLightHighContrast,
     surfaceContainerHighest = surfaceContainerHighestLightHighContrast,
 )
-
-private val mediumContrastDarkColorScheme = darkColorScheme(
-    primary = primaryDarkMediumContrast,
-    onPrimary = onPrimaryDarkMediumContrast,
-    primaryContainer = primaryContainerDarkMediumContrast,
-    onPrimaryContainer = onPrimaryContainerDarkMediumContrast,
-    secondary = secondaryDarkMediumContrast,
-    onSecondary = onSecondaryDarkMediumContrast,
-    secondaryContainer = secondaryContainerDarkMediumContrast,
-    onSecondaryContainer = onSecondaryContainerDarkMediumContrast,
-    tertiary = tertiaryDarkMediumContrast,
-    onTertiary = onTertiaryDarkMediumContrast,
-    tertiaryContainer = tertiaryContainerDarkMediumContrast,
-    onTertiaryContainer = onTertiaryContainerDarkMediumContrast,
-    error = errorDarkMediumContrast,
-    onError = onErrorDarkMediumContrast,
-    errorContainer = errorContainerDarkMediumContrast,
-    onErrorContainer = onErrorContainerDarkMediumContrast,
-    background = backgroundDarkMediumContrast,
-    onBackground = onBackgroundDarkMediumContrast,
-    surface = surfaceDarkMediumContrast,
-    onSurface = onSurfaceDarkMediumContrast,
-    surfaceVariant = surfaceVariantDarkMediumContrast,
-    onSurfaceVariant = onSurfaceVariantDarkMediumContrast,
-    outline = outlineDarkMediumContrast,
-    outlineVariant = outlineVariantDarkMediumContrast,
-    scrim = scrimDarkMediumContrast,
-    inverseSurface = inverseSurfaceDarkMediumContrast,
-    inverseOnSurface = inverseOnSurfaceDarkMediumContrast,
-    inversePrimary = inversePrimaryDarkMediumContrast,
-    surfaceDim = surfaceDimDarkMediumContrast,
-    surfaceBright = surfaceBrightDarkMediumContrast,
-    surfaceContainerLowest = surfaceContainerLowestDarkMediumContrast,
-    surfaceContainerLow = surfaceContainerLowDarkMediumContrast,
-    surfaceContainer = surfaceContainerDarkMediumContrast,
-    surfaceContainerHigh = surfaceContainerHighDarkMediumContrast,
-    surfaceContainerHighest = surfaceContainerHighestDarkMediumContrast,
-)
-
-private val highContrastDarkColorScheme = darkColorScheme(
-    primary = primaryDarkHighContrast,
-    onPrimary = onPrimaryDarkHighContrast,
-    primaryContainer = primaryContainerDarkHighContrast,
-    onPrimaryContainer = onPrimaryContainerDarkHighContrast,
-    secondary = secondaryDarkHighContrast,
-    onSecondary = onSecondaryDarkHighContrast,
-    secondaryContainer = secondaryContainerDarkHighContrast,
-    onSecondaryContainer = onSecondaryContainerDarkHighContrast,
-    tertiary = tertiaryDarkHighContrast,
-    onTertiary = onTertiaryDarkHighContrast,
-    tertiaryContainer = tertiaryContainerDarkHighContrast,
-    onTertiaryContainer = onTertiaryContainerDarkHighContrast,
-    error = errorDarkHighContrast,
-    onError = onErrorDarkHighContrast,
-    errorContainer = errorContainerDarkHighContrast,
-    onErrorContainer = onErrorContainerDarkHighContrast,
-    background = backgroundDarkHighContrast,
-    onBackground = onBackgroundDarkHighContrast,
-    surface = surfaceDarkHighContrast,
-    onSurface = onSurfaceDarkHighContrast,
-    surfaceVariant = surfaceVariantDarkHighContrast,
-    onSurfaceVariant = onSurfaceVariantDarkHighContrast,
-    outline = outlineDarkHighContrast,
-    outlineVariant = outlineVariantDarkHighContrast,
-    scrim = scrimDarkHighContrast,
-    inverseSurface = inverseSurfaceDarkHighContrast,
-    inverseOnSurface = inverseOnSurfaceDarkHighContrast,
-    inversePrimary = inversePrimaryDarkHighContrast,
-    surfaceDim = surfaceDimDarkHighContrast,
-    surfaceBright = surfaceBrightDarkHighContrast,
-    surfaceContainerLowest = surfaceContainerLowestDarkHighContrast,
-    surfaceContainerLow = surfaceContainerLowDarkHighContrast,
-    surfaceContainer = surfaceContainerDarkHighContrast,
-    surfaceContainerHigh = surfaceContainerHighDarkHighContrast,
-    surfaceContainerHighest = surfaceContainerHighestDarkHighContrast,
-)
-
-@Immutable
-data class ColorFamily(
-    val color: Color,
-    val onColor: Color,
-    val colorContainer: Color,
-    val onColorContainer: Color
-)
-
-val unspecified_scheme = ColorFamily(
-    Color.Unspecified, Color.Unspecified, Color.Unspecified, Color.Unspecified
-)
-
+var LocalFontScale = staticCompositionLocalOf { 1.0f } // Default scale of 1.0
 @Composable
 fun ChatbotTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
@@ -258,18 +172,34 @@ fun ChatbotTheme(
     dynamicColor: Boolean = true,
     content: @Composable() () -> Unit
 ) {
-  val colorScheme = when {
-      dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-          val context = LocalContext.current
-          if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-      }
-      else -> lightScheme
-  }
+    val fontScale = LocalFontScale.current
+    val colorScheme = when {
+        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
+            val context = LocalContext.current
+            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+        }
 
-  MaterialTheme(
-    colorScheme = colorScheme,
-    typography = AppTypography,
-    content = content
-  )
+        else -> lightScheme
+    }
+    val scaledTypography = Typography.copy(
+        headlineLarge = Typography.headlineLarge.copy(fontSize = Typography.headlineLarge.fontSize * fontScale),
+        headlineMedium = Typography.headlineMedium.copy(fontSize = Typography.headlineMedium.fontSize * fontScale),
+        headlineSmall = Typography.headlineSmall.copy(fontSize = Typography.headlineSmall.fontSize * fontScale),
+        titleLarge = Typography.titleLarge.copy(fontSize = Typography.titleLarge.fontSize * fontScale),
+        titleMedium = Typography.titleMedium.copy(fontSize = Typography.titleMedium.fontSize * fontScale),
+        titleSmall = Typography.titleSmall.copy(fontSize = Typography.titleSmall.fontSize * fontScale),
+        bodyLarge = Typography.bodyLarge.copy(fontSize = Typography.bodyLarge.fontSize * fontScale),
+        bodyMedium = Typography.bodyMedium.copy(fontSize = Typography.bodyMedium.fontSize * fontScale),
+        bodySmall = Typography.bodySmall.copy(fontSize = Typography.bodySmall.fontSize * fontScale),
+        labelLarge = Typography.labelLarge.copy(fontSize = Typography.labelLarge.fontSize * fontScale),
+        labelMedium = Typography.labelMedium.copy(fontSize = Typography.labelMedium.fontSize * fontScale),
+        labelSmall = Typography.labelSmall.copy(fontSize = Typography.labelSmall.fontSize * fontScale)
+    )
+
+    MaterialTheme(
+        colorScheme = colorScheme,
+        typography = scaledTypography,
+        content = content
+    )
 }
 
