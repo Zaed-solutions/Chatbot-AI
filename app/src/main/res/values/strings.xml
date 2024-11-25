@@ -170,4 +170,6 @@
     <string name="promo_code">Promo Code</string>
     <string name="if_you_received_a_referral_code_you_can_enter_the_code_here">If you received a referral code, you can enter the code here!</string>
     <string name="enter_promo_code">Enter Promo Code</string>
+    <string name="become_unlimited">Become Unlimited</string>
+    <string name="infinite_art_generations">Infinite Art Generations</string>
 </resources>

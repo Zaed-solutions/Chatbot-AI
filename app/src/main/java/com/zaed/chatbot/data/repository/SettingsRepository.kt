@@ -3,7 +3,8 @@ package com.zaed.chatbot.data.repository
 import com.zaed.chatbot.ui.mainchat.components.ChatModel
 
 interface SettingsRepository {
-    fun setDefaultChatMode(chatModel: String)
-    fun setDefaultFontScale(fontScale: Float)
-    fun setDefaultLanguage(languageCode: String)
+    suspend fun setDefaultChatMode(chatModel: String)
+    suspend fun setDefaultFontScale(fontScale: Float)
+    suspend fun getChatMode(): String
+    suspend fun getFontScale(): Float
 }

@@ -54,15 +54,19 @@ import org.koin.androidx.compose.navigation.koinNavViewModel
 @Composable
 fun ChatModeScreen(
     modifier: Modifier = Modifier,
+    defaultChatMode: ChatModel,
+    onSetDefaultChatMode: (ChatModel) -> Unit,
     onNavigateBack: () -> Unit,
     viewModel: SettingsViewModel = koinViewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     ChatModeScreenContent(
         modifier = modifier,
+        defaultChatMode = defaultChatMode,
         onAction = { action ->
             when(action){
                 SettingsUiAction.OnBackPressed -> onNavigateBack()
+                is SettingsUiAction.OnSetDefaultChatMode -> onSetDefaultChatMode(action.chatModel)
                 else -> viewModel.handleAction(action)
             }
         },
@@ -78,6 +82,7 @@ fun ChatModeScreen(
 private fun ChatModeScreenContent(
     modifier: Modifier = Modifier,
     onAction: (SettingsUiAction) -> Unit = {},
+    defaultChatMode: ChatModel = ChatModel.GPT_4O_MINI,
     isPro: Boolean = false,
     monthlyCost: Double = 0.0,
     lifetimeCost: Double = 0.0,
@@ -108,7 +113,7 @@ private fun ChatModeScreenContent(
             modifier = Modifier.padding(it),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            var selectedIndex by remember { mutableIntStateOf(0) }
+            var selectedIndex by remember { mutableIntStateOf(defaultChatMode.ordinal) }
             LazyColumn(
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp),

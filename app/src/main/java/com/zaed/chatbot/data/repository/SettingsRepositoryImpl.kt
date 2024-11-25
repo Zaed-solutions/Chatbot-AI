@@ -1,18 +1,25 @@
 package com.zaed.chatbot.data.repository
 
-class SettingsRepositoryImpl(
+import com.zaed.chatbot.data.source.local.SettingsKeyValueStorage
 
+class SettingsRepositoryImpl(
+    private val settingsKeyValueStorage: SettingsKeyValueStorage
 ) : SettingsRepository {
 
-    override fun setDefaultChatMode(chatModel: String) {
-//        TODO("Not yet implemented")
+    override suspend fun setDefaultChatMode(chatModel: String) {
+        return settingsKeyValueStorage.setChatMode(chatModel)
     }
 
-    override fun setDefaultFontScale(fontScale: Float) {
-//        TODO("Not yet implemented")
+    override suspend fun setDefaultFontScale(fontScale: Float) {
+        return settingsKeyValueStorage.setFontScale(fontScale)
     }
 
-    override fun setDefaultLanguage(languageCode: String) {
-//        TODO("Not yet implemented")
+
+    override suspend fun getChatMode(): String {
+        return settingsKeyValueStorage.getChatMode()
+    }
+
+    override suspend fun getFontScale(): Float {
+        return settingsKeyValueStorage.getFontScale()
     }
 }

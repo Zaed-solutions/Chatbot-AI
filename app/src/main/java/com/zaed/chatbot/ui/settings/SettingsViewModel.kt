@@ -17,7 +17,6 @@ class SettingsViewModel(
         when(action){
             is SettingsUiAction.OnSetDefaultChatMode -> setDefaultMode(action.chatModel)
             is SettingsUiAction.OnSetFontScale -> setFontScale(action.fontScale)
-            is SettingsUiAction.OnSetLanguage -> setLanguage(action.languageCode)
             is SettingsUiAction.OnSubmitPromoCode -> submitPromoCode(action.promoCode)
             else -> Unit
         }
@@ -27,11 +26,6 @@ class SettingsViewModel(
 //        TODO("Not yet implemented")
     }
 
-    private fun setLanguage(languageCode: String) {
-        viewModelScope.launch {
-            settingsRepo.setDefaultLanguage(languageCode)
-        }
-    }
 
     private fun setFontScale(fontScale: Float) {
         viewModelScope.launch {

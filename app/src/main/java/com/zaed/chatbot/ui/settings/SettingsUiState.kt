@@ -6,11 +6,9 @@ import java.util.Locale
 
 data class SettingsUiState(
     val isPro: Boolean = false,
-    val locale: Locale = Locale.getDefault(),
     val chatMode: ChatModel = ChatModel.GPT_4O_MINI,
     val monthlyCost: Double = 0.0,
     val lifetimeCost: Double = 0.0,
-    val language: AppLanguage = AppLanguage.ENGLISH,
     val fontSize: FontSize = FontSize.MEDIUM
 )
 

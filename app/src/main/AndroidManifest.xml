@@ -14,7 +14,7 @@
         android:theme="@style/Theme.ProjectTemplate"
         tools:targetApi="31">
         <activity
-            android:name="com.zaed.chatbot.ui.MainActivity"
+            android:name="com.zaed.chatbot.ui.activity.MainActivity"
             android:exported="true"
             android:label="@string/app_name"
             android:theme="@style/Theme.ProjectTemplate">

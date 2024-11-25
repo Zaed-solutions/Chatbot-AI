@@ -1,17 +1,21 @@
 package com.zaed.chatbot.ui.settings
 
 import android.content.res.Configuration
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Chat
+import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Loop
@@ -21,7 +25,6 @@ import androidx.compose.material.icons.filled.QrCode
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Support
 import androidx.compose.material.icons.filled.Title
-import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -29,16 +32,29 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.zaed.chatbot.R
+import com.zaed.chatbot.ui.mainchat.components.ProSubscriptionBottomSheet
 import com.zaed.chatbot.ui.theme.ChatbotTheme
 import org.koin.androidx.compose.koinViewModel
 
@@ -48,18 +64,16 @@ fun SettingsScreen(
     onNavigateBack: () -> Unit = {},
     onNavigateToFontScale: () -> Unit = {},
     onNavigateToChatMode: () -> Unit = {},
-    onNavigateToLanguage: () -> Unit = {},
     onNavigateToPromoCode: () -> Unit = {},
     onNavigateToFaqSupport: () -> Unit = {},
     onNavigateToPrivacyPolicy: () -> Unit = {},
     onNavigateToCommunityGuidelines: () -> Unit = {},
 ) {
     SettingsScreenContent(
-        onNavigateBack = onNavigateBack,
-        action = { action ->
+        onAction = { action ->
             when (action) {
+                SettingsUiAction.OnBackPressed -> onNavigateBack()
                 SettingsUiAction.OnDefaultChatModeClicked -> onNavigateToChatMode()
-                SettingsUiAction.OnLanguageClicked -> onNavigateToLanguage()
                 SettingsUiAction.OnFontSizeClicked -> onNavigateToFontScale()
                 SettingsUiAction.OnPromoCodeClicked -> onNavigateToPromoCode()
                 SettingsUiAction.OnRateUsClicked -> {
@@ -70,6 +84,7 @@ fun SettingsScreen(
                 }
                 SettingsUiAction.OnFaqSupportClicked -> onNavigateToFaqSupport()
                 SettingsUiAction.OnPrivacyPolicyClicked -> onNavigateToPrivacyPolicy()
+                SettingsUiAction.OnPrivacyTermsClicked -> onNavigateToPrivacyPolicy()
                 SettingsUiAction.OnCommunityGuidelinesClicked -> onNavigateToCommunityGuidelines()
                 else -> viewModel.handleAction(action)
             }
@@ -81,37 +96,58 @@ fun SettingsScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreenContent(
-    action: (SettingsUiAction) -> Unit = {},
-    onNavigateBack: () -> Unit = {}
+    modifier: Modifier = Modifier,
+    onAction: (SettingsUiAction) -> Unit = {},
+    isPro: Boolean = false,
+    monthlyCost: Double = 0.0,
+    lifetimeCost: Double = 0.0,
 ) {
-    Scaffold(
-        topBar = {
-            CenterAlignedTopAppBar(
-                title = {
-                    Text(
-                        text = "Settings",
-                        fontWeight = FontWeight.Bold
-                    )
-                },
-                actions = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Default.Close, contentDescription = "Back")
-                    }
-                }
+    var isBottomSheetVisible by remember { mutableStateOf(false) }
+    val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    Scaffold(modifier = modifier, topBar = {
+        TopAppBar(title = {
+            Text(
+                text = "Settings", fontWeight = FontWeight.Bold
             )
-        }
-    ) { it ->
-
+        }, actions = {
+            IconButton(onClick = { onAction(SettingsUiAction.OnBackPressed) }) {
+                Icon(Icons.Default.Close, contentDescription = "Back")
+            }
+        })
+    }) { innerPadding ->
         Column(
-            modifier = Modifier
-                .padding(it)
+            modifier = Modifier.padding(innerPadding)
         ) {
-            SettingItems(
-                items = SettingItems.entries,
-                action = { a ->
-                    action(a)
+            SettingItems(items = SettingItems.entries,
+                isPro = isPro,
+                onPromoClicked = { isBottomSheetVisible = true },
+                action = { action ->
+                    onAction(action)
+                })
+            AnimatedVisibility(visible = isBottomSheetVisible) {
+                ModalBottomSheet(
+                    onDismissRequest = {
+                        isBottomSheetVisible = false
+                    }, sheetState = bottomSheetState, shape = RectangleShape
+                ) {
+                    ProSubscriptionBottomSheet(
+                        modifier = Modifier.fillMaxSize(),
+                        onDismiss = { isBottomSheetVisible = false },
+                        onRestore = { onAction(SettingsUiAction.OnRestoreSubscription) },
+                        monthlyCost = monthlyCost,
+                        lifetimeCost = lifetimeCost,
+                        onContinue = { b: Boolean, b1: Boolean ->
+                            onAction(
+                                SettingsUiAction.OnUpgradeSubscription(
+                                    b, b1
+                                )
+                            )
+                        },
+                        onPrivacyTermsClicked = { onAction(SettingsUiAction.OnPrivacyTermsClicked) },
+                    )
                 }
-            )
+
+            }
         }
     }
 }
@@ -119,49 +155,30 @@ fun SettingsScreenContent(
 @Composable
 private fun SettingItems(
     items: List<SettingItems> = emptyList(),
+    isPro: Boolean = false,
     action: (SettingsUiAction) -> Unit = {},
+    onPromoClicked: () -> Unit,
 ) {
     val groupedItems = items.groupBy { it.category }
-
     LazyColumn(
         modifier = Modifier.fillMaxSize()
     ) {
-        item {
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.primary
-                )
-            ) {
-                Text(
-                    text = "Become Unlimited",
-                    style = MaterialTheme.typography.headlineMedium,
-                    modifier = Modifier.padding(vertical = 16.dp, horizontal = 8.dp)
-                )
-                Text(
-                    text = "Answers from GPT-4o",
-                    modifier = Modifier.padding(bottom = 8.dp, start = 8.dp, end = 8.dp)
-                )
-                Text(
-                    text = "Infinite Art Generations",
-                    modifier = Modifier.padding(vertical = 8.dp, horizontal = 8.dp)
+        if (!isPro) {
+            item {
+                PromoCard(
+                    onPromoClicked = onPromoClicked
                 )
             }
         }
-        // Iterate over each group
-        // Create a card for each item in the group
-        itemsIndexed(groupedItems.entries.toList()) { index, items ->
+        items(groupedItems.entries.toList()) { items ->
             OutlinedCard(
-                modifier = Modifier
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.background
                 ),
                 border = CardDefaults.outlinedCardBorder()
             ) {
-                items.value.forEach { item ->
+                items.value.forEachIndexed { innerIndex, item ->
                     Row(
                         modifier = Modifier
                             .padding(16.dp)
@@ -179,7 +196,7 @@ private fun SettingItems(
                             text = item.title,
                         )
                     }
-                    if (index < groupedItems.entries.size - 1) {
+                    if (innerIndex < groupedItems.entries.size - 1) {
                         HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
                     }
 
@@ -191,13 +208,65 @@ private fun SettingItems(
     }
 }
 
+@Composable
+private fun PromoCard(
+    modifier: Modifier = Modifier,
+    onPromoClicked: () -> Unit
+) {
+    Surface(
+        onClick = {
+            onPromoClicked()
+        },
+        shape = MaterialTheme.shapes.large,
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        color = MaterialTheme.colorScheme.primary
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Text(
+                text = stringResource(R.string.become_unlimited),
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+            )
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_double_star),
+                    contentDescription = null,
+                    modifier = Modifier.size(16.dp)
+                )
+                Text(
+                    text = stringResource(id = R.string.answers_from_gpt_4o),
+                    style = MaterialTheme.typography.titleSmall
+                )
+            }
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_image_1),
+                    contentDescription = null,
+                    modifier = Modifier.size(16.dp)
+                )
+                Text(
+                    text = stringResource(R.string.infinite_art_generations),
+                    style = MaterialTheme.typography.titleSmall
+                )
+            }
+        }
+    }
+}
+
 
 enum class SettingsCategory {
-    CATEGORY_1,
-    CATEGORY_2,
-    CATEGORY_3,
-    CATEGORY_4,
-    CATEGORY_5,
+    CATEGORY_1, CATEGORY_2, CATEGORY_3, CATEGORY_4;
 }
 
 enum class SettingItems(
@@ -208,65 +277,58 @@ enum class SettingItems(
 ) {
     DEFAULT_CHAT_MODE(
         "Default Chat Mode",
-        Icons.Default.Chat,
+        Icons.AutoMirrored.Filled.Chat,
         SettingsUiAction.OnDefaultChatModeClicked,
         SettingsCategory.CATEGORY_1
-    ),
-    LANGUAGE(
-        "Language",
-        Icons.Default.Language,
-        SettingsUiAction.OnLanguageClicked,
-        SettingsCategory.CATEGORY_2
     ),
     FONT_SIZE(
         "Font Size",
         Icons.Default.Title,
         SettingsUiAction.OnFontSizeClicked,
-        SettingsCategory.CATEGORY_2
+        SettingsCategory.CATEGORY_1
     ),
     PROMO_CODE(
         "Promo Code",
         Icons.Default.QrCode,
         SettingsUiAction.OnPromoCodeClicked,
-        SettingsCategory.CATEGORY_3
+        SettingsCategory.CATEGORY_2
     ),
     RATE_US(
-        "Rate Us",
-        Icons.Default.Star,
+        "Rate Us", Icons.Default.Star,
         SettingsUiAction.OnRateUsClicked,
-        SettingsCategory.CATEGORY_4
+        SettingsCategory.CATEGORY_3
     ),
     RESTORE_PURCHASE(
         "Restore Purchase",
         Icons.Default.Loop,
         SettingsUiAction.OnRestorePurchaseClicked,
-        SettingsCategory.CATEGORY_4
+        SettingsCategory.CATEGORY_3
     ),
     FAQ_SUPPORT(
         "FAQ & Support",
         Icons.Default.Support,
         SettingsUiAction.OnFaqSupportClicked,
-        SettingsCategory.CATEGORY_4
+        SettingsCategory.CATEGORY_3
     ),
     PRIVACY_POLICY(
         "Privacy Policy | T&C",
         Icons.Default.PrivacyTip,
         SettingsUiAction.OnPrivacyPolicyClicked,
-        SettingsCategory.CATEGORY_5
+        SettingsCategory.CATEGORY_4
     ),
     COMMUNITY_GUIDELINES(
         "Community Guidelines",
         Icons.Default.People,
         SettingsUiAction.OnCommunityGuidelinesClicked,
-        SettingsCategory.CATEGORY_5
+        SettingsCategory.CATEGORY_4
     ),
 }
 
-@Preview
+
 @Preview(uiMode = Configuration.UI_MODE_NIGHT_YES or Configuration.UI_MODE_TYPE_NORMAL)
 @Composable
 fun SettingsScreenPreview() {
     ChatbotTheme {
-        SettingsScreen()
+        SettingsScreenContent()
     }
 }
