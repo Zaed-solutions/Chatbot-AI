@@ -1,6 +1,9 @@
 package com.zaed.chatbot.ui.mainchat
 
+import android.app.Activity
+import android.content.Intent
 import android.net.Uri
+import android.speech.RecognizerIntent
 import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
@@ -34,10 +37,15 @@ import com.zaed.chatbot.ui.mainchat.components.MainChatBottomBar
 import com.zaed.chatbot.ui.mainchat.components.MainChatTopBar
 import com.zaed.chatbot.ui.mainchat.components.ProSubscriptionBottomSheet
 import com.zaed.chatbot.ui.mainchat.components.QueryList
+import com.zaed.chatbot.ui.mainchat.components.SpeechRecognitionBottomSheet
 import com.zaed.chatbot.ui.theme.ChatbotTheme
 import com.zaed.chatbot.ui.util.createImageFile
 import com.zaed.chatbot.ui.util.getFileNameFromUri
+import com.zaed.chatbot.ui.util.getMimeType
+import com.zaed.chatbot.ui.util.uriToBitmap
 import org.koin.androidx.compose.koinViewModel
+import java.util.Locale
+
 private val TAG = "MainChatScreen"
 @Composable
 fun MainChatScreen(
@@ -56,26 +64,28 @@ fun MainChatScreen(
     val context = LocalContext.current
     val imagePicker = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
         uri?.let {
-            val attachment = MessageAttachment(uri = it, type = FileType.IMAGE)
+            val attachment = MessageAttachment(uri = it, type = FileType.IMAGE, bitmap = uriToBitmap(context,uri))
             viewModel.handleAction(MainChatUiAction.OnAddAttachment(attachment))
         }
     }
     val filePicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         uri?.let {
             val fileName = getFileNameFromUri(context, it)
-            val attachment = MessageAttachment(name = fileName?:"", uri = it, type = FileType.ALL)
+            val attachment = MessageAttachment(name = fileName?:"", uri = it, type = FileType.ALL, )
             viewModel.handleAction(MainChatUiAction.OnAddAttachment(attachment))
         }
     }
     var photoUri by remember { mutableStateOf<Uri?>(null) }
     val cameraCaptureLauncher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { success ->
         if (success && photoUri != null) {
-            val attachment = MessageAttachment(uri = photoUri?:Uri.EMPTY, type = FileType.IMAGE)
+            val attachment = MessageAttachment(uri = photoUri?:Uri.EMPTY, type = FileType.IMAGE, bitmap = uriToBitmap(context,photoUri?:Uri.EMPTY))
             viewModel.handleAction(MainChatUiAction.OnAddAttachment(attachment))
         } else {
             Log.d(TAG, "Image capture failed.")
         }
     }
+
+    var recordingBottomSheetVisible by remember { mutableStateOf(false) }
     MainChatScreenContent(
         modifier =modifier,
         onAction = { action ->
@@ -100,7 +110,7 @@ fun MainChatScreen(
                     onNavigateToPrivacyAndTerms()
                 }
                 MainChatUiAction.OnRecordVoiceClicked -> {
-                    //TODO(implement voice recording)
+                    recordingBottomSheetVisible = true
                 }
                 MainChatUiAction.OnSettingsClicked -> {
                     onNavigateToSettingsScreen()
@@ -108,8 +118,10 @@ fun MainChatScreen(
                 else -> viewModel.handleAction(action)
             }
         },
+        prompt = state.currentPrompt,
         isChatEmpty = state.queries.isEmpty(),
         isPro = state.isPro,
+        isLoading = state.isLoading,
         monthlyCost = state.monthlyCost,
         lifetimeCost = state.lifetimeCost,
         queries = state.queries,
@@ -117,6 +129,16 @@ fun MainChatScreen(
         attachments = state.attachments
 
     )
+    if (recordingBottomSheetVisible) {
+        SpeechRecognitionBottomSheet(
+            onDismiss = { recordingBottomSheetVisible = false },
+            onResult = { result ->
+                Log.d("AudioRec2",result)
+                viewModel.handleAction(MainChatUiAction.OnUpdatePrompt(result))
+                recordingBottomSheetVisible = false
+            }
+        )
+    }
 
 }
 
@@ -127,6 +149,8 @@ fun MainChatScreenContent(
     onAction: (MainChatUiAction) -> Unit = {},
     isChatEmpty: Boolean = true,
     isPro: Boolean = false,
+    prompt: String,
+    isLoading : Boolean = false,
     monthlyCost: Double = 0.0,
     lifetimeCost: Double = 0.0,
     queries: List<ChatQuery> = emptyList(),
@@ -147,8 +171,10 @@ fun MainChatScreenContent(
         bottomBar = {
             MainChatBottomBar(
                 modifier = Modifier.fillMaxWidth(),
+                isLoading =isLoading ,
                 onSend = { onAction(MainChatUiAction.OnSendPrompt) },
                 onUpdateText = { text -> onAction(MainChatUiAction.OnUpdatePrompt(text)) },
+                prompt = prompt,
                 attachments = attachments,
                 onRecordVoice = { onAction(MainChatUiAction.OnRecordVoiceClicked) },
                 onDeleteAttachment = { uri -> onAction(MainChatUiAction.OnDeleteAttachment(uri)) },
@@ -209,7 +235,7 @@ fun MainChatScreenContent(
 @Composable
 private fun MainChatScreenContentPreview() {
     ChatbotTheme {
-        val queries = listOf<ChatQuery>(
+        val queries = listOf(
             ChatQuery(prompt = "Hello there! tell me a joke", response = "Sure! Here's one for you:\n" +
                     "Why don't skeletons fight each other?\n" +
                     "Because they don’t have the guts! \uD83D\uDE04"),
@@ -221,7 +247,8 @@ private fun MainChatScreenContentPreview() {
         )
         MainChatScreenContent(
             isChatEmpty = false,
-            queries = queries.reversed()
+            queries = queries.reversed(),
+            prompt = ""
         )
     }
 }

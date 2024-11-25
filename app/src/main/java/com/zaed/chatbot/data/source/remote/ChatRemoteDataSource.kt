@@ -1,10 +1,8 @@
-package com.zaed.chatbot.data.repository
+package com.zaed.chatbot.data.source.remote
 
 import com.zaed.chatbot.data.model.ChatQuery
 import kotlinx.coroutines.flow.Flow
 
-interface ChatRepository {
+interface ChatRemoteDataSource {
     suspend fun sendPrompt(chatQuery: ChatQuery): Flow<Result<ChatQuery>>
-    suspend fun getChatById(chatId: String): Flow<Result<List<ChatQuery>>>
-
 }
