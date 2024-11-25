@@ -172,7 +172,9 @@ fun MainChatScreenContent(
             MainChatBottomBar(
                 modifier = Modifier.fillMaxWidth(),
                 isLoading =isLoading ,
+                isAnimating = queries.first().animateResponse,
                 onSend = { onAction(MainChatUiAction.OnSendPrompt) },
+                onStopAnimation = { onAction(MainChatUiAction.OnStopAnimation) },
                 onUpdateText = { text -> onAction(MainChatUiAction.OnUpdatePrompt(text)) },
                 prompt = prompt,
                 attachments = attachments,
