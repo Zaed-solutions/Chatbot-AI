@@ -172,4 +172,12 @@
     <string name="enter_promo_code">Enter Promo Code</string>
     <string name="become_unlimited">Become Unlimited</string>
     <string name="infinite_art_generations">Infinite Art Generations</string>
+    <string name="rename">Rename</string>
+    <string name="delete">Delete</string>
+    <string name="delete_chat">Delete Chat</string>
+    <string name="this_chat_will_be_permanently_deleted_are_you_sure_you_want_to_proceed_with_the_deletion">This chat will be permanently deleted. Are you sure you want to proceed with the deletion?</string>
+    <string name="cancel">Cancel</string>
+    <string name="rename_chat">Rename Chat</string>
+    <string name="new_title">New Title</string>
+    <string name="ok">Ok</string>
 </resources>

@@ -1,6 +1,7 @@
 package com.zaed.chatbot.data.repository
 
 import android.util.Log
+import com.zaed.chatbot.data.model.ChatHistory
 import com.zaed.chatbot.data.model.ChatQuery
 import com.zaed.chatbot.data.source.local.ChatLocalDataSource
 import com.zaed.chatbot.data.source.remote.ChatRemoteDataSource
@@ -25,6 +26,22 @@ class ChatRepositoryImpl(
 
     override suspend fun getChatById(chatId: String): Flow<Result<List<ChatQuery>>> {
         return chatLocalDataSource.getChatById(chatId)
+    }
+
+    override suspend fun getChatHistories(): Flow<Result<List<ChatHistory>>> {
+        return chatLocalDataSource.getChatHistories()
+    }
+
+    override suspend fun deleteChatHistory(chatId: String) {
+        return chatLocalDataSource.deleteChatHistory(chatId)
+    }
+
+    override suspend fun updateChatHistory(chatHistory: ChatHistory) {
+        return chatLocalDataSource.updateChatHistory(chatHistory)
+    }
+
+    override suspend fun createChatHistory(chatHistory: ChatHistory) {
+        return chatLocalDataSource.createChatHistory(chatHistory)
     }
 
 }
