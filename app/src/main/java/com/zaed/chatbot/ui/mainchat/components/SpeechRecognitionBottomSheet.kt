@@ -11,31 +11,12 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Mic
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
@@ -56,50 +37,50 @@ fun SpeechRecognitionBottomSheet(
 ) {
     val context = LocalContext.current
     val speechRecognizer = remember { SpeechRecognizer.createSpeechRecognizer(context) }
-    val recognizerIntent = remember {
+
+    // Default language is English
+    var selectedLanguage by remember { mutableStateOf(Locale.US.toString()) }
+
+    // Recognizer intent setup
+    val recognizerIntent = remember(selectedLanguage) {
         Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
-            putExtra(
-                RecognizerIntent.EXTRA_LANGUAGE_MODEL,
-                RecognizerIntent.LANGUAGE_MODEL_FREE_FORM
-            )
-            putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault())
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE, selectedLanguage) // Use the selected language
+            putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, 10000)
+            putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS, 7000)
+            putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 5)
         }
     }
 
     val sheetState = rememberModalBottomSheetState()
     var isListening by remember { mutableStateOf(false) }
-    var speechText by remember { mutableStateOf("Say something...") }
-    val amplitudes = remember { mutableStateListOf<Float>() } // List for amplitude visualization
+    var speechText by remember { mutableStateOf("") }
+    val amplitudes = remember { mutableStateListOf<Float>() }
     val scope = rememberCoroutineScope()
     var hasPermission by remember { mutableStateOf(false) }
+
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
-    ) { granted ->
-        hasPermission = granted
-    }
+    ) { granted -> hasPermission = granted }
+
     val listener = remember {
         object : RecognitionListener {
-            override fun onReadyForSpeech(params: Bundle?) {
-                speechText = "Listening..."
+            override fun onReadyForSpeech(params: Bundle?) {}
+            override fun onBeginningOfSpeech() {
+                amplitudes.clear()
             }
 
-            override fun onBeginningOfSpeech() {}
             override fun onRmsChanged(rmsdB: Float) {
-                val amplitude = rmsdB.coerceIn(0f, 10f) / 10f // Normalize RMS values to 0-1
+                val amplitude = rmsdB.coerceIn(0f, 10f) / 10f
                 amplitudes.add(amplitude)
-                if (amplitudes.size > 20) amplitudes.removeAt(0) // Limit to 20 bars
+                if (amplitudes.size > 20) amplitudes.removeAt(0)
             }
 
             override fun onBufferReceived(buffer: ByteArray?) {}
-            override fun onEndOfSpeech() {
-                isListening = false
-//                onResult(speechText)
-                scope.launch { sheetState.hide() }
-            }
+            override fun onEndOfSpeech() {}
 
             override fun onError(error: Int) {
-                speechText = "Sorry, something went wrong."
-                onResult("")
+                onResult("Error")
                 scope.launch { sheetState.hide() }
             }
 
@@ -107,21 +88,19 @@ fun SpeechRecognitionBottomSheet(
                 val result =
                     results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)?.firstOrNull()
                 Log.d("AudioRec1", result ?: "No speech detected.")
-                speechText = result ?: "No speech detected."
+                speechText += result ?: ""
                 onResult(speechText)
                 scope.launch { sheetState.hide() }
-
             }
 
             override fun onPartialResults(partialResults: Bundle?) {
-                onResult(speechText)
-                scope.launch { sheetState.hide() }
+                val partial = partialResults?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)?.firstOrNull()
+                if (partial != null) {
+                    speechText += partial
+                }
             }
 
-            override fun onEvent(eventType: Int, params: Bundle?) {
-                onResult(speechText)
-                scope.launch { sheetState.hide() }
-            }
+            override fun onEvent(eventType: Int, params: Bundle?) {}
         }
     }
 
@@ -129,7 +108,7 @@ fun SpeechRecognitionBottomSheet(
         speechRecognizer.setRecognitionListener(listener)
     }
 
-    // Bottom sheet with a microphone and live visualization
+    // Modal bottom sheet for speech recognition
     ModalBottomSheet(
         sheetState = sheetState,
         onDismissRequest = {
@@ -149,7 +128,29 @@ fun SpeechRecognitionBottomSheet(
                 .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Microphone icon
+            // Language Switcher
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                // Switch for language selection
+                Text("English")
+                Switch(
+                    checked = selectedLanguage == "ar", // Check if Arabic is selected
+                    onCheckedChange = { isChecked ->
+                        // Disable switch if speech is ongoing
+                        if (!isListening) {
+                            selectedLanguage = if (isChecked) "ar" else Locale.US.toString()
+                        }
+                    },
+                    enabled = !isListening // Disable the switch when listening
+                )
+                Text("Arabic")
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Microphone Button
             Box(
                 modifier = Modifier
                     .size(100.dp)
@@ -162,12 +163,12 @@ fun SpeechRecognitionBottomSheet(
                     tint = Color.White,
                     modifier = Modifier
                         .size(50.dp)
-                        .background(Color.Transparent)
                         .clickable {
                             if (isListening) {
                                 speechRecognizer.stopListening()
                                 isListening = false
                                 scope.launch { sheetState.hide() }
+                                onResult(speechText)
                             } else {
                                 isListening = true
                                 speechRecognizer.startListening(recognizerIntent)
@@ -176,11 +177,15 @@ fun SpeechRecognitionBottomSheet(
                         }
                 )
             }
+
             Spacer(modifier = Modifier.height(16.dp))
-            // Frequency visualization
+
+            // Frequency visualization (optional)
             RealTimeFrequencyVisualizer(amplitudes = amplitudes)
+
             Spacer(modifier = Modifier.height(16.dp))
-            // Text for live feedback
+
+            // Display speech text
             Text(
                 text = speechText,
                 style = MaterialTheme.typography.bodyMedium,
@@ -200,7 +205,6 @@ fun SpeechRecognitionBottomSheet(
 fun RealTimeFrequencyVisualizer(
     amplitudes: List<Float>
 ) {
-
     Canvas(
         modifier = Modifier
             .fillMaxWidth()
@@ -208,14 +212,13 @@ fun RealTimeFrequencyVisualizer(
             .padding(horizontal = 16.dp)
     ) {
         val barCount = amplitudes.size
-        val barWidth = size.width / (barCount * 2) // Space between bars
+        val barWidth = size.width / (barCount * 2)
         val centerY = size.height / 2
 
-        // Draw bars for the amplitudes
         amplitudes.forEachIndexed { index, amplitude ->
             val barHeight =
-                (amplitude * size.height).coerceAtLeast(4.dp.toPx()) // Set a minimum height for visibility
-            val barX = index * barWidth * 2 // Position bar
+                (amplitude * size.height).coerceAtLeast(4.dp.toPx())
+            val barX = index * barWidth * 2
             drawRoundRect(
                 color = Color.Blue,
                 topLeft = Offset(barX, centerY - barHeight / 2),
@@ -225,6 +228,3 @@ fun RealTimeFrequencyVisualizer(
         }
     }
 }
-
-
-

@@ -104,4 +104,6 @@ dependencies {
     //Google AI
     implementation("com.google.ai.client.generativeai:generativeai:0.7.0")
 
+//    implementation("com.google.mlkit:speech:16.0.0-beta1")
+
 }
