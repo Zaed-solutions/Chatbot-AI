@@ -28,7 +28,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import java.util.Locale
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SpeechRecognitionBottomSheet(
@@ -52,9 +51,10 @@ fun SpeechRecognitionBottomSheet(
         }
     }
 
-    val sheetState = rememberModalBottomSheetState()
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var isListening by remember { mutableStateOf(false) }
     var speechText by remember { mutableStateOf("") }
+    var speechStateText by remember { mutableStateOf("Idle") } // New text for speech state
     val amplitudes = remember { mutableStateListOf<Float>() }
     val scope = rememberCoroutineScope()
     var hasPermission by remember { mutableStateOf(false) }
@@ -68,6 +68,7 @@ fun SpeechRecognitionBottomSheet(
             override fun onReadyForSpeech(params: Bundle?) {}
             override fun onBeginningOfSpeech() {
                 amplitudes.clear()
+                speechStateText = "Listening..."
             }
 
             override fun onRmsChanged(rmsdB: Float) {
@@ -77,10 +78,13 @@ fun SpeechRecognitionBottomSheet(
             }
 
             override fun onBufferReceived(buffer: ByteArray?) {}
-            override fun onEndOfSpeech() {}
+            override fun onEndOfSpeech() {
+                speechStateText = "Processing..."
+            }
 
             override fun onError(error: Int) {
                 onResult("Error")
+                speechStateText = "Error occurred"
                 scope.launch { sheetState.hide() }
             }
 
@@ -90,6 +94,7 @@ fun SpeechRecognitionBottomSheet(
                 Log.d("AudioRec1", result ?: "No speech detected.")
                 speechText += result ?: ""
                 onResult(speechText)
+                speechStateText = "Idle"
                 scope.launch { sheetState.hide() }
             }
 
@@ -125,7 +130,7 @@ fun SpeechRecognitionBottomSheet(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(24.dp), // Added padding for a more spacious look
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // Language Switcher
@@ -148,13 +153,23 @@ fun SpeechRecognitionBottomSheet(
                 Text("Arabic")
             }
 
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // Speech State Text
+            Text(
+                text = "Speech State: $speechStateText", // New text to indicate the state
+                style = MaterialTheme.typography.bodyMedium.copy(color = Color.Gray),
+                textAlign = TextAlign.Center
+            )
+
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Microphone Button
+            // Microphone Button with improved styling
             Box(
                 modifier = Modifier
-                    .size(100.dp)
-                    .background(if (isListening) Color.Green else Color.Red, shape = CircleShape),
+                    .size(120.dp)
+                    .background(if (isListening) Color.Green else Color.Red, shape = CircleShape)
+                    .padding(8.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
@@ -162,16 +177,18 @@ fun SpeechRecognitionBottomSheet(
                     contentDescription = "Mic",
                     tint = Color.White,
                     modifier = Modifier
-                        .size(50.dp)
+                        .size(60.dp)
                         .clickable {
                             if (isListening) {
                                 speechRecognizer.stopListening()
                                 isListening = false
+                                speechStateText = "Idle"
                                 scope.launch { sheetState.hide() }
                                 onResult(speechText)
                             } else {
                                 isListening = true
                                 speechRecognizer.startListening(recognizerIntent)
+                                speechStateText = "Listening..."
                                 scope.launch { sheetState.show() }
                             }
                         }
@@ -185,12 +202,20 @@ fun SpeechRecognitionBottomSheet(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Display speech text
-            Text(
-                text = speechText,
-                style = MaterialTheme.typography.bodyMedium,
-                textAlign = TextAlign.Center
-            )
+            // Display speech text with a distinct visual styling
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+                    .background(Color(0xFFF0F0F0), shape = MaterialTheme.shapes.medium)
+                    .padding(16.dp)
+            ) {
+                Text(
+                    text = if (speechText.isEmpty()) "No speech detected" else speechText,
+                    style = MaterialTheme.typography.bodyLarge.copy(color = Color.Black),
+                    textAlign = TextAlign.Center
+                )
+            }
         }
     }
 
@@ -228,3 +253,4 @@ fun RealTimeFrequencyVisualizer(
         }
     }
 }
+
