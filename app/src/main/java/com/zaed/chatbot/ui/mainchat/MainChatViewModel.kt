@@ -64,11 +64,21 @@ class MainChatViewModel(
                 action.isFreeTrialEnabled,
                 action.isLifetime
             )
-
+            is MainChatUiAction.OnStopAnimation -> stopAnimation()
             else -> Unit
         }
     }
-
+    private fun stopAnimation() {
+        viewModelScope.launch {
+            _uiState.update { currentState ->
+                val updatedQueries = currentState.queries
+                if (updatedQueries.isNotEmpty()) {
+                    updatedQueries[0] = updatedQueries[0].copy(animateResponse = false)
+                }
+                currentState.copy(queries = updatedQueries)
+            }
+        }
+    }
     private fun upgradeSubscription(freeTrialEnabled: Boolean, lifetime: Boolean) {
 //        TODO("Not yet implemented")
     }

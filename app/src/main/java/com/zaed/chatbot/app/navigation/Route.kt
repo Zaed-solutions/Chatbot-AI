@@ -29,4 +29,7 @@ sealed interface Route {
 
     @Serializable
     data object MainChatRoute : Route
+
+    @Serializable
+    data object HistoryRoute : Route
 }

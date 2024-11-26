@@ -20,6 +20,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.FileOpen
 import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.filled.StopCircle
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -44,6 +45,7 @@ import com.zaed.chatbot.ui.theme.ChatbotTheme
 fun MainChatBottomBar(
     modifier: Modifier = Modifier,
     isLoading : Boolean = false,
+    isAnimating: Boolean = false,
     onSend: () -> Unit = {},
     onUpdateText: (String) -> Unit = {},
     attachments: List<MessageAttachment> = emptyList(),
@@ -52,6 +54,7 @@ fun MainChatBottomBar(
     onAddImage: () -> Unit = {},
     onOpenCamera: () -> Unit = {},
     onAddFile: () -> Unit = {},
+    onStopAnimation: () -> Unit = {},
     prompt: String,
 ) {
     var isExpanded by remember { mutableStateOf(false) }
@@ -194,16 +197,20 @@ fun MainChatBottomBar(
                 }
             }
             IconButton(
-                enabled =!isLoading ,
+                enabled = isAnimating || (!isLoading && prompt.isNotBlank()),
                 onClick = {
-                    onSend()
+                    if(isAnimating){
+                        onStopAnimation()
+                    } else {
+                        onSend()
+                    }
                 },
                 colors = IconButtonDefaults.iconButtonColors(
                     contentColor = MaterialTheme.colorScheme.primary,
                 )
             ) {
                 Icon(
-                    imageVector = Icons.AutoMirrored.Filled.Send,
+                    imageVector = if(isAnimating) Icons.Default.StopCircle else Icons.AutoMirrored.Filled.Send,
                     contentDescription = "Send",
                     modifier = Modifier
                         .padding(start = 8.dp)

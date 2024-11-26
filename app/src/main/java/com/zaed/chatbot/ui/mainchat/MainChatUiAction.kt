@@ -7,6 +7,7 @@ import com.zaed.chatbot.ui.mainchat.components.ChatModel
 sealed interface MainChatUiAction {
     data class OnChangeModel(val model: ChatModel) : MainChatUiAction
     data object OnNewChatClicked : MainChatUiAction
+    data object OnStopAnimation : MainChatUiAction
     data object OnPersonalizationClicked : MainChatUiAction
     data object OnHistoryClicked : MainChatUiAction
     data object OnSettingsClicked : MainChatUiAction

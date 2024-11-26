@@ -9,6 +9,7 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.zaed.chatbot.ui.history.HistoryScreen
 import com.zaed.chatbot.ui.mainchat.MainChatScreen
 import com.zaed.chatbot.ui.mainchat.components.ChatModel
 import com.zaed.chatbot.ui.settings.SettingsScreen
@@ -46,10 +47,13 @@ fun NavigationHost(
             )
         }) {
         composable<Route.MainChatRoute> {
-            MainChatScreen(onNavigateToPersonalizationScreen = {/*TODO*/ },
-                onNavigateToHistoryScreen = {/*TODO*/ },
+            MainChatScreen(
+                onNavigateToPersonalizationScreen = {/*TODO*/ },
+                onNavigateToHistoryScreen = {
+                    navController.navigate(Route.HistoryRoute)
+                },
                 onNavigateToSettingsScreen = { navController.navigate(Route.SettingsRoute) },
-                onNavigateToPrivacyAndTerms = {/*TODO*/ })
+                onNavigateToPrivacyAndTerms = { navController.navigate(Route.PrivacyPolicyRoute) })
         }
         composable<Route.SettingsRoute> {
             SettingsScreen(onNavigateBack = { navController.popBackStack() },
@@ -72,6 +76,15 @@ fun NavigationHost(
                     onDefaultChatModeChanged(it)
                 },
                 onNavigateBack = { navController.popBackStack() }
+            )
+        }
+        composable<Route.HistoryRoute> {
+            HistoryScreen(
+                onBackPressed = { navController.popBackStack() },
+                onNavigateToChat = { chatId ->
+                    //todo: use chat id to load chat in main chat
+                    navController.navigate(Route.MainChatRoute)
+                }
             )
         }
         composable<Route.PromoCodeRoute> {
