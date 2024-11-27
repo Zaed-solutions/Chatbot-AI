@@ -101,6 +101,8 @@ dependencies {
     implementation(libs.lottie.compose)
     //DataStore
     implementation(libs.androidx.datastore.preferences)
+    //Google play billing
+    implementation(libs.billing.ktx)
     //Google AI
     implementation("com.google.ai.client.generativeai:generativeai:0.7.0")
 

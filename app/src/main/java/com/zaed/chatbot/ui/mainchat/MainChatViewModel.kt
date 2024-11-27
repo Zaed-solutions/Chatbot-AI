@@ -52,18 +52,12 @@ class MainChatViewModel(
     fun handleAction(action: MainChatUiAction) {
         when (action) {
             is MainChatUiAction.OnAddAttachment -> addAttachment(action.attachment)
-            MainChatUiAction.OnCancelSubscription -> cancelSubscription()
             is MainChatUiAction.OnChangeModel -> changeChatModel(action.model)
             is MainChatUiAction.OnDeleteAttachment -> deleteAttachment(action.attachmentUri)
             MainChatUiAction.OnNewChatClicked -> clearChat()
-            MainChatUiAction.OnRestoreSubscription -> restoreSubscription()
             MainChatUiAction.OnSendPrompt -> sendPrompt()
             is MainChatUiAction.OnSendSuggestion -> sendSuggestion(action.suggestionPrompt)
             is MainChatUiAction.OnUpdatePrompt -> updatePrompt(action.text)
-            is MainChatUiAction.OnUpgradeSubscription -> upgradeSubscription(
-                action.isFreeTrialEnabled,
-                action.isLifetime
-            )
             is MainChatUiAction.OnStopAnimation -> stopAnimation()
             else -> Unit
         }
@@ -79,10 +73,6 @@ class MainChatViewModel(
             }
         }
     }
-    private fun upgradeSubscription(freeTrialEnabled: Boolean, lifetime: Boolean) {
-//        TODO("Not yet implemented")
-    }
-
     private fun updatePrompt(text: String) {
         viewModelScope.launch {
             _uiState.update {
@@ -137,10 +127,6 @@ class MainChatViewModel(
         }
     }
 
-    private fun restoreSubscription() {
-//        TODO("Not yet implemented")
-    }
-
     private fun clearChat() {
 //        TODO("Not yet implemented")
     }
@@ -151,10 +137,6 @@ class MainChatViewModel(
                 it.copy(selectedModel = model)
             }
         }
-    }
-
-    private fun cancelSubscription() {
-//        TODO("Not yet implemented")
     }
 
     private fun addAttachment(attachment: MessageAttachment) {

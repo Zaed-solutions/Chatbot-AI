@@ -2,6 +2,7 @@ package com.zaed.chatbot.ui.activity
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.android.billingclient.api.ProductDetails
 import com.zaed.chatbot.data.repository.SettingsRepository
 import com.zaed.chatbot.ui.mainchat.components.ChatModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -36,13 +37,15 @@ class MainViewModel(
         when (action) {
             is MainAction.OnSetDefaultChatMode -> setDefaultMode(action.chatModel)
             is MainAction.OnSetFontScale -> setFontScale(action.fontScale)
-            is MainAction.OnSubmitPromoCode -> submitPromoCode(action.promoCode)
+            is MainAction.OnUpdateProductsList -> updateProductsList(action.products)
             else -> Unit
         }
     }
 
-    private fun submitPromoCode(promoCode: String) {
-//        TODO("Not yet implemented")
+    private fun updateProductsList(products: List<ProductDetails>) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(products = products) }
+        }
     }
 
 
@@ -61,13 +64,13 @@ class MainViewModel(
 }
 
 sealed interface MainAction {
-    data class OnSubmitPromoCode(val promoCode: String) : MainAction
     data class OnSetFontScale(val fontScale: Float) : MainAction
     data class OnSetDefaultChatMode(val chatModel: ChatModel) : MainAction
-
+    data class OnUpdateProductsList(val products: List<ProductDetails>) : MainAction
 }
 
 data class MainUiState(
     val fontScale: Float = 1f,
     val chatMode: ChatModel = ChatModel.GPT_4O_MINI,
+    val products: List<ProductDetails> = emptyList()
 )

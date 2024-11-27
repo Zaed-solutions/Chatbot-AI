@@ -9,6 +9,7 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.zaed.chatbot.ui.activity.SubscriptionAction
 import com.zaed.chatbot.ui.history.HistoryScreen
 import com.zaed.chatbot.ui.mainchat.MainChatScreen
 import com.zaed.chatbot.ui.mainchat.components.ChatModel
@@ -26,6 +27,7 @@ fun NavigationHost(
     navController: NavHostController,
     defaultChatMode: ChatModel,
     fontScale: Float,
+    onSubscriptionAction: (SubscriptionAction) -> Unit,
     onFontScaleChanged: (Float) -> Unit,
     onDefaultChatModeChanged: (ChatModel) -> Unit,
 ) {
@@ -52,17 +54,21 @@ fun NavigationHost(
                 onNavigateToHistoryScreen = {
                     navController.navigate(Route.HistoryRoute)
                 },
+                onSubscriptionAction = onSubscriptionAction,
                 onNavigateToSettingsScreen = { navController.navigate(Route.SettingsRoute) },
                 onNavigateToPrivacyAndTerms = { navController.navigate(Route.PrivacyPolicyRoute) })
         }
         composable<Route.SettingsRoute> {
-            SettingsScreen(onNavigateBack = { navController.popBackStack() },
+            SettingsScreen(
+                onNavigateBack = { navController.popBackStack() },
                 onNavigateToFontScale = { navController.navigate(Route.ChangeFontScaleRoute) },
                 onNavigateToChatMode = { navController.navigate(Route.ChangeChatModeRoute) },
                 onNavigateToPromoCode = { navController.navigate(Route.PromoCodeRoute) },
                 onNavigateToFaqSupport = { navController.navigate(Route.FaqSupportRoute) },
                 onNavigateToPrivacyPolicy = { navController.navigate(Route.PrivacyPolicyRoute) },
-                onNavigateToCommunityGuidelines = { navController.navigate(Route.CommunityGuidelinesRoute) })
+                onNavigateToCommunityGuidelines = { navController.navigate(Route.CommunityGuidelinesRoute) },
+                onSubscriptionAction = onSubscriptionAction
+            )
         }
         composable<Route.ChangeFontScaleRoute> {
             FontScaleScreen(fontScale = fontScale,
@@ -75,7 +81,8 @@ fun NavigationHost(
                 onSetDefaultChatMode = {
                     onDefaultChatModeChanged(it)
                 },
-                onNavigateBack = { navController.popBackStack() }
+                onNavigateBack = { navController.popBackStack() },
+                onSubscriptionAction = onSubscriptionAction
             )
         }
         composable<Route.HistoryRoute> {
@@ -88,16 +95,17 @@ fun NavigationHost(
             )
         }
         composable<Route.PromoCodeRoute> {
-            PromoCodeScreen(onNavigateBack = { navController.popBackStack() })
+            PromoCodeScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onSubscriptionAction = onSubscriptionAction
+            )
         }
 
         composable<Route.FaqSupportRoute> {
             FaqSupportScreen(onNavigateBack = { navController.popBackStack() })
-            // FAQ & Support Screen
         }
         composable<Route.PrivacyPolicyRoute> {
             PrivacyPolicyScreen(onNavigateBack = { navController.popBackStack() })
-            // Privacy Policy Screen
         }
         composable<Route.CommunityGuidelinesRoute> {
             CommunityGuidelinesScreen(onNavigateBack = { navController.popBackStack() })

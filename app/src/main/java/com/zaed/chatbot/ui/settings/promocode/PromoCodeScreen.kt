@@ -28,6 +28,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.zaed.chatbot.R
+import com.zaed.chatbot.ui.activity.SubscriptionAction
 import com.zaed.chatbot.ui.settings.SettingsUiAction
 import com.zaed.chatbot.ui.settings.SettingsViewModel
 import com.zaed.chatbot.ui.theme.ChatbotTheme
@@ -37,14 +38,14 @@ import org.koin.androidx.compose.koinViewModel
 @Composable
 fun PromoCodeScreen(
     modifier: Modifier = Modifier,
-    viewModel: SettingsViewModel = koinViewModel(),
+    onSubscriptionAction: (SubscriptionAction) -> Unit = {},
     onNavigateBack: () -> Unit
 ) {
     PromoCodeScreenContent(
         modifier = modifier,
         onNavigateBack = onNavigateBack,
         onSubmitCode = { code ->
-            viewModel.handleAction(SettingsUiAction.OnSubmitPromoCode(code))
+            onSubscriptionAction(SubscriptionAction.OnApplyPromoCode(code))
         })
 
 }
