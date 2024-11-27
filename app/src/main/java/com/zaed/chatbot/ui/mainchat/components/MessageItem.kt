@@ -1,6 +1,5 @@
 package com.zaed.chatbot.ui.mainchat.components
 
-import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -17,9 +16,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.outlined.CatchingPokemon
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -32,7 +28,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -40,6 +35,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.zaed.chatbot.R
 import com.zaed.chatbot.data.model.MessageAttachment
+import com.zaed.chatbot.ui.mainchat.MainChatUiAction
 import com.zaed.chatbot.ui.theme.ChatbotTheme
 import kotlinx.coroutines.delay
 import java.text.BreakIterator
@@ -52,6 +48,7 @@ fun MessageItem(
     isLoading: Boolean = false,
     message: String,
     animating: Boolean = false,
+    action: (MainChatUiAction) -> Unit = {},
     hasAttachments: Boolean,
     attachments: List<MessageAttachment> = emptyList(),
 ) {
@@ -79,7 +76,7 @@ fun MessageItem(
             LoadingBubble(modifier = Modifier.padding(start = 28.dp, top = 8.dp)) // Display animated loading bubble
         }
         else {
-            AnimatedText(text = message, animating = animating)
+            AnimatedText(text = message, animating = animating,action)
             if (hasAttachments && isPrompt) {
                 PreviewedAttachments(
                     modifier = Modifier.padding(top = 8.dp, start = 28.dp),
@@ -106,12 +103,16 @@ private fun MessageItemPreview() {
             attachments = listOf(
                 MessageAttachment(name = "Test-1.txt"),
                 MessageAttachment(name = "Test-2.txt"),
-            )
+            ),
         )
     }
 }
 @Composable
-private fun AnimatedText(text: String,animating: Boolean = true) {
+private fun AnimatedText(
+    text: String,
+    animating: Boolean = true,
+    action: (MainChatUiAction) -> Unit
+) {
     val breakIterator = remember(text) { BreakIterator.getCharacterInstance() }
 
     val typingDelayInMs = 30L
@@ -130,6 +131,7 @@ private fun AnimatedText(text: String,animating: Boolean = true) {
             nextIndex = breakIterator.next()
             delay(typingDelayInMs)
         }
+        action(MainChatUiAction.OnStopAnimation)
     }
     Text(
         modifier = Modifier.padding(top = 8.dp, start = 28.dp),

@@ -126,6 +126,7 @@ fun MainChatScreen(
         lifetimeCost = state.lifetimeCost,
         queries = state.queries,
         selectedModel = state.selectedModel,
+        isAnimating = state.isAnimating,
         attachments = state.attachments
 
     )
@@ -154,6 +155,7 @@ fun MainChatScreenContent(
     monthlyCost: Double = 0.0,
     lifetimeCost: Double = 0.0,
     queries: List<ChatQuery> = emptyList(),
+    isAnimating: Boolean = false,
     selectedModel: ChatModel = ChatModel.GPT_4O_MINI,
     attachments: List<MessageAttachment> = emptyList()
 ) {
@@ -172,7 +174,7 @@ fun MainChatScreenContent(
             MainChatBottomBar(
                 modifier = Modifier.fillMaxWidth(),
                 isLoading =isLoading ,
-                isAnimating = queries.first().animateResponse,
+                isAnimating = isAnimating,
                 onSend = { onAction(MainChatUiAction.OnSendPrompt) },
                 onStopAnimation = { onAction(MainChatUiAction.OnStopAnimation) },
                 onUpdateText = { text -> onAction(MainChatUiAction.OnUpdatePrompt(text)) },
@@ -206,7 +208,8 @@ fun MainChatScreenContent(
 
                     else -> {
                         QueryList(
-                            queries = queries
+                            queries = queries,
+                            action = onAction
                         )
                     }
                 }

@@ -10,6 +10,7 @@ data class MainChatUiState(
     val isPro: Boolean = false,
     val isLoading : Boolean = false,
     val currentPrompt: String = "",
+    val isAnimating: Boolean = false,
     val monthlyCost: Double = 0.0,
     val lifetimeCost: Double = 0.0,
     val selectedModel: ChatModel = ChatModel.GPT_4O_MINI,

@@ -20,6 +20,7 @@ fun PreviewedAttachments(
     isAttachmentRemovable: Boolean = true,
     attachments: List<MessageAttachment>,
     onDeleteAttachment: (Uri) -> Unit = {},
+
 ) {
     LazyRow(
         modifier = modifier,

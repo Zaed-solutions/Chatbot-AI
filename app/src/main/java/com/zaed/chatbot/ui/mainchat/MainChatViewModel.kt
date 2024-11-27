@@ -64,21 +64,30 @@ class MainChatViewModel(
                 action.isFreeTrialEnabled,
                 action.isLifetime
             )
-            is MainChatUiAction.OnStopAnimation -> stopAnimation()
+
+            is MainChatUiAction.OnStopAnimation -> {
+                Log.d("MainChatViewModel", "handleAction: stop animation")
+                stopAnimation()
+            }
+
             else -> Unit
         }
     }
+
     private fun stopAnimation() {
         viewModelScope.launch {
-            _uiState.update { currentState ->
-                val updatedQueries = currentState.queries
-                if (updatedQueries.isNotEmpty()) {
-                    updatedQueries[0] = updatedQueries[0].copy(animateResponse = false)
-                }
-                currentState.copy(queries = updatedQueries)
+            Log.d("MainChatViewModel1", "${uiState.value.queries}")
+            val updatedQueries = _uiState.value.queries
+            if (updatedQueries.isNotEmpty()) {
+                updatedQueries[0] = updatedQueries[0].copy(animateResponse = false)
             }
+            _uiState.update { currentState ->
+                currentState.copy(queries = updatedQueries, isAnimating = false)
+            }
+            Log.d("MainChatViewModel2", "${uiState.value.queries}")
         }
     }
+
     private fun upgradeSubscription(freeTrialEnabled: Boolean, lifetime: Boolean) {
 //        TODO("Not yet implemented")
     }
@@ -118,25 +127,26 @@ class MainChatViewModel(
                     isLoading = true
                 )
             }
-            chatRepository.sendPrompt(query).collect { result ->
-                result.onSuccess { data ->
+
+            chatRepository.sendPrompt(query)
+                .collect {result->
                     _uiState.update { oldState ->
                         oldState.copy(
                             queries = oldState.queries.map {
                                 if (it.isLoading) it.copy(
                                     isLoading = false,
-                                    response = data.response,
+                                    response = result.choices.first().message.content.orEmpty(),
                                     animateResponse = true,
-                                    responseAttachments = data.responseAttachments
+//                                    responseAttachments = data.responseAttachments
                                 ) else it.copy(isLoading = false, animateResponse = false)
-                            }.toMutableList(), isLoading = false
+                            }.toMutableList(), isLoading = false, isAnimating = true
                         )
+
                     }
+
                 }
-            }
         }
     }
-
     private fun restoreSubscription() {
 //        TODO("Not yet implemented")
     }
