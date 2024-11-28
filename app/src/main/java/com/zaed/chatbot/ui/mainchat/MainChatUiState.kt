@@ -18,5 +18,6 @@ data class MainChatUiState(
     val isFreeTrialEnabled: Boolean = false,
     val imageHitTimes : Int = 0,
     val textHitTimes : Int = 0,
-    val totalHitTimes : Int = 0
+    val totalHitTimes : Int = 0,
+    val internetConnected : Boolean = true
 )

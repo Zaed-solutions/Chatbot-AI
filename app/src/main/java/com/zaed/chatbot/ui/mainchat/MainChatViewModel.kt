@@ -38,14 +38,20 @@ class MainChatViewModel(
             }
         }
     }
-    val isConnected = connectivityObserver
-        .isConnected
-        .stateIn(
-            viewModelScope,
-            SharingStarted.WhileSubscribed(5000L),
-            false
-        )
+    private fun checkInternetConnection() {
+        viewModelScope.launch {
+            connectivityObserver.isConnected
+            .collect {result->
+                _uiState.update {
+                    it.copy(internetConnected = result)
+                }
+            }
+        }
+
+    }
     private fun fetchChat(chatId: String) {
+        checkInternetConnection()
+        if(!uiState.value.internetConnected) return
         viewModelScope.launch(Dispatchers.IO) {
             chatRepository.getChatById(chatId).collect { result ->
                 result.onSuccess {
@@ -121,6 +127,8 @@ class MainChatViewModel(
     }
 
     private fun sendSuggestion(prompt: String) {
+        checkInternetConnection()
+        if(!uiState.value.internetConnected) return
         viewModelScope.launch(Dispatchers.IO) {
             _uiState.update {
                 it.copy(currentPrompt = prompt)
@@ -178,6 +186,8 @@ class MainChatViewModel(
     }
 
     private fun sendPrompt() {
+        checkInternetConnection()
+        if(!uiState.value.internetConnected) return
         when (uiState.value.selectedModel) {
             ChatModel.GPT_4O_MINI -> createText(ChatModel.GPT_4O_MINI.modelId)
             ChatModel.GPT_4O -> createText(ChatModel.GPT_4O.modelId)

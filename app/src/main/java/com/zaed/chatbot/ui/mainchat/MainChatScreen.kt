@@ -67,7 +67,6 @@ fun MainChatScreen(
     onNavigateToPrivacyAndTerms: () -> Unit = {},
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    val isConnected by viewModel.isConnected.collectAsStateWithLifecycle()
     LaunchedEffect(true) {
         viewModel.init(chatId)
     }
@@ -103,7 +102,7 @@ fun MainChatScreen(
     var recordingBottomSheetVisible by remember { mutableStateOf(false) }
     var previewImageFullScreen by remember { mutableStateOf(false to "") }
     MainChatScreenContent(
-        isConnected = isConnected,
+        isConnected = state.internetConnected,
         modifier = modifier,
         onAction = { action ->
             when (action) {
@@ -212,11 +211,6 @@ fun MainChatScreenContent(
     var isBottomSheetVisible by remember { mutableStateOf(isPro) }
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val infoDialog = remember { mutableStateOf(false) }
-    if (!isConnected) {
-        infoDialog.value = true
-    } else {
-        infoDialog.value = false
-    }
     Scaffold(
 
         topBar = {
@@ -307,7 +301,7 @@ fun MainChatScreenContent(
             }
         }
     }
-    if (infoDialog.value) {
+    if (!isConnected) {
 
         InfoDialog(
             title = "Whoops!",
