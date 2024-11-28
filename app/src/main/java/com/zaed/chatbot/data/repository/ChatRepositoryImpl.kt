@@ -9,6 +9,7 @@ import com.zaed.chatbot.data.model.ChatHistory
 import com.zaed.chatbot.data.model.ChatQuery
 import com.zaed.chatbot.data.source.local.ChatLocalDataSource
 import com.zaed.chatbot.data.source.remote.OpenAIRemoteDataSource
+import com.zaed.chatbot.ui.util.toMessageAttachments
 import kotlinx.coroutines.flow.Flow
 
 class ChatRepositoryImpl(
@@ -47,7 +48,7 @@ class ChatRepositoryImpl(
                                 lastResponse = data.choices.first().message.content.orEmpty(),
                                 lastResponseTime = chatQuery.createdAtEpochSeconds,
                             )
-                        ).collect{}
+                        ).collect {}
                     }
                 }
             }
@@ -55,30 +56,65 @@ class ChatRepositoryImpl(
         return result
     }
 
-    override suspend fun createImage(prompt: String, n: Int, size: ImageSize): List<ImageURL> =
-        chatRemoteDataSource.createImage(prompt, n, size)
+    override suspend fun createImage(
+        chatQuery: ChatQuery, n: Int, size: ImageSize, isFirstMessage: Boolean
+    ): List<ImageURL> {
+        val Mainresult = chatRemoteDataSource.createImage(chatQuery, n, size)
+        chatLocalDataSource.saveChat(
+            chatQuery.copy(
+                isLoading = false,
+                animateResponse = false,
+                response = Mainresult.first().revisedPrompt?:"",
+                responseAttachments = Mainresult.toMessageAttachments()
+            )
+        ).collect { result ->
+            result.onSuccess {
+                if (isFirstMessage) {
+                    //todo chat title
+                    chatLocalDataSource.createChatHistory(
+                        ChatHistory(
+                            chatId = chatQuery.chatId,
+                            lastResponse = Mainresult.first().revisedPrompt?:"",
+                            lastResponseTime = chatQuery.createdAtEpochSeconds,
+                            title = chatQuery.prompt,
 
-    override suspend fun listModels(): List<Model> = chatRemoteDataSource.listModels()
+                        )
+                    )
+                } else {
+                    chatLocalDataSource.updateChatHistory(
+                        ChatHistory(
+                            chatId = chatQuery.chatId,
+                            lastResponse = Mainresult.first().revisedPrompt?:"",
+                            lastResponseTime = chatQuery.createdAtEpochSeconds,
+                        )
+                    ).collect {}
+                }
+            }
+        }
+    return Mainresult
+}
+
+override suspend fun listModels(): List<Model> = chatRemoteDataSource.listModels()
 
 
-    override suspend fun getChatById(chatId: String): Flow<Result<List<ChatQuery>>> {
-        return chatLocalDataSource.getChatById(chatId)
-    }
+override suspend fun getChatById(chatId: String): Flow<Result<List<ChatQuery>>> {
+    return chatLocalDataSource.getChatById(chatId)
+}
 
-    override suspend fun getChatHistories():  Result<List<ChatHistory>> {
-        return chatLocalDataSource.getChatHistories()
-    }
+override suspend fun getChatHistories(): Result<List<ChatHistory>> {
+    return chatLocalDataSource.getChatHistories()
+}
 
-    override suspend fun deleteChatHistory(chatId: String): Flow<Result<Unit>> {
-        return chatLocalDataSource.deleteChatHistory(chatId)
-    }
+override suspend fun deleteChatHistory(chatId: String): Flow<Result<Unit>> {
+    return chatLocalDataSource.deleteChatHistory(chatId)
+}
 
-    override suspend fun updateChatHistory(chatHistory: ChatHistory): Flow<Result<Unit>> {
-        return chatLocalDataSource.updateChatHistory(chatHistory)
-    }
+override suspend fun updateChatHistory(chatHistory: ChatHistory): Flow<Result<Unit>> {
+    return chatLocalDataSource.updateChatHistory(chatHistory)
+}
 
-    override suspend fun createChatHistory(chatHistory: ChatHistory) {
-        return chatLocalDataSource.createChatHistory(chatHistory)
-    }
+override suspend fun createChatHistory(chatHistory: ChatHistory) {
+    return chatLocalDataSource.createChatHistory(chatHistory)
+}
 
 }

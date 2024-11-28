@@ -96,6 +96,9 @@ fun MessageItem(
                     modifier = Modifier.padding(top = 8.dp, start = 28.dp),
                     contentPadding = PaddingValues(0.dp),
                     attachments = attachments,
+                    onImageClicked = {
+                        action(MainChatUiAction.OnImageClicked(it))
+                    },
                     attachmentSize = 256.dp,
                     isAttachmentRemovable = false
                 )

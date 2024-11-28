@@ -19,6 +19,7 @@ fun PreviewedAttachments(
     attachmentSize: Dp = 64.dp,
     isAttachmentRemovable: Boolean = true,
     attachments: List<MessageAttachment>,
+    onImageClicked: (Uri) -> Unit = {},
     onDeleteAttachment: (Uri) -> Unit = {},
 
 ) {
@@ -34,6 +35,7 @@ fun PreviewedAttachments(
                 size = attachmentSize,
                 isRemovable = isAttachmentRemovable,
                 attachment = attachment,
+                onImageClicked = { onImageClicked(it) },
                 onDeleteAttachment = { onDeleteAttachment(it) }
             )
         }

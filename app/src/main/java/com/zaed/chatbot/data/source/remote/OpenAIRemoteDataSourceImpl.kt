@@ -52,12 +52,12 @@ class OpenAIRemoteDataSourceImpl(
     }
 
     override suspend fun createImage(
-        prompt: String,
+        chatQuery: ChatQuery,
         n: Int,
         size: ImageSize
     ) : List<ImageURL> = openAI.imageURL( // or openAI.imageJSON
         creation = ImageCreation(
-            prompt = prompt,
+            prompt = chatQuery.prompt,
             model = ChatModel.AI_ART_GENERATOR.modelId,
             n = 1,
             size = ImageSize.is1024x1024

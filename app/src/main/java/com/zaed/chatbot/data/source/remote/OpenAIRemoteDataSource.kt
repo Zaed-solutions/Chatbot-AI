@@ -16,7 +16,7 @@ interface OpenAIRemoteDataSource {
 
 
     suspend fun createImage(
-        prompt: String,
+        chatQuery: ChatQuery,
         n: Int = 1,
         size: ImageSize = ImageSize.is1024x1024
     ): List<ImageURL>

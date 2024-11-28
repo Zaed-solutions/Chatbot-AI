@@ -130,6 +130,7 @@ class MainChatViewModel(
     }
 
     private fun createImages() {
+        val isFirstMessage = uiState.value.queries.isEmpty()
         viewModelScope.launch(Dispatchers.IO) {
             viewModelScope.launch(Dispatchers.IO) {
                 val query = ChatQuery(
@@ -151,9 +152,10 @@ class MainChatViewModel(
                     )
                 }
                 val result = chatRepository.createImage(
-                    prompt = query.prompt,
+                    chatQuery = query,
                     n = 1,
-                    size = com.aallam.openai.api.image.ImageSize.is256x256
+                    size = com.aallam.openai.api.image.ImageSize.is256x256,
+                    isFirstMessage = isFirstMessage
                 )
                 _uiState.update { oldState ->
                     oldState.copy(

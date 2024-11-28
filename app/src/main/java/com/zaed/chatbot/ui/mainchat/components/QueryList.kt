@@ -64,7 +64,7 @@ fun QueryItem(
         MessageItem(
             isPrompt = false,
             isLoading = query.isLoading,
-            action = {action(MainChatUiAction.OnStopAnimation)},
+            action = action,
             message = query.response,
             animating = query.animateResponse,
             hasAttachments = query.responseAttachments.isNotEmpty(),

@@ -7,15 +7,19 @@ import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -23,10 +27,17 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.FilterQuality
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import coil.compose.rememberAsyncImagePainter
 import com.zaed.chatbot.data.model.ChatQuery
 import com.zaed.chatbot.data.model.FileType
 import com.zaed.chatbot.data.model.MessageAttachment
@@ -90,6 +101,7 @@ fun MainChatScreen(
         }
 
     var recordingBottomSheetVisible by remember { mutableStateOf(false) }
+    var previewImageFullScreen by remember { mutableStateOf(false to "") }
     MainChatScreenContent(
         isConnected = isConnected,
         modifier = modifier,
@@ -128,6 +140,10 @@ fun MainChatScreen(
                     onNavigateToSettingsScreen()
                 }
 
+                is MainChatUiAction.OnImageClicked -> {
+                    previewImageFullScreen = true to action.imageUri.toString()
+                }
+
                 else -> viewModel.handleAction(action)
             }
         },
@@ -153,6 +169,26 @@ fun MainChatScreen(
             }
         )
     }
+    if (previewImageFullScreen.first) {
+        Dialog(
+            properties = DialogProperties(
+                dismissOnClickOutside = true,
+                dismissOnBackPress = true
+            ),
+            onDismissRequest = { previewImageFullScreen = false to "" }
+        ) {
+            Column (Modifier.fillMaxWidth()){
+                Image(
+                    painter = rememberAsyncImagePainter(
+                        model = previewImageFullScreen.second,
+                        contentScale = ContentScale.Fit,
+                        filterQuality = FilterQuality.High
+                    ),
+                    contentDescription = "Attachment BackGround",
+                )
+            }
+        }
+    }
 
 }
 
@@ -176,9 +212,9 @@ fun MainChatScreenContent(
     var isBottomSheetVisible by remember { mutableStateOf(isPro) }
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val infoDialog = remember { mutableStateOf(false) }
-    if(!isConnected){
+    if (!isConnected) {
         infoDialog.value = true
-    }else{
+    } else {
         infoDialog.value = false
     }
     Scaffold(
