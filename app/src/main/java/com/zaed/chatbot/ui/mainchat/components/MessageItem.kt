@@ -1,6 +1,5 @@
 package com.zaed.chatbot.ui.mainchat.components
 
-import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -17,9 +16,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.outlined.CatchingPokemon
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -32,14 +28,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.halilibo.richtext.commonmark.Markdown
+import com.halilibo.richtext.ui.material3.RichText
 import com.zaed.chatbot.R
 import com.zaed.chatbot.data.model.MessageAttachment
+import com.zaed.chatbot.ui.mainchat.MainChatUiAction
 import com.zaed.chatbot.ui.theme.ChatbotTheme
 import kotlinx.coroutines.delay
 import java.text.BreakIterator
@@ -52,6 +50,7 @@ fun MessageItem(
     isLoading: Boolean = false,
     message: String,
     animating: Boolean = false,
+    action: (MainChatUiAction) -> Unit = {},
     hasAttachments: Boolean,
     attachments: List<MessageAttachment> = emptyList(),
 ) {
@@ -64,7 +63,7 @@ fun MessageItem(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
-                painter = painterResource(id = if(isPrompt) R.drawable.ic_profile else R.drawable.ic_openai),
+                painter = painterResource(id = if (isPrompt) R.drawable.ic_profile else R.drawable.ic_openai),
                 contentDescription = "Message Icon",
                 modifier = Modifier.size(20.dp),
             )
@@ -75,21 +74,34 @@ fun MessageItem(
                 modifier = Modifier.padding(start = 8.dp)
             )
         }
-        if(isLoading){
-            LoadingBubble(modifier = Modifier.padding(start = 28.dp, top = 8.dp)) // Display animated loading bubble
-        }
-        else {
-            AnimatedText(text = message, animating = animating)
+        if (isLoading) {
+            LoadingBubble(
+                modifier = Modifier.padding(
+                    start = 28.dp,
+                    top = 8.dp
+                )
+            ) // Display animated loading bubble
+        } else {
+            AnimatedText(text = message, animating = animating, action)
             if (hasAttachments && isPrompt) {
                 PreviewedAttachments(
                     modifier = Modifier.padding(top = 8.dp, start = 28.dp),
                     contentPadding = PaddingValues(0.dp),
                     attachments = attachments,
-                    attachmentSize = 80.dp,
+                    attachmentSize = 128.dp,
                     isAttachmentRemovable = false
                 )
             } else if (hasAttachments) {
-                //TODO: Display response images
+                PreviewedAttachments(
+                    modifier = Modifier.padding(top = 8.dp, start = 28.dp),
+                    contentPadding = PaddingValues(0.dp),
+                    attachments = attachments,
+                    onImageClicked = {
+                        action(MainChatUiAction.OnImageClicked(it))
+                    },
+                    attachmentSize = 256.dp,
+                    isAttachmentRemovable = false
+                )
             }
         }
     }
@@ -106,12 +118,29 @@ private fun MessageItemPreview() {
             attachments = listOf(
                 MessageAttachment(name = "Test-1.txt"),
                 MessageAttachment(name = "Test-2.txt"),
-            )
+            ),
         )
     }
 }
+
+
 @Composable
-private fun AnimatedText(text: String,animating: Boolean = true) {
+fun MarkdownViewer(markdownText: String) {
+    RichText(
+        modifier = Modifier.padding(16.dp)
+    ) {
+        Markdown(
+            markdownText.trimIndent()
+        )
+    }
+}
+
+@Composable
+private fun AnimatedText(
+    text: String,
+    animating: Boolean = true,
+    action: (MainChatUiAction) -> Unit
+) {
     val breakIterator = remember(text) { BreakIterator.getCharacterInstance() }
 
     val typingDelayInMs = 30L
@@ -130,13 +159,18 @@ private fun AnimatedText(text: String,animating: Boolean = true) {
             nextIndex = breakIterator.next()
             delay(typingDelayInMs)
         }
+        action(MainChatUiAction.OnStopAnimation)
     }
-    Text(
+
+    RichText(
         modifier = Modifier.padding(top = 8.dp, start = 28.dp),
-        text = if(animating) substringText else text,
-        style = MaterialTheme.typography.bodyMedium,
-    )
+    ) {
+        Markdown(
+            content = if (animating) substringText.trimIndent() else text.trimIndent()
+        )
+    }
 }
+
 @Composable
 fun LoadingBubble(modifier: Modifier = Modifier) {
     Row(

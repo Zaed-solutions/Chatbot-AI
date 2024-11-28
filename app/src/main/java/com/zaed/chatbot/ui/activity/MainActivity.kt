@@ -168,6 +168,8 @@ class MainActivity : ComponentActivity(), BillingClientStateListener {
 
             else -> {
                 Log.d(TAG, "Query product details failed: ${productDetailsResult.billingResult.debugMessage}")
+                    }
+                )
             }
         }
     }

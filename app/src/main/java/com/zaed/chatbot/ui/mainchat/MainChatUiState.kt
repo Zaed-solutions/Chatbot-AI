@@ -10,8 +10,14 @@ data class MainChatUiState(
     val isPro: Boolean = false,
     val isLoading : Boolean = false,
     val currentPrompt: String = "",
+    val isAnimating: Boolean = false,
     val monthlyCost: Double = 0.0,
     val lifetimeCost: Double = 0.0,
     val selectedModel: ChatModel = ChatModel.GPT_4O_MINI,
     val attachments: List<MessageAttachment> = emptyList(),
+    val isFreeTrialEnabled: Boolean = false,
+    val imageHitTimes : Int = 0,
+    val textHitTimes : Int = 0,
+    val totalHitTimes : Int = 0,
+    val internetConnected : Boolean = true
 )

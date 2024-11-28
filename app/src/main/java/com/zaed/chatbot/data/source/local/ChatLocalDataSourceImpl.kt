@@ -56,7 +56,7 @@ class ChatLocalDataSourceImpl(private val realm: Realm) : ChatLocalDataSource {
         }
     }
 
-    override suspend fun updateChatHistory(chatHistory: ChatHistory) {
+    override suspend fun updateChatHistory(chatHistory: ChatHistory): Flow<Result<Unit>> = flow {
         try {
             Log.d("ChatLocalDataSource", "updateChatHistory: $chatHistory")
             realm.write {
@@ -72,13 +72,15 @@ class ChatLocalDataSourceImpl(private val realm: Realm) : ChatLocalDataSource {
                     throw IllegalArgumentException("Chat history with id ${chatHistory.chatId} not found.")
                 }
             }
+            emit(Result.success(Unit))
         } catch (e: Exception) {
             Log.e(TAG, "updateChatHistory error: ${e.localizedMessage}", )
             e.printStackTrace()
+            emit(Result.failure(e))
         }
     }
 
-    override suspend fun deleteChatHistory(chatId: String) {
+    override suspend fun deleteChatHistory(chatId: String):Flow<Result<Unit>> = flow {
         try {
             Log.d("ChatLocalDataSource", "deleteChatHistory: chatId = $chatId")
             realm.write {
@@ -90,21 +92,23 @@ class ChatLocalDataSourceImpl(private val realm: Realm) : ChatLocalDataSource {
                     throw IllegalArgumentException("Chat history with id $chatId not found.")
                 }
             }
+            emit(Result.success(Unit))
         } catch (e: Exception) {
             Log.e(TAG, "deleteChatHistory: Error deleting chat history", e)
             e.printStackTrace()
+            emit(Result.failure(e))
         }
     }
 
-    override suspend fun getChatHistories(): Flow<Result<List<ChatHistory>>> = flow {
-        try {
+    override suspend fun getChatHistories(): Result<List<ChatHistory>> {
+        return try {
             val histories = realm.query<ChatHistoryEntity>()
                 .find()
                 .map { it.toChatHistory() }
             Log.d("ChatLocalDataSource", "getChatHistories: $histories")
-            emit(Result.success(histories))
+            Result.success(histories)
         } catch (e: Exception) {
-            emit(Result.failure(e))
+            return Result.failure(e)
         }
     }
 }
