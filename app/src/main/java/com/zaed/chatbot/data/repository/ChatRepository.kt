@@ -11,7 +11,7 @@ import com.zaed.chatbot.data.model.ChatQuery
 import kotlinx.coroutines.flow.Flow
 
 interface ChatRepository {
-    suspend fun sendPrompt(chatQuery: ChatQuery,modelId: ModelId): Flow<ChatCompletion>
+    suspend fun sendPrompt(chatQuery: ChatQuery,modelId: ModelId,isFirstMessage: Boolean): Flow<ChatCompletion>
     suspend fun createImage(prompt: String,n: Int = 1, size: ImageSize = ImageSize.is1024x1024): List<ImageURL>
     suspend fun listModels(): List<Model>
 

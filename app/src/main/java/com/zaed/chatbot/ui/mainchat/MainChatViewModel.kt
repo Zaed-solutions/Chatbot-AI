@@ -172,6 +172,7 @@ class MainChatViewModel(
     }
 
     private fun createText(modelId: ModelId) {
+        val isFirstMessage = uiState.value.queries.isEmpty()
         viewModelScope.launch(Dispatchers.IO) {
             val query = ChatQuery(
                 chatId = uiState.value.chatId,
@@ -190,7 +191,7 @@ class MainChatViewModel(
                 )
             }
 
-            chatRepository.sendPrompt(query, modelId)
+            chatRepository.sendPrompt(query, modelId,isFirstMessage)
                 .collect { result ->
                     _uiState.update { oldState ->
                         oldState.copy(
