@@ -171,4 +171,7 @@ class MainActivity : ComponentActivity(), BillingClientStateListener {
             }
         }
     }
+    private suspend fun queryPurchases() {
+
+    }
 }
