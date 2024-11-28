@@ -71,8 +71,6 @@ class MainChatViewModel(
     fun handleAction(action: MainChatUiAction) {
         when (action) {
             is MainChatUiAction.OnAddAttachment -> addAttachment(action.attachment)
-            is MainChatUiAction.OnChangeModel -> changeChatModel(action.model)
-            MainChatUiAction.OnCancelSubscription -> cancelSubscription()
             is MainChatUiAction.OnChangeModel -> clearChat(action.model)
             is MainChatUiAction.OnDeleteAttachment -> deleteAttachment(action.attachmentUri)
             MainChatUiAction.OnNewChatClicked -> clearChat()
@@ -80,16 +78,6 @@ class MainChatViewModel(
             is MainChatUiAction.OnSendSuggestion -> sendSuggestion(action.suggestionPrompt)
             is MainChatUiAction.OnUpdatePrompt -> updatePrompt(action.text)
             is MainChatUiAction.OnStopAnimation -> stopAnimation()
-            is MainChatUiAction.OnUpgradeSubscription -> upgradeSubscription(
-                action.isFreeTrialEnabled,
-                action.isLifetime
-            )
-
-            is MainChatUiAction.OnStopAnimation -> {
-                Log.d("MainChatViewModel", "handleAction: stop animation")
-                stopAnimation()
-            }
-
             else -> Unit
         }
     }
@@ -115,9 +103,6 @@ class MainChatViewModel(
         }
     }
 
-    private fun upgradeSubscription(freeTrialEnabled: Boolean, lifetime: Boolean) {
-//        TODO("Not yet implemented")
-    }
 
     private fun updatePrompt(text: String) {
         viewModelScope.launch {
@@ -236,16 +221,9 @@ class MainChatViewModel(
         }
     }
 
-    private fun restoreSubscription() {
-//        TODO("Not yet implemented")
-    }
+
 
     private fun clearChat(selectedModel: ChatModel = ChatModel.GPT_4O_MINI){
-    private fun clearChat() {
-//        TODO("Not yet implemented")
-    }
-
-    private fun changeChatModel(model: ChatModel) {
         viewModelScope.launch {
             _uiState.update {
                 MainChatUiState(chatId = UUID.randomUUID().toString(), selectedModel = selectedModel)

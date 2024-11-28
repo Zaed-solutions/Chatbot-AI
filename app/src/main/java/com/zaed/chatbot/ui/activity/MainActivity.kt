@@ -73,6 +73,7 @@ class MainActivity : ComponentActivity(), BillingClientStateListener {
         super.onCreate(savedInstanceState)
         billingClient = BillingClient.newBuilder(this)
             .setListener(purchasesUpdatedListener)
+            .enablePendingPurchases()
             .build()
         establishGoogleBillingConnection()
         enableEdgeToEdge()
@@ -227,8 +228,9 @@ class MainActivity : ComponentActivity(), BillingClientStateListener {
             }
 
             else -> {
-                Log.d(TAG, "Query product details failed: ${productDetailsResult.billingResult.debugMessage}")
-                    }
+                Log.d(
+                    TAG,
+                    "Query product details failed: ${productDetailsResult.billingResult.debugMessage}"
                 )
             }
         }
@@ -345,3 +347,4 @@ class MainActivity : ComponentActivity(), BillingClientStateListener {
         }
     }
 }
+

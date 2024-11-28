@@ -9,8 +9,8 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import com.zaed.chatbot.ui.activity.SubscriptionAction
 import androidx.navigation.toRoute
+import com.zaed.chatbot.ui.activity.SubscriptionAction
 import com.zaed.chatbot.ui.history.HistoryScreen
 import com.zaed.chatbot.ui.mainchat.MainChatScreen
 import com.zaed.chatbot.ui.mainchat.components.ChatModel
@@ -50,8 +50,8 @@ fun NavigationHost(
                 )
             )
         }) {
-        composable<MainChatRoute> {backStackEntry ->
-            val args:MainChatRoute = backStackEntry.toRoute()
+        composable<MainChatRoute> { backStackEntry ->
+            val args: MainChatRoute = backStackEntry.toRoute()
             MainChatScreen(
                 chatId = args.chatId,
                 onNavigateToPersonalizationScreen = {/*TODO*/ },
@@ -60,30 +60,24 @@ fun NavigationHost(
                 },
                 isPro = isPro,
                 onSubscriptionAction = onSubscriptionAction,
-                onNavigateToSettingsScreen = { navController.navigate(Route.SettingsRoute) },
-                onNavigateToPrivacyAndTerms = { navController.navigate(Route.PrivacyPolicyRoute) })
                 onNavigateToSettingsScreen = { navController.navigate(SettingsRoute) },
-                onNavigateToPrivacyAndTerms = { navController.navigate(PrivacyPolicyRoute) })
+                onNavigateToPrivacyAndTerms = { navController.navigate(PrivacyPolicyRoute) },
+            )
         }
-        composable<Route.SettingsRoute> {
+        composable<SettingsRoute> {
             SettingsScreen(
                 onNavigateBack = { navController.popBackStack() },
-                onNavigateToFontScale = { navController.navigate(Route.ChangeFontScaleRoute) },
-                onNavigateToChatMode = { navController.navigate(Route.ChangeChatModeRoute) },
-                onNavigateToPromoCode = { navController.navigate(Route.PromoCodeRoute) },
-                onNavigateToFaqSupport = { navController.navigate(Route.FaqSupportRoute) },
-                onNavigateToPrivacyPolicy = { navController.navigate(Route.PrivacyPolicyRoute) },
-                onNavigateToCommunityGuidelines = { navController.navigate(Route.CommunityGuidelinesRoute) },
-                onSubscriptionAction = onSubscriptionAction
-            )
-        composable<SettingsRoute> {
-            SettingsScreen(onNavigateBack = { navController.popBackStack() },
                 onNavigateToFontScale = { navController.navigate(ChangeFontScaleRoute) },
                 onNavigateToChatMode = { navController.navigate(ChangeChatModeRoute) },
                 onNavigateToPromoCode = { navController.navigate(PromoCodeRoute) },
                 onNavigateToFaqSupport = { navController.navigate(FaqSupportRoute) },
                 onNavigateToPrivacyPolicy = { navController.navigate(PrivacyPolicyRoute) },
-                onNavigateToCommunityGuidelines = { navController.navigate(CommunityGuidelinesRoute) })
+                onNavigateToCommunityGuidelines = {
+                    navController.navigate(
+                        CommunityGuidelinesRoute
+                    )
+                }, onSubscriptionAction = onSubscriptionAction
+            )
         }
         composable<ChangeFontScaleRoute> {
             FontScaleScreen(fontScale = fontScale,
@@ -109,13 +103,11 @@ fun NavigationHost(
                 }
             )
         }
-        composable<Route.PromoCodeRoute> {
+        composable<PromoCodeRoute> {
             PromoCodeScreen(
                 onNavigateBack = { navController.popBackStack() },
                 onSubscriptionAction = onSubscriptionAction
             )
-        composable<PromoCodeRoute> {
-            PromoCodeScreen(onNavigateBack = { navController.popBackStack() })
         }
 
         composable<FaqSupportRoute> {
@@ -128,5 +120,6 @@ fun NavigationHost(
             CommunityGuidelinesScreen(onNavigateBack = { navController.popBackStack() })
         }
     }
+
 }
 
