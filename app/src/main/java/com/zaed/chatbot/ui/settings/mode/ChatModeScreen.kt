@@ -48,7 +48,6 @@ import com.zaed.chatbot.ui.mainchat.components.ProSubscriptionBottomSheet
 import com.zaed.chatbot.ui.settings.SettingsUiAction
 import com.zaed.chatbot.ui.settings.SettingsViewModel
 import org.koin.androidx.compose.koinViewModel
-import org.koin.androidx.compose.navigation.koinNavViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

@@ -9,6 +9,7 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.toRoute
 import com.zaed.chatbot.ui.history.HistoryScreen
 import com.zaed.chatbot.ui.mainchat.MainChatScreen
 import com.zaed.chatbot.ui.mainchat.components.ChatModel
@@ -31,7 +32,7 @@ fun NavigationHost(
 ) {
     NavHost(modifier = modifier,
         navController = navController,
-        startDestination = Route.MainChatRoute,
+        startDestination = MainChatRoute(),
         enterTransition = {
             fadeIn(
                 animationSpec = tween(
@@ -46,30 +47,32 @@ fun NavigationHost(
                 )
             )
         }) {
-        composable<Route.MainChatRoute> {
+        composable<MainChatRoute> {backStackEntry ->
+            val args:MainChatRoute = backStackEntry.toRoute()
             MainChatScreen(
+                chatId = args.chatId,
                 onNavigateToPersonalizationScreen = {/*TODO*/ },
                 onNavigateToHistoryScreen = {
-                    navController.navigate(Route.HistoryRoute)
+                    navController.navigate(HistoryRoute)
                 },
-                onNavigateToSettingsScreen = { navController.navigate(Route.SettingsRoute) },
-                onNavigateToPrivacyAndTerms = { navController.navigate(Route.PrivacyPolicyRoute) })
+                onNavigateToSettingsScreen = { navController.navigate(SettingsRoute) },
+                onNavigateToPrivacyAndTerms = { navController.navigate(PrivacyPolicyRoute) })
         }
-        composable<Route.SettingsRoute> {
+        composable<SettingsRoute> {
             SettingsScreen(onNavigateBack = { navController.popBackStack() },
-                onNavigateToFontScale = { navController.navigate(Route.ChangeFontScaleRoute) },
-                onNavigateToChatMode = { navController.navigate(Route.ChangeChatModeRoute) },
-                onNavigateToPromoCode = { navController.navigate(Route.PromoCodeRoute) },
-                onNavigateToFaqSupport = { navController.navigate(Route.FaqSupportRoute) },
-                onNavigateToPrivacyPolicy = { navController.navigate(Route.PrivacyPolicyRoute) },
-                onNavigateToCommunityGuidelines = { navController.navigate(Route.CommunityGuidelinesRoute) })
+                onNavigateToFontScale = { navController.navigate(ChangeFontScaleRoute) },
+                onNavigateToChatMode = { navController.navigate(ChangeChatModeRoute) },
+                onNavigateToPromoCode = { navController.navigate(PromoCodeRoute) },
+                onNavigateToFaqSupport = { navController.navigate(FaqSupportRoute) },
+                onNavigateToPrivacyPolicy = { navController.navigate(PrivacyPolicyRoute) },
+                onNavigateToCommunityGuidelines = { navController.navigate(CommunityGuidelinesRoute) })
         }
-        composable<Route.ChangeFontScaleRoute> {
+        composable<ChangeFontScaleRoute> {
             FontScaleScreen(fontScale = fontScale,
                 onFontScaleChanged = onFontScaleChanged,
                 onNavigateBack = { navController.popBackStack() })
         }
-        composable<Route.ChangeChatModeRoute> {
+        composable<ChangeChatModeRoute> {
             ChatModeScreen(
                 defaultChatMode = defaultChatMode,
                 onSetDefaultChatMode = {
@@ -78,28 +81,28 @@ fun NavigationHost(
                 onNavigateBack = { navController.popBackStack() }
             )
         }
-        composable<Route.HistoryRoute> {
+        composable<HistoryRoute> {
             HistoryScreen(
                 onBackPressed = { navController.popBackStack() },
                 onNavigateToChat = { chatId ->
                     //todo: use chat id to load chat in main chat
-                    navController.navigate(Route.MainChatRoute)
+                    navController.navigate(MainChatRoute(chatId))
                 }
             )
         }
-        composable<Route.PromoCodeRoute> {
+        composable<PromoCodeRoute> {
             PromoCodeScreen(onNavigateBack = { navController.popBackStack() })
         }
 
-        composable<Route.FaqSupportRoute> {
+        composable<FaqSupportRoute> {
             FaqSupportScreen(onNavigateBack = { navController.popBackStack() })
             // FAQ & Support Screen
         }
-        composable<Route.PrivacyPolicyRoute> {
+        composable<PrivacyPolicyRoute> {
             PrivacyPolicyScreen(onNavigateBack = { navController.popBackStack() })
             // Privacy Policy Screen
         }
-        composable<Route.CommunityGuidelinesRoute> {
+        composable<CommunityGuidelinesRoute> {
             CommunityGuidelinesScreen(onNavigateBack = { navController.popBackStack() })
         }
     }

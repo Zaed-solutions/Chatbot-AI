@@ -22,6 +22,7 @@ class MainChatViewModel(
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(MainChatUiState())
     val uiState = _uiState.asStateFlow()
+
     fun init(chatId: String) {
         if (chatId.isNotBlank()) {
             fetchChat(chatId)
@@ -215,8 +216,12 @@ class MainChatViewModel(
 //        TODO("Not yet implemented")
     }
 
-    private fun clearChat() {
-//        TODO("Not yet implemented")
+    private fun clearChat(){
+        viewModelScope.launch {
+            _uiState.update {
+                MainChatUiState(chatId = UUID.randomUUID().toString())
+            }
+        }
     }
 
     private fun changeChatModel(model: ChatModel) {
