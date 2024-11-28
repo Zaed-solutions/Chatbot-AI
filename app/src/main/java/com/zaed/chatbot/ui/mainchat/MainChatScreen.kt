@@ -14,6 +14,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -30,6 +32,7 @@ import com.zaed.chatbot.data.model.FileType
 import com.zaed.chatbot.data.model.MessageAttachment
 import com.zaed.chatbot.ui.mainchat.components.ChatModel
 import com.zaed.chatbot.ui.mainchat.components.EmptyChat
+import com.zaed.chatbot.ui.mainchat.components.InfoDialog
 import com.zaed.chatbot.ui.mainchat.components.MainChatBottomBar
 import com.zaed.chatbot.ui.mainchat.components.MainChatTopBar
 import com.zaed.chatbot.ui.mainchat.components.ProSubscriptionBottomSheet
@@ -38,10 +41,10 @@ import com.zaed.chatbot.ui.mainchat.components.SpeechRecognitionBottomSheet
 import com.zaed.chatbot.ui.theme.ChatbotTheme
 import com.zaed.chatbot.ui.util.createImageFile
 import com.zaed.chatbot.ui.util.getFileNameFromUri
-import com.zaed.chatbot.ui.util.uriToBitmap
 import org.koin.androidx.compose.koinViewModel
 
 private val TAG = "MainChatScreen"
+
 @Composable
 fun MainChatScreen(
     modifier: Modifier = Modifier,
@@ -53,63 +56,78 @@ fun MainChatScreen(
     onNavigateToPrivacyAndTerms: () -> Unit = {},
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    LaunchedEffect(true){
+    val isConnected by viewModel.isConnected.collectAsStateWithLifecycle()
+    LaunchedEffect(true) {
         viewModel.init(chatId)
     }
     val context = LocalContext.current
-    val imagePicker = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
-        uri?.let {
-            val attachment = MessageAttachment(uri = it, type = FileType.IMAGE)
-            viewModel.handleAction(MainChatUiAction.OnAddAttachment(attachment))
+    val imagePicker =
+        rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+            uri?.let {
+                val attachment = MessageAttachment(uri = it, type = FileType.IMAGE)
+                viewModel.handleAction(MainChatUiAction.OnAddAttachment(attachment))
+            }
         }
-    }
-    val filePicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
-        uri?.let {
-            val fileName = getFileNameFromUri(context, it)
-            val attachment = MessageAttachment(name = fileName?:"", uri = it, type = FileType.ALL, )
-            viewModel.handleAction(MainChatUiAction.OnAddAttachment(attachment))
+    val filePicker =
+        rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+            uri?.let {
+                val fileName = getFileNameFromUri(context, it)
+                val attachment =
+                    MessageAttachment(name = fileName ?: "", uri = it, type = FileType.ALL)
+                viewModel.handleAction(MainChatUiAction.OnAddAttachment(attachment))
+            }
         }
-    }
     var photoUri by remember { mutableStateOf<Uri?>(null) }
-    val cameraCaptureLauncher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { success ->
-        if (success && photoUri != null) {
-            val attachment = MessageAttachment(uri = photoUri?:Uri.EMPTY, type = FileType.IMAGE)
-            viewModel.handleAction(MainChatUiAction.OnAddAttachment(attachment))
-        } else {
-            Log.d(TAG, "Image capture failed.")
+    val cameraCaptureLauncher =
+        rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { success ->
+            if (success && photoUri != null) {
+                val attachment =
+                    MessageAttachment(uri = photoUri ?: Uri.EMPTY, type = FileType.IMAGE)
+                viewModel.handleAction(MainChatUiAction.OnAddAttachment(attachment))
+            } else {
+                Log.d(TAG, "Image capture failed.")
+            }
         }
-    }
 
     var recordingBottomSheetVisible by remember { mutableStateOf(false) }
     MainChatScreenContent(
-        modifier =modifier,
+        isConnected = isConnected,
+        modifier = modifier,
         onAction = { action ->
             when (action) {
                 MainChatUiAction.OnAddFileClicked -> {
                     filePicker.launch("*/*")
                 }
+
                 MainChatUiAction.OnAddImageClicked -> {
                     imagePicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
                 }
+
                 MainChatUiAction.OnHistoryClicked -> {
                     onNavigateToHistoryScreen()
                 }
+
                 MainChatUiAction.OnOpenCameraClicked -> {
                     photoUri = createImageFile(context)
-                    cameraCaptureLauncher.launch(photoUri?:Uri.EMPTY)
+                    cameraCaptureLauncher.launch(photoUri ?: Uri.EMPTY)
                 }
+
                 MainChatUiAction.OnPersonalizationClicked -> {
                     onNavigateToPersonalizationScreen()
                 }
+
                 MainChatUiAction.OnPrivacyTermsClicked -> {
                     onNavigateToPrivacyAndTerms()
                 }
+
                 MainChatUiAction.OnRecordVoiceClicked -> {
                     recordingBottomSheetVisible = true
                 }
+
                 MainChatUiAction.OnSettingsClicked -> {
                     onNavigateToSettingsScreen()
                 }
+
                 else -> viewModel.handleAction(action)
             }
         },
@@ -129,7 +147,7 @@ fun MainChatScreen(
         SpeechRecognitionBottomSheet(
             onDismiss = { recordingBottomSheetVisible = false },
             onResult = { result ->
-                Log.d("AudioRec2",result)
+                Log.d("AudioRec2", result)
                 viewModel.handleAction(MainChatUiAction.OnUpdatePrompt(result))
                 recordingBottomSheetVisible = false
             }
@@ -142,11 +160,12 @@ fun MainChatScreen(
 @Composable
 fun MainChatScreenContent(
     modifier: Modifier = Modifier,
+    isConnected: Boolean = false,
     onAction: (MainChatUiAction) -> Unit = {},
     isChatEmpty: Boolean = true,
     isPro: Boolean = false,
     prompt: String,
-    isLoading : Boolean = false,
+    isLoading: Boolean = false,
     monthlyCost: Double = 0.0,
     lifetimeCost: Double = 0.0,
     queries: List<ChatQuery> = emptyList(),
@@ -156,7 +175,14 @@ fun MainChatScreenContent(
 ) {
     var isBottomSheetVisible by remember { mutableStateOf(isPro) }
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val infoDialog = remember { mutableStateOf(false) }
+    if(!isConnected){
+        infoDialog.value = true
+    }else{
+        infoDialog.value = false
+    }
     Scaffold(
+
         topBar = {
             MainChatTopBar(
                 modifier = Modifier.fillMaxWidth(),
@@ -171,8 +197,8 @@ fun MainChatScreenContent(
         bottomBar = {
             MainChatBottomBar(
                 modifier = Modifier.fillMaxWidth(),
-                isLoading =isLoading ,
-                isAttachmentButtonsVisible = selectedModel!=ChatModel.AI_ART_GENERATOR,
+                isLoading = isLoading,
+                isAttachmentButtonsVisible = selectedModel != ChatModel.AI_ART_GENERATOR,
                 isAnimating = isAnimating,
                 onSend = { onAction(MainChatUiAction.OnSendPrompt) },
                 onStopAnimation = { onAction(MainChatUiAction.OnStopAnimation) },
@@ -199,7 +225,13 @@ fun MainChatScreenContent(
                         EmptyChat(
                             modifier = Modifier.fillMaxSize(),
                             selectedModel = selectedModel,
-                            onUseAIArtGenerator = { onAction(MainChatUiAction.OnChangeModel(ChatModel.AI_ART_GENERATOR)) },
+                            onUseAIArtGenerator = {
+                                onAction(
+                                    MainChatUiAction.OnChangeModel(
+                                        ChatModel.AI_ART_GENERATOR
+                                    )
+                                )
+                            },
                             onSuggestingClicked = { suggestionPrompt ->
                                 onAction(MainChatUiAction.OnSendSuggestion(suggestionPrompt))
                             })
@@ -221,16 +253,35 @@ fun MainChatScreenContent(
                 ) {
                     ProSubscriptionBottomSheet(
                         modifier = Modifier.fillMaxSize(),
-                        onDismiss = {isBottomSheetVisible = false},
+                        onDismiss = { isBottomSheetVisible = false },
                         onRestore = { onAction(MainChatUiAction.OnRestoreSubscription) },
                         monthlyCost = monthlyCost,
                         lifetimeCost = lifetimeCost,
-                        onContinue = { isFreeTrialEnabled, isLifetimeSelected -> onAction(MainChatUiAction.OnUpgradeSubscription(isFreeTrialEnabled, isLifetimeSelected)) },
+                        onContinue = { isFreeTrialEnabled, isLifetimeSelected ->
+                            onAction(
+                                MainChatUiAction.OnUpgradeSubscription(
+                                    isFreeTrialEnabled,
+                                    isLifetimeSelected
+                                )
+                            )
+                        },
                         onPrivacyTermsClicked = { onAction(MainChatUiAction.OnPrivacyTermsClicked) },
                     )
                 }
             }
         }
+    }
+    if (infoDialog.value) {
+
+        InfoDialog(
+            title = "Whoops!",
+            desc = "No Internet Connection found.\n" +
+                    "Check your connection or try again.",
+            onDismiss = {
+                infoDialog.value = false
+            }
+        )
+
     }
 
 }
@@ -240,14 +291,17 @@ fun MainChatScreenContent(
 private fun MainChatScreenContentPreview() {
     ChatbotTheme {
         val queries = listOf(
-            ChatQuery(prompt = "Hello there! tell me a joke", response = "Sure! Here's one for you:\n" +
-                    "Why don't skeletons fight each other?\n" +
-                    "Because they don’t have the guts! \uD83D\uDE04"),
+            ChatQuery(
+                prompt = "Hello there! tell me a joke", response = "Sure! Here's one for you:\n" +
+                        "Why don't skeletons fight each other?\n" +
+                        "Because they don’t have the guts! \uD83D\uDE04"
+            ),
             ChatQuery(
                 prompt = "not funny another one",
                 response = "Alright, let me try again:\n" +
                         "Why did the scarecrow win an award?\n" +
-                        "Because he was outstanding in his field! \uD83C\uDF3E\uD83D\uDE02")
+                        "Because he was outstanding in his field! \uD83C\uDF3E\uD83D\uDE02"
+            )
         )
         MainChatScreenContent(
             isChatEmpty = false,

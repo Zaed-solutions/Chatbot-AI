@@ -9,16 +9,20 @@ import com.zaed.chatbot.data.model.ChatQuery
 import com.zaed.chatbot.data.model.MessageAttachment
 import com.zaed.chatbot.data.repository.ChatRepository
 import com.zaed.chatbot.ui.mainchat.components.ChatModel
+import com.zaed.chatbot.ui.util.ConnectivityObserver
 import com.zaed.chatbot.ui.util.toMessageAttachments
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.util.UUID
 
 class MainChatViewModel(
-    private val chatRepository: ChatRepository
+    private val chatRepository: ChatRepository,
+    private val connectivityObserver: ConnectivityObserver
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(MainChatUiState())
     val uiState = _uiState.asStateFlow()
@@ -34,7 +38,13 @@ class MainChatViewModel(
             }
         }
     }
-
+    val isConnected = connectivityObserver
+        .isConnected
+        .stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(5000L),
+            false
+        )
     private fun fetchChat(chatId: String) {
         viewModelScope.launch(Dispatchers.IO) {
             chatRepository.getChatById(chatId).collect { result ->
