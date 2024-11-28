@@ -54,6 +54,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.zaed.chatbot.R
+import com.zaed.chatbot.ui.activity.SubscriptionAction
 import com.zaed.chatbot.ui.mainchat.components.ProSubscriptionBottomSheet
 import com.zaed.chatbot.ui.theme.ChatbotTheme
 import org.koin.androidx.compose.koinViewModel
@@ -68,6 +69,7 @@ fun SettingsScreen(
     onNavigateToFaqSupport: () -> Unit = {},
     onNavigateToPrivacyPolicy: () -> Unit = {},
     onNavigateToCommunityGuidelines: () -> Unit = {},
+    onSubscriptionAction: (SubscriptionAction) -> Unit = {},
 ) {
     SettingsScreenContent(
         onAction = { action ->
@@ -86,6 +88,17 @@ fun SettingsScreen(
                 SettingsUiAction.OnPrivacyPolicyClicked -> onNavigateToPrivacyPolicy()
                 SettingsUiAction.OnPrivacyTermsClicked -> onNavigateToPrivacyPolicy()
                 SettingsUiAction.OnCommunityGuidelinesClicked -> onNavigateToCommunityGuidelines()
+                is SettingsUiAction.OnUpgradeSubscription -> onSubscriptionAction(
+                    SubscriptionAction.UpgradeSubscription(
+                        action.isFreeTrialEnabled,
+                        action.isLifetime
+                    )
+                )
+                is SettingsUiAction.OnSubmitPromoCode -> onSubscriptionAction(
+                    SubscriptionAction.OnApplyPromoCode(action.promoCode)
+                )
+                SettingsUiAction.OnRestorePurchaseClicked -> onSubscriptionAction(SubscriptionAction.RestoreSubscription)
+                SettingsUiAction.OnCancelSubscription -> onSubscriptionAction(SubscriptionAction.CancelSubscription)
                 else -> viewModel.handleAction(action)
             }
         },
@@ -133,7 +146,7 @@ fun SettingsScreenContent(
                     ProSubscriptionBottomSheet(
                         modifier = Modifier.fillMaxSize(),
                         onDismiss = { isBottomSheetVisible = false },
-                        onRestore = { onAction(SettingsUiAction.OnRestoreSubscription) },
+                        onRestore = { onAction(SettingsUiAction.OnRestorePurchaseClicked) },
                         monthlyCost = monthlyCost,
                         lifetimeCost = lifetimeCost,
                         onContinue = { b: Boolean, b1: Boolean ->

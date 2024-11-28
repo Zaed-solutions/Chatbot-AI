@@ -10,6 +10,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
+import com.zaed.chatbot.ui.activity.SubscriptionAction
 import com.zaed.chatbot.ui.history.HistoryScreen
 import com.zaed.chatbot.ui.mainchat.MainChatScreen
 import com.zaed.chatbot.ui.mainchat.components.ChatModel
@@ -26,7 +27,9 @@ fun NavigationHost(
     modifier: Modifier = Modifier,
     navController: NavHostController,
     defaultChatMode: ChatModel,
+    isPro: Boolean = false,
     fontScale: Float,
+    onSubscriptionAction: (SubscriptionAction) -> Unit,
     onFontScaleChanged: (Float) -> Unit,
     onDefaultChatModeChanged: (ChatModel) -> Unit,
 ) {
@@ -47,25 +50,34 @@ fun NavigationHost(
                 )
             )
         }) {
-        composable<MainChatRoute> {backStackEntry ->
-            val args:MainChatRoute = backStackEntry.toRoute()
+        composable<MainChatRoute> { backStackEntry ->
+            val args: MainChatRoute = backStackEntry.toRoute()
             MainChatScreen(
                 chatId = args.chatId,
                 onNavigateToPersonalizationScreen = {/*TODO*/ },
                 onNavigateToHistoryScreen = {
                     navController.navigate(HistoryRoute)
                 },
+                isPro = isPro,
+                onSubscriptionAction = onSubscriptionAction,
                 onNavigateToSettingsScreen = { navController.navigate(SettingsRoute) },
-                onNavigateToPrivacyAndTerms = { navController.navigate(PrivacyPolicyRoute) })
+                onNavigateToPrivacyAndTerms = { navController.navigate(PrivacyPolicyRoute) },
+            )
         }
         composable<SettingsRoute> {
-            SettingsScreen(onNavigateBack = { navController.popBackStack() },
+            SettingsScreen(
+                onNavigateBack = { navController.popBackStack() },
                 onNavigateToFontScale = { navController.navigate(ChangeFontScaleRoute) },
                 onNavigateToChatMode = { navController.navigate(ChangeChatModeRoute) },
                 onNavigateToPromoCode = { navController.navigate(PromoCodeRoute) },
                 onNavigateToFaqSupport = { navController.navigate(FaqSupportRoute) },
                 onNavigateToPrivacyPolicy = { navController.navigate(PrivacyPolicyRoute) },
-                onNavigateToCommunityGuidelines = { navController.navigate(CommunityGuidelinesRoute) })
+                onNavigateToCommunityGuidelines = {
+                    navController.navigate(
+                        CommunityGuidelinesRoute
+                    )
+                }, onSubscriptionAction = onSubscriptionAction
+            )
         }
         composable<ChangeFontScaleRoute> {
             FontScaleScreen(fontScale = fontScale,
@@ -78,7 +90,8 @@ fun NavigationHost(
                 onSetDefaultChatMode = {
                     onDefaultChatModeChanged(it)
                 },
-                onNavigateBack = { navController.popBackStack() }
+                onNavigateBack = { navController.popBackStack() },
+                onSubscriptionAction = onSubscriptionAction
             )
         }
         composable<HistoryRoute> {
@@ -91,20 +104,22 @@ fun NavigationHost(
             )
         }
         composable<PromoCodeRoute> {
-            PromoCodeScreen(onNavigateBack = { navController.popBackStack() })
+            PromoCodeScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onSubscriptionAction = onSubscriptionAction
+            )
         }
 
         composable<FaqSupportRoute> {
             FaqSupportScreen(onNavigateBack = { navController.popBackStack() })
-            // FAQ & Support Screen
         }
         composable<PrivacyPolicyRoute> {
             PrivacyPolicyScreen(onNavigateBack = { navController.popBackStack() })
-            // Privacy Policy Screen
         }
         composable<CommunityGuidelinesRoute> {
             CommunityGuidelinesScreen(onNavigateBack = { navController.popBackStack() })
         }
     }
+
 }
 

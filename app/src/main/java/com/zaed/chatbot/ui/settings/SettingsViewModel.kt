@@ -17,13 +17,8 @@ class SettingsViewModel(
         when(action){
             is SettingsUiAction.OnSetDefaultChatMode -> setDefaultMode(action.chatModel)
             is SettingsUiAction.OnSetFontScale -> setFontScale(action.fontScale)
-            is SettingsUiAction.OnSubmitPromoCode -> submitPromoCode(action.promoCode)
             else -> Unit
         }
-    }
-
-    private fun submitPromoCode(promoCode: String) {
-//        TODO("Not yet implemented")
     }
 
 

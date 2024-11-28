@@ -16,12 +16,10 @@ sealed interface SettingsUiAction {
     data object OnCommunityGuidelinesClicked : SettingsUiAction
     data class OnSetDefaultChatMode(val chatModel: ChatModel): SettingsUiAction
     data object OnBackPressed: SettingsUiAction
-    data object OnRestoreSubscription: SettingsUiAction
     data class OnUpgradeSubscription(val isFreeTrialEnabled: Boolean, val isLifetime: Boolean):
         SettingsUiAction
     data object OnCancelSubscription: SettingsUiAction
     data object OnPrivacyTermsClicked: SettingsUiAction
     data class OnSetFontScale(val fontScale: Float): SettingsUiAction
     data class OnSubmitPromoCode(val promoCode: String): SettingsUiAction
-
 }

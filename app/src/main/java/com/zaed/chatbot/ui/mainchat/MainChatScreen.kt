@@ -43,6 +43,7 @@ import coil.compose.rememberAsyncImagePainter
 import com.zaed.chatbot.data.model.ChatQuery
 import com.zaed.chatbot.data.model.FileType
 import com.zaed.chatbot.data.model.MessageAttachment
+import com.zaed.chatbot.ui.activity.SubscriptionAction
 import com.zaed.chatbot.ui.mainchat.components.ChatModel
 import com.zaed.chatbot.ui.mainchat.components.EmptyChat
 import com.zaed.chatbot.ui.mainchat.components.InfoDialog
@@ -64,6 +65,8 @@ fun MainChatScreen(
     modifier: Modifier = Modifier,
     viewModel: MainChatViewModel = koinViewModel(),
     chatId: String = "",
+    isPro: Boolean = false,
+    onSubscriptionAction: (SubscriptionAction) -> Unit = {},
     onNavigateToHistoryScreen: () -> Unit = {},
     onNavigateToPersonalizationScreen: () -> Unit = {},
     onNavigateToSettingsScreen: () -> Unit = {},
@@ -141,6 +144,15 @@ fun MainChatScreen(
                 MainChatUiAction.OnSettingsClicked -> {
                     onNavigateToSettingsScreen()
                 }
+                MainChatUiAction.OnCancelSubscription -> {
+                    onSubscriptionAction(SubscriptionAction.CancelSubscription)
+                }
+                MainChatUiAction.OnRestoreSubscription -> {
+                    onSubscriptionAction(SubscriptionAction.RestoreSubscription)
+                }
+                is MainChatUiAction.OnUpgradeSubscription -> {
+                    onSubscriptionAction(SubscriptionAction.UpgradeSubscription(action.isFreeTrialEnabled, action.isLifetime))
+                }
 
                 is MainChatUiAction.OnImageClicked -> {
                     previewImageFullScreen = true to action.imageUri.toString()
@@ -151,10 +163,8 @@ fun MainChatScreen(
         },
         prompt = state.currentPrompt,
         isChatEmpty = state.queries.isEmpty(),
-        isPro = state.isPro,
+        isPro = isPro,
         isLoading = state.isLoading,
-        monthlyCost = state.monthlyCost,
-        lifetimeCost = state.lifetimeCost,
         queries = state.queries,
         selectedModel = state.selectedModel,
         isAnimating = state.isAnimating,

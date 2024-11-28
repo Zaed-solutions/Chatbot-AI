@@ -71,24 +71,13 @@ class MainChatViewModel(
     fun handleAction(action: MainChatUiAction) {
         when (action) {
             is MainChatUiAction.OnAddAttachment -> addAttachment(action.attachment)
-            MainChatUiAction.OnCancelSubscription -> cancelSubscription()
             is MainChatUiAction.OnChangeModel -> clearChat(action.model)
             is MainChatUiAction.OnDeleteAttachment -> deleteAttachment(action.attachmentUri)
             MainChatUiAction.OnNewChatClicked -> clearChat()
-            MainChatUiAction.OnRestoreSubscription -> restoreSubscription()
             MainChatUiAction.OnSendPrompt -> sendPrompt()
             is MainChatUiAction.OnSendSuggestion -> sendSuggestion(action.suggestionPrompt)
             is MainChatUiAction.OnUpdatePrompt -> updatePrompt(action.text)
-            is MainChatUiAction.OnUpgradeSubscription -> upgradeSubscription(
-                action.isFreeTrialEnabled,
-                action.isLifetime
-            )
-
-            is MainChatUiAction.OnStopAnimation -> {
-                Log.d("MainChatViewModel", "handleAction: stop animation")
-                stopAnimation()
-            }
-
+            is MainChatUiAction.OnStopAnimation -> stopAnimation()
             else -> Unit
         }
     }
@@ -114,9 +103,6 @@ class MainChatViewModel(
         }
     }
 
-    private fun upgradeSubscription(freeTrialEnabled: Boolean, lifetime: Boolean) {
-//        TODO("Not yet implemented")
-    }
 
     private fun updatePrompt(text: String) {
         viewModelScope.launch {
@@ -235,9 +221,7 @@ class MainChatViewModel(
         }
     }
 
-    private fun restoreSubscription() {
-//        TODO("Not yet implemented")
-    }
+
 
     private fun clearChat(selectedModel: ChatModel = ChatModel.GPT_4O_MINI){
         viewModelScope.launch {
@@ -245,10 +229,6 @@ class MainChatViewModel(
                 MainChatUiState(chatId = UUID.randomUUID().toString(), selectedModel = selectedModel)
             }
         }
-    }
-
-    private fun cancelSubscription() {
-//        TODO("Not yet implemented")
     }
 
     private fun addAttachment(attachment: MessageAttachment) {
