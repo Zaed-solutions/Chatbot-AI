@@ -27,6 +27,7 @@ fun NavigationHost(
     modifier: Modifier = Modifier,
     navController: NavHostController,
     defaultChatMode: ChatModel,
+    isPro: Boolean = false,
     fontScale: Float,
     onSubscriptionAction: (SubscriptionAction) -> Unit,
     onFontScaleChanged: (Float) -> Unit,
@@ -57,6 +58,7 @@ fun NavigationHost(
                 onNavigateToHistoryScreen = {
                     navController.navigate(HistoryRoute)
                 },
+                isPro = isPro,
                 onSubscriptionAction = onSubscriptionAction,
                 onNavigateToSettingsScreen = { navController.navigate(Route.SettingsRoute) },
                 onNavigateToPrivacyAndTerms = { navController.navigate(Route.PrivacyPolicyRoute) })
