@@ -13,6 +13,7 @@ import androidx.core.net.toUri
 import com.aallam.openai.api.image.ImageURL
 import com.zaed.chatbot.data.model.FileType
 import com.zaed.chatbot.data.model.MessageAttachment
+import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.InputStream
 import java.text.SimpleDateFormat
@@ -46,6 +47,25 @@ fun uriToBitmap(context: Context, uri: Uri): Bitmap? {
     } catch (e: Exception) {
         e.printStackTrace()
         null
+    }
+}
+fun contentUriToByteArray(context: Context, uri: Uri): ByteArray? {
+    return try {
+        // Open an InputStream for the content URI
+        val inputStream = context.contentResolver.openInputStream(uri)
+        inputStream?.use { stream ->
+            // Read the InputStream into a ByteArrayOutputStream
+            val byteArrayOutputStream = ByteArrayOutputStream()
+            val buffer = ByteArray(1024)
+            var bytesRead: Int
+            while (stream.read(buffer).also { bytesRead = it } != -1) {
+                byteArrayOutputStream.write(buffer, 0, bytesRead)
+            }
+            byteArrayOutputStream.toByteArray() // Convert to ByteArray
+        }
+    } catch (e: Exception) {
+        e.printStackTrace()
+        null // Return null in case of an error
     }
 }
 

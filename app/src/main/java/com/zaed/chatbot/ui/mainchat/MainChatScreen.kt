@@ -52,6 +52,7 @@ import com.zaed.chatbot.ui.mainchat.components.ProSubscriptionBottomSheet
 import com.zaed.chatbot.ui.mainchat.components.QueryList
 import com.zaed.chatbot.ui.mainchat.components.SpeechRecognitionBottomSheet
 import com.zaed.chatbot.ui.theme.ChatbotTheme
+import com.zaed.chatbot.ui.util.contentUriToByteArray
 import com.zaed.chatbot.ui.util.createImageFile
 import com.zaed.chatbot.ui.util.getFileNameFromUri
 import org.koin.androidx.compose.koinViewModel
@@ -76,7 +77,7 @@ fun MainChatScreen(
     val imagePicker =
         rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
             uri?.let {
-                val attachment = MessageAttachment(uri = it, type = FileType.IMAGE)
+                val attachment = MessageAttachment(uri = it, type = FileType.IMAGE, byteArray = contentUriToByteArray(context,uri))
                 viewModel.handleAction(MainChatUiAction.OnAddAttachment(attachment))
             }
         }
@@ -94,7 +95,7 @@ fun MainChatScreen(
         rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { success ->
             if (success && photoUri != null) {
                 val attachment =
-                    MessageAttachment(uri = photoUri ?: Uri.EMPTY, type = FileType.IMAGE)
+                    MessageAttachment(uri = photoUri ?: Uri.EMPTY, type = FileType.IMAGE, byteArray = contentUriToByteArray(context,photoUri ?: Uri.EMPTY))
                 viewModel.handleAction(MainChatUiAction.OnAddAttachment(attachment))
             } else {
                 Log.d(TAG, "Image capture failed.")

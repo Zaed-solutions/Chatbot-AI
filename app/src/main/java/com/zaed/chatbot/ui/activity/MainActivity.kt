@@ -19,6 +19,8 @@ import com.zaed.chatbot.app.navigation.NavigationHost
 import com.zaed.chatbot.ui.theme.ChatbotTheme
 import com.zaed.chatbot.ui.theme.LocalFontScale
 import org.koin.android.ext.android.inject
+val     supabaseUrl = "https://xkiiaxlzevzzbamtelzp.supabase.co"
+   val  supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhraWlheGx6ZXZ6emJhbXRlbHpwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzI4MDc5ODcsImV4cCI6MjA0ODM4Mzk4N30.JuJfcbtL-05l4ViSnL2TUprT-4DFGlCRz7q7Uz442Ek"
 
 class MainActivity : ComponentActivity() {
     companion object {

@@ -10,6 +10,7 @@ data class MessageAttachment(
     val name: String = "",
     val type: FileType = FileType.ALL,
     val uri: Uri = Uri.EMPTY,
+    val byteArray: ByteArray? = null,
 
 )
 fun MessageAttachmentEntity.toMessageAttachment() =

@@ -1,6 +1,5 @@
 package com.zaed.chatbot.app.di
 
-import android.system.Os.bind
 import com.aallam.openai.api.http.Timeout
 import com.aallam.openai.client.OpenAI
 import com.zaed.chatbot.data.source.remote.ChatRemoteDataSource

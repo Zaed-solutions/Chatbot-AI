@@ -15,25 +15,30 @@ import com.aallam.openai.api.file.FileId
 import com.aallam.openai.api.file.FileSource
 import com.aallam.openai.api.file.FileUpload
 import com.aallam.openai.api.file.Purpose
-import com.aallam.openai.api.file.fileSource
 import com.aallam.openai.api.image.ImageCreation
 import com.aallam.openai.api.image.ImageEdit
 import com.aallam.openai.api.image.ImageSize
 import com.aallam.openai.api.image.ImageURL
 import com.aallam.openai.api.image.ImageVariation
-import com.aallam.openai.api.message.attachment
 import com.aallam.openai.api.model.Model
 import com.aallam.openai.api.model.ModelId
 import com.aallam.openai.api.moderation.ModerationRequest
 import com.aallam.openai.client.OpenAI
 import com.zaed.chatbot.data.model.ChatQuery
 import com.zaed.chatbot.ui.mainchat.components.ChatModel
+
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.RequestBody
 import okio.Source
+import java.io.File
+import java.util.UUID
 
 class OpenAIRemoteDataSourceImpl(
-    val openAI: OpenAI
+    val openAI: OpenAI,
+//    val supabase: SupabaseClient
 ) : OpenAIRemoteDataSource {
 
     override suspend fun listModels(): List<Model> = openAI.models()
@@ -44,7 +49,7 @@ class OpenAIRemoteDataSourceImpl(
         modelId: ModelId
     ): Flow<Result<ChatCompletion>> = flow {
         try {
-            val message = if(chatQuery.promptAttachments.isEmpty()){
+            val message = if (chatQuery.promptAttachments.isEmpty()) {
                 chatMessage {
                     role = ChatRole.User
                     content {
@@ -52,17 +57,18 @@ class OpenAIRemoteDataSourceImpl(
                     }
                 }
             } else {
+//                val url = chatQuery.promptAttachments.first().byteArray?.let { uploadAttachment(it) }
+//                if(url.isNullOrEmpty()) throw Exception("Attachment url is null or empty")
                 chatMessage {
                     role = ChatRole.User
                     content {
                         text(chatQuery.prompt)
-                        //TODO: Upload image and send url
-//                        image(chatQuery.promptAttachments.first().uri.toString())
+//                        image(url)
                     }
                 }
             }
             val messages = mutableListOf(message)
-            if(isFirst){
+            if (isFirst) {
                 val titleMessage = ChatMessage(
                     role = ChatRole.System,
                     content = "Give a title for the other chat message no words before or after just the title"
@@ -74,7 +80,7 @@ class OpenAIRemoteDataSourceImpl(
                 messages = messages
             )
             emit(Result.success(openAI.chatCompletion(chatCompletionRequest)))
-        }catch (e:Exception){
+        } catch (e: Exception) {
             emit(Result.failure(e))
             e.printStackTrace()
         }
@@ -180,6 +186,24 @@ class OpenAIRemoteDataSourceImpl(
             input = listOf("I want to kill them.")
         )
     )
+//    private suspend fun uploadAttachment(
+//         attachment: ByteArray
+//    ): String {
+//        return try {
+//            val path = "images/${UUID.randomUUID()}"
+//            val bucket = supabase.storage.from("IMAGES")
+//            val key = bucket.upload(path = path, data =  attachment)
+//            print("attachment uploaded: $key")
+//            val url = supabase.storage.from("IMAGES").publicUrl(path)
+//            println("attachment url: $url")
+//                url
+//
+//        } catch (e: Exception) {
+//            e.printStackTrace()
+//            return ""
+//        }
+//
+//    }
 
 
 }
