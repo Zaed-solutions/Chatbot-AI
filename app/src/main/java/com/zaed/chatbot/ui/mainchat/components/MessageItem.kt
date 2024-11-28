@@ -33,7 +33,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImage
+import com.halilibo.richtext.commonmark.Markdown
+import com.halilibo.richtext.ui.material3.RichText
 import com.zaed.chatbot.R
 import com.zaed.chatbot.data.model.MessageAttachment
 import com.zaed.chatbot.ui.mainchat.MainChatUiAction
@@ -62,7 +63,7 @@ fun MessageItem(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
-                painter = painterResource(id = if(isPrompt) R.drawable.ic_profile else R.drawable.ic_openai),
+                painter = painterResource(id = if (isPrompt) R.drawable.ic_profile else R.drawable.ic_openai),
                 contentDescription = "Message Icon",
                 modifier = Modifier.size(20.dp),
             )
@@ -73,11 +74,15 @@ fun MessageItem(
                 modifier = Modifier.padding(start = 8.dp)
             )
         }
-        if(isLoading){
-            LoadingBubble(modifier = Modifier.padding(start = 28.dp, top = 8.dp)) // Display animated loading bubble
-        }
-        else {
-            AnimatedText(text = message, animating = animating,action)
+        if (isLoading) {
+            LoadingBubble(
+                modifier = Modifier.padding(
+                    start = 28.dp,
+                    top = 8.dp
+                )
+            ) // Display animated loading bubble
+        } else {
+            AnimatedText(text = message, animating = animating, action)
             if (hasAttachments && isPrompt) {
                 PreviewedAttachments(
                     modifier = Modifier.padding(top = 8.dp, start = 28.dp),
@@ -87,13 +92,13 @@ fun MessageItem(
                     isAttachmentRemovable = false
                 )
             } else if (hasAttachments) {
-                    PreviewedAttachments(
-                        modifier = Modifier.padding(top = 8.dp, start = 28.dp),
-                        contentPadding = PaddingValues(0.dp),
-                        attachments =attachments ,
-                        attachmentSize = 256.dp,
-                        isAttachmentRemovable = false
-                    )
+                PreviewedAttachments(
+                    modifier = Modifier.padding(top = 8.dp, start = 28.dp),
+                    contentPadding = PaddingValues(0.dp),
+                    attachments = attachments,
+                    attachmentSize = 256.dp,
+                    isAttachmentRemovable = false
+                )
             }
         }
     }
@@ -114,6 +119,19 @@ private fun MessageItemPreview() {
         )
     }
 }
+
+
+@Composable
+fun MarkdownViewer(markdownText: String) {
+    RichText(
+        modifier = Modifier.padding(16.dp)
+    ) {
+        Markdown(
+            markdownText.trimIndent()
+        )
+    }
+}
+
 @Composable
 private fun AnimatedText(
     text: String,
@@ -140,12 +158,16 @@ private fun AnimatedText(
         }
         action(MainChatUiAction.OnStopAnimation)
     }
-    Text(
+
+    RichText(
         modifier = Modifier.padding(top = 8.dp, start = 28.dp),
-        text = if(animating) substringText else text,
-        style = MaterialTheme.typography.bodyMedium,
-    )
+    ) {
+        Markdown(
+            content = if (animating) substringText.trimIndent() else text.trimIndent()
+        )
+    }
 }
+
 @Composable
 fun LoadingBubble(modifier: Modifier = Modifier) {
     Row(

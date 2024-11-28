@@ -9,9 +9,9 @@
     <string name="create_images">Create Images</string>
     <string name="you">You</string>
     <string name="create_image_with_ai_art_generator">Create image with AI Art Generator</string>
-    <string name="gpt_4o_mini_welcome_message">Welcome! I&apos;m your personal AI assistant Chatbot AI. You can select a suggestion from below or tell me what you need. ☺️</string>
-    <string name="gpt_4o_welcome_message">Hello! You&apos;re currently interacting with Chatbot AI powered by GPT-4o. I&apos;m equipped to provide detailed answers to your complex questions. How can I assist you today?</string>
-    <string name="art_generator_welcome_message">Hello there! I&apos;m the AI Art Generator of Chatbot AI. I can answer your questions and create stunning images for you. How can I help you today?</string>
+    <string name="gpt_4o_mini_welcome_message">Welcome! Im your personal AI assistant Chatbot AI. You can select a suggestion from below or tell me what you need. ☺️</string>
+    <string name="gpt_4o_welcome_message">Hello! Youre currently interacting with Chatbot AI powered by GPT-4o. Im equipped to provide detailed answers to your complex questions. How can I assist you today?</string>
+    <string name="art_generator_welcome_message">Hello there! Im the AI Art Generator of Chatbot AI. I can answer your questions and create stunning images for you. How can I help you today?</string>
     <string name="make_money">💸 Make Money</string>
     <string name="generate_fast_income">Generate fast income</string>
     <string name="strategies">Strategies</string>
@@ -62,10 +62,10 @@
     <string name="infinite_image_generations">Infinite Image Generations</string>
     <string name="no_limits">No Limits</string>
     <string name="advanced_ai_capabilities">Advanced AI Capabilities</string>
-    <string name="faster_more_accurate_answers">Faster &amp; more accurate answers</string>
+    <string name="faster_more_accurate_answers">Faster more accurate answers</string>
     <string name="create_stunning_visuals">Create stunning visuals</string>
     <string name="have_unlimited_dialogues">Have unlimited dialogues</string>
-    <string name="upload_file_images_to_ask">Upload files &amp; images to ask</string>
+    <string name="upload_file_images_to_ask">Upload files images to ask</string>
     <string name="enable_free_trial">Enable Free Trial</string>
     <string name="weekly_subscription_cost">£%.2f / Week</string>
     <string name="life_time_subscription_cost">£%.2f / Lifetime</string>
