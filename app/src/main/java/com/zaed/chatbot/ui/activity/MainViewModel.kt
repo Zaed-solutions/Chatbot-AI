@@ -38,7 +38,14 @@ class MainViewModel(
             is MainAction.OnSetDefaultChatMode -> setDefaultMode(action.chatModel)
             is MainAction.OnSetFontScale -> setFontScale(action.fontScale)
             is MainAction.OnUpdateProductsList -> updateProductsList(action.products)
+            is MainAction.OnUpdateSubscribedPlan -> updateSubscribedPlan(action.planId)
             else -> Unit
+        }
+    }
+
+    private fun updateSubscribedPlan(planId: String) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(subscribedPlan = it.products.find { it.productId == planId }) }
         }
     }
 
@@ -67,10 +74,14 @@ sealed interface MainAction {
     data class OnSetFontScale(val fontScale: Float) : MainAction
     data class OnSetDefaultChatMode(val chatModel: ChatModel) : MainAction
     data class OnUpdateProductsList(val products: List<ProductDetails>) : MainAction
+    data class OnUpdateSubscribedPlan(val planId: String): MainAction
 }
 
 data class MainUiState(
     val fontScale: Float = 1f,
     val chatMode: ChatModel = ChatModel.GPT_4O_MINI,
-    val products: List<ProductDetails> = emptyList()
-)
+    val products: List<ProductDetails> = emptyList(),
+    val subscribedPlan: ProductDetails? = null,
+    val isPro: Boolean = false,
+
+    )

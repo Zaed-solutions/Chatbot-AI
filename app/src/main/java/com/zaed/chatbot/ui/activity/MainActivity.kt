@@ -2,6 +2,7 @@ package com.zaed.chatbot.ui.activity
 
 import android.os.Bundle
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -17,12 +18,20 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.rememberNavController
+import com.android.billingclient.api.AcknowledgePurchaseParams
 import com.android.billingclient.api.BillingClient
 import com.android.billingclient.api.BillingClientStateListener
+import com.android.billingclient.api.BillingFlowParams
 import com.android.billingclient.api.BillingResult
+import com.android.billingclient.api.ProductDetails
+import com.android.billingclient.api.Purchase
 import com.android.billingclient.api.PurchasesUpdatedListener
 import com.android.billingclient.api.QueryProductDetailsParams
+import com.android.billingclient.api.QueryPurchaseHistoryParams
+import com.android.billingclient.api.QueryPurchasesParams
 import com.android.billingclient.api.queryProductDetails
+import com.android.billingclient.api.queryPurchaseHistory
+import com.android.billingclient.api.queryPurchasesAsync
 import com.zaed.chatbot.app.navigation.NavigationHost
 import com.zaed.chatbot.ui.theme.ChatbotTheme
 import com.zaed.chatbot.ui.theme.LocalFontScale
@@ -40,6 +49,23 @@ class MainActivity : ComponentActivity(), BillingClientStateListener {
     private val purchasesUpdatedListener =
         PurchasesUpdatedListener { billingResult, purchases ->
             Log.d(TAG, "Purchases Updated Listener: result: $billingResult, purchases: $purchases ")
+            val responseCode = billingResult.responseCode
+            when(responseCode){
+                BillingClient.BillingResponseCode.OK -> {
+                    Log.d(TAG, "Query purchases success")
+                    if(purchases?.isNotEmpty() == true){
+                        purchases.forEach{ purchase ->
+                            Log.d(TAG, "Purchase: $purchase")
+                            lifecycleScope.launch {
+                                acknowledgePurchase(purchase)
+                            }
+                        }
+                    }
+                }
+                else -> {
+                    Log.d(TAG, "Query purchases failed: ${billingResult.debugMessage}")
+                }
+            }
         }
     private lateinit var billingClient: BillingClient
     private val viewModel: MainViewModel by inject<MainViewModel>()
@@ -93,18 +119,51 @@ class MainActivity : ComponentActivity(), BillingClientStateListener {
                                 action.isLifeTime
                             )
                         }
-                    }
+                    },
+                    isPro = state.isPro
                 )
             }
         }
     }
 
     private fun upgradeSubscription(freeTrialEnabled: Boolean, lifeTime: Boolean) {
-        TODO("Not yet implemented")
+        lifecycleScope.launch {
+            try {
+                val productDetails = billingClient.queryProductDetails(
+                    QueryProductDetailsParams.newBuilder()
+                        .setProductList(
+                            listOf(
+                                QueryProductDetailsParams.Product.newBuilder()
+                                    .setProductId(
+                                        if (lifeTime) Constants.LIFETIME_SUBSCRIPTION_ID
+                                        else Constants.WEEKLY_SUBSCRIPTION_ID
+                                    )
+                                    .setProductType(BillingClient.ProductType.SUBS)
+                                    .build()
+                            )
+                        )
+                        .build()
+                ).productDetailsList?.firstOrNull()
+                if (productDetails != null) {
+                    launchBillingFlow(productDetails)
+                } else {
+                    Log.d(TAG, "Product details is null")
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to upgrade subscription: ${e.message}")
+            }
+        }
     }
 
     private fun restoreSubscription() {
-        TODO("Not yet implemented")
+        lifecycleScope.launch {
+            try {
+                queryUserHistory()
+                Log.d(TAG, "Subscription restored successfully")
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to restore subscription: ${e.message}")
+            }
+        }
     }
 
     private fun applyPromoCode(promoCode: String) {
@@ -125,6 +184,7 @@ class MainActivity : ComponentActivity(), BillingClientStateListener {
             Log.d(TAG, "Billing client connected")
             lifecycleScope.launch {
                 querySubscriptions()
+                queryPurchases()
             }
         } else {
             Log.d(TAG, "Billing client connection failed")
@@ -172,6 +232,114 @@ class MainActivity : ComponentActivity(), BillingClientStateListener {
         }
     }
     private suspend fun queryPurchases() {
+        if(billingClient.isReady == false){
+            Log.e(TAG, "Billing client is not ready")
+            return
+        }
+        val queryPurchasesParams = QueryPurchasesParams.newBuilder()
+            .setProductType(BillingClient.ProductType.SUBS)
+            .build()
+        billingClient.queryPurchasesAsync(queryPurchasesParams) { billingResult, productDetailsList ->
+            Log.d(TAG, "Query purchases result: $billingResult, purchases: $productDetailsList")
+            val responseCode = billingResult.responseCode
+            when(responseCode){
+                BillingClient.BillingResponseCode.OK -> {
+                    Log.d(TAG, "Query purchases success")
+                    if(productDetailsList.isNotEmpty()){
+                        productDetailsList.forEach{ purchase ->
+                            Log.d(TAG, "Purchase: $purchase")
+                            lifecycleScope.launch {
+                                acknowledgePurchase(purchase)
+                            }
+                        }
+                    }
+                }
+                else -> {
+                    Log.d(TAG, "Query purchases failed: ${billingResult.debugMessage}")
+                }
+            }
+        }
+    }
+    private suspend fun acknowledgePurchase(purchase: Purchase){
+        if(purchase.purchaseState == Purchase.PurchaseState.PURCHASED){
+            if(!purchase.isAcknowledged){
+                val acknowledgePurchaseParams = AcknowledgePurchaseParams.newBuilder()
+                    .setPurchaseToken(purchase.purchaseToken)
+                withContext(Dispatchers.IO){
+                    billingClient.acknowledgePurchase(acknowledgePurchaseParams.build()) { billingResult ->
+                        val responseCode = billingResult.responseCode
+                        when(responseCode){
+                            BillingClient.BillingResponseCode.OK -> {
+                                //TODO: optional save purchase to your backend
+                                Toast.makeText(this@MainActivity, "You are now subscribed to the app!", Toast.LENGTH_SHORT).show()
+                                viewModel.handleAction(MainAction.OnUpdateSubscribedPlan(purchase.products.first()))
+                                Log.d(TAG, "Purchase acknowledged")
+                            }
+                            else -> {
+                                Log.d(TAG, "Purchase acknowledge failed: ${billingResult.debugMessage}")
+                            }
+                        }
+                    }
+                }
+            } else {
+                //TODO: optional save purchase to your backend
+            }
+        }
+    }
+    private suspend fun queryUserHistory(){
+        withContext(Dispatchers.IO){
+            val params = QueryPurchaseHistoryParams.newBuilder()
+                .setProductType(BillingClient.ProductType.SUBS)
+            val purchaseHistoryResult = billingClient.queryPurchaseHistory(params.build())
+            val responseCode = purchaseHistoryResult.billingResult.responseCode
+            if(responseCode == BillingClient.BillingResponseCode.OK) {
+                val historyList = purchaseHistoryResult.purchaseHistoryRecordList
+                if(historyList?.isNotEmpty() == true){
+                    historyList.forEach { history ->
+                        Log.d(TAG, "Purchase history: $history")
+                        history.products.forEach { product ->
+                            Log.d(TAG, "Product: $product")
+                        }
+                    }
+                } else {
+                    Log.d(TAG, "Purchase history list is empty")
+                }
+            } else {
+                Log.d(TAG, "Query purchase history failed: ${purchaseHistoryResult.billingResult.debugMessage}")
+            }
+        }
+    }
 
+    private suspend fun launchBillingFlow(productDetails: ProductDetails){
+        val productDetailsParamsList = listOf(
+            BillingFlowParams.ProductDetailsParams.newBuilder()
+                .setProductDetails(productDetails)
+                .setOfferToken(productDetails.subscriptionOfferDetails?.get(0)?.offerToken.toString())
+                .build()
+        )
+        val billingFlowParams = BillingFlowParams.newBuilder()
+            .setProductDetailsParamsList(productDetailsParamsList)
+            .build()
+        if(billingClient.isReady == false){
+            Log.e(TAG, "Billing client is not ready")
+        }
+        val billingResult = billingClient.launchBillingFlow(this, billingFlowParams)
+        val responseCode = billingResult.responseCode
+        when(responseCode){
+            BillingClient.BillingResponseCode.OK -> {
+                Log.d(TAG, "Billing flow launched")
+                //TODO: Handle successful purchase
+            }
+            else -> {
+                Log.d(TAG, "Billing flow launch failed: ${billingResult.debugMessage}")
+            }
+        }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        if(billingClient.isReady){
+            billingClient.endConnection()
+        }
     }
 }
