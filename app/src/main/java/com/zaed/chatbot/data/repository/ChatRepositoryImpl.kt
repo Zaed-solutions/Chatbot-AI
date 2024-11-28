@@ -1,5 +1,6 @@
 package com.zaed.chatbot.data.repository
 
+import android.util.Log
 import com.aallam.openai.api.chat.ChatCompletion
 import com.aallam.openai.api.image.ImageSize
 import com.aallam.openai.api.image.ImageURL
@@ -11,6 +12,7 @@ import com.zaed.chatbot.data.source.local.ChatLocalDataSource
 import com.zaed.chatbot.data.source.remote.OpenAIRemoteDataSource
 import com.zaed.chatbot.ui.util.toMessageAttachments
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 
 class ChatRepositoryImpl(
     private val chatRemoteDataSource: OpenAIRemoteDataSource,
@@ -20,14 +22,57 @@ class ChatRepositoryImpl(
         chatQuery: ChatQuery,
         modelId: ModelId,
         isFirstMessage: Boolean
-    ): Flow<ChatCompletion> {
-        val result = chatRemoteDataSource.sendPrompt(chatQuery, modelId)
-        result.collect { data ->
+    ): Flow<ChatCompletion> = flow {
+        chatRemoteDataSource.sendPrompt(chatQuery, isFirst = isFirstMessage, modelId).collect { result ->
+            result.onSuccess { data ->
+                Log.d("ChatRepositoryImpl", "sendPrompt received data: $data")
+                chatLocalDataSource.saveChat(
+                    chatQuery.copy(
+                        isLoading = false,
+                        animateResponse = false,
+                        response = data.choices.first().message.content.toString()
+                    )
+                ).collect { result ->
+                    result.onSuccess {
+                        if (isFirstMessage) {
+                            //todo chat title
+                            chatLocalDataSource.createChatHistory(
+                                ChatHistory(
+                                    chatId = chatQuery.chatId,
+                                    lastResponse = data.choices.first().message.content.toString(),
+                                    lastResponseTime = chatQuery.createdAtEpochSeconds,
+                                    title = chatQuery.prompt
+                                )
+                            )
+                        } else {
+                            chatLocalDataSource.updateChatHistory(
+                                ChatHistory(
+                                    chatId = chatQuery.chatId,
+                                    lastResponse = data.choices.first().message.content.orEmpty(),
+                                    lastResponseTime = chatQuery.createdAtEpochSeconds,
+                                )
+                            ).collect {}
+                        }
+                    }
+                }
+                emit(data)
+            }.onFailure {
+                Log.e("ChatRepositoryImpl", "sendPrompt: $it")
+            }
+        }
+    }
+
+    override suspend fun createImage(
+        chatQuery: ChatQuery, n: Int, size: ImageSize, isFirstMessage: Boolean
+    ): Flow<List<ImageURL>> = flow {
+        val remoteResult = chatRemoteDataSource.createImage(chatQuery, n, size)
+        remoteResult.onSuccess { remoteResult ->
             chatLocalDataSource.saveChat(
                 chatQuery.copy(
                     isLoading = false,
                     animateResponse = false,
-                    response = data.choices.first().message.content.toString()
+                    response = remoteResult.first().revisedPrompt?:"",
+                    responseAttachments = remoteResult.toMessageAttachments()
                 )
             ).collect { result ->
                 result.onSuccess {
@@ -36,62 +81,27 @@ class ChatRepositoryImpl(
                         chatLocalDataSource.createChatHistory(
                             ChatHistory(
                                 chatId = chatQuery.chatId,
-                                lastResponse = data.choices.first().message.content.toString(),
+                                lastResponse = remoteResult.first().revisedPrompt?:"",
                                 lastResponseTime = chatQuery.createdAtEpochSeconds,
-                                title = chatQuery.prompt
-                            )
+                                title = chatQuery.prompt,
+
+                                )
                         )
                     } else {
                         chatLocalDataSource.updateChatHistory(
                             ChatHistory(
                                 chatId = chatQuery.chatId,
-                                lastResponse = data.choices.first().message.content.orEmpty(),
+                                lastResponse = remoteResult.first().revisedPrompt?:"",
                                 lastResponseTime = chatQuery.createdAtEpochSeconds,
                             )
                         ).collect {}
                     }
                 }
             }
+            emit(remoteResult)
+        }.onFailure {
+            Log.e("ChatRepositoryImpl", "createImage: $it")
         }
-        return result
-    }
-
-    override suspend fun createImage(
-        chatQuery: ChatQuery, n: Int, size: ImageSize, isFirstMessage: Boolean
-    ): List<ImageURL> {
-        val Mainresult = chatRemoteDataSource.createImage(chatQuery, n, size)
-        chatLocalDataSource.saveChat(
-            chatQuery.copy(
-                isLoading = false,
-                animateResponse = false,
-                response = Mainresult.first().revisedPrompt?:"",
-                responseAttachments = Mainresult.toMessageAttachments()
-            )
-        ).collect { result ->
-            result.onSuccess {
-                if (isFirstMessage) {
-                    //todo chat title
-                    chatLocalDataSource.createChatHistory(
-                        ChatHistory(
-                            chatId = chatQuery.chatId,
-                            lastResponse = Mainresult.first().revisedPrompt?:"",
-                            lastResponseTime = chatQuery.createdAtEpochSeconds,
-                            title = chatQuery.prompt,
-
-                        )
-                    )
-                } else {
-                    chatLocalDataSource.updateChatHistory(
-                        ChatHistory(
-                            chatId = chatQuery.chatId,
-                            lastResponse = Mainresult.first().revisedPrompt?:"",
-                            lastResponseTime = chatQuery.createdAtEpochSeconds,
-                        )
-                    ).collect {}
-                }
-            }
-        }
-    return Mainresult
 }
 
 override suspend fun listModels(): List<Model> = chatRemoteDataSource.listModels()

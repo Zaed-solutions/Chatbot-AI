@@ -12,7 +12,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -212,7 +214,6 @@ fun MainChatScreenContent(
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val infoDialog = remember { mutableStateOf(false) }
     Scaffold(
-
         topBar = {
             MainChatTopBar(
                 modifier = Modifier.fillMaxWidth(),
@@ -228,7 +229,7 @@ fun MainChatScreenContent(
             MainChatBottomBar(
                 modifier = Modifier.fillMaxWidth(),
                 isLoading = isLoading,
-                isAttachmentButtonsVisible = selectedModel != ChatModel.AI_ART_GENERATOR,
+                isAttachmentButtonsVisible = selectedModel != ChatModel.AI_ART_GENERATOR && !isAnimating && attachments.isEmpty(),
                 isAnimating = isAnimating,
                 onSend = { onAction(MainChatUiAction.OnSendPrompt) },
                 onStopAnimation = { onAction(MainChatUiAction.OnStopAnimation) },
@@ -242,7 +243,7 @@ fun MainChatScreenContent(
                 onAddFile = { onAction(MainChatUiAction.OnAddFileClicked) }
             )
         },
-        modifier = modifier,
+        modifier = modifier.systemBarsPadding(),
     ) { innerPadding ->
         Box(
             modifier = Modifier.padding(innerPadding),

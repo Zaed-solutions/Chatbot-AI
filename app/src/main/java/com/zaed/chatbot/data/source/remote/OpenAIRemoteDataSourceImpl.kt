@@ -10,15 +10,18 @@ import com.aallam.openai.api.chat.ChatCompletion
 import com.aallam.openai.api.chat.ChatCompletionRequest
 import com.aallam.openai.api.chat.ChatMessage
 import com.aallam.openai.api.chat.ChatRole
+import com.aallam.openai.api.chat.chatMessage
 import com.aallam.openai.api.file.FileId
 import com.aallam.openai.api.file.FileSource
 import com.aallam.openai.api.file.FileUpload
 import com.aallam.openai.api.file.Purpose
+import com.aallam.openai.api.file.fileSource
 import com.aallam.openai.api.image.ImageCreation
 import com.aallam.openai.api.image.ImageEdit
 import com.aallam.openai.api.image.ImageSize
 import com.aallam.openai.api.image.ImageURL
 import com.aallam.openai.api.image.ImageVariation
+import com.aallam.openai.api.message.attachment
 import com.aallam.openai.api.model.Model
 import com.aallam.openai.api.model.ModelId
 import com.aallam.openai.api.moderation.ModerationRequest
@@ -37,17 +40,38 @@ class OpenAIRemoteDataSourceImpl(
     suspend fun retrieveModel(modelId: String): Model = openAI.model(ModelId(modelId))
     override suspend fun sendPrompt(
         chatQuery: ChatQuery,
+        isFirst: Boolean,
         modelId: ModelId
     ): Flow<Result<ChatCompletion>> = flow {
         try {
+            val message = if(chatQuery.promptAttachments.isEmpty()){
+                chatMessage {
+                    role = ChatRole.User
+                    content {
+                        text(chatQuery.prompt)
+                    }
+                }
+            } else {
+                chatMessage {
+                    role = ChatRole.User
+                    content {
+                        text(chatQuery.prompt)
+                        //TODO: Upload image and send url
+//                        image(chatQuery.promptAttachments.first().uri.toString())
+                    }
+                }
+            }
+            val messages = mutableListOf(message)
+            if(isFirst){
+                val titleMessage = ChatMessage(
+                    role = ChatRole.System,
+                    content = "Give a title for the other chat message no words before or after just the title"
+                )
+                messages.add(titleMessage)
+            }
             val chatCompletionRequest = ChatCompletionRequest(
                 model = modelId,
-                messages = listOf(
-                    ChatMessage(
-                        role = ChatRole.User,
-                        content = chatQuery.prompt
-                    )
-                )
+                messages = messages
             )
             emit(Result.success(openAI.chatCompletion(chatCompletionRequest)))
         }catch (e:Exception){

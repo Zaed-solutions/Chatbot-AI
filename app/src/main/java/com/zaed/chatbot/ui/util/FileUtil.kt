@@ -65,13 +65,13 @@ fun createTempFileFromUri(uri: Uri, fileName: String, context: Context): File? {
     }
 }
 
-fun getMimeType(context: Context, uri: Uri): String? {
+fun getMimeType(context: Context, uri: Uri): String {
     return if (uri.scheme == ContentResolver.SCHEME_CONTENT) {
         context.contentResolver.getType(uri)
     } else {
         val fileExtension = MimeTypeMap.getFileExtensionFromUrl(uri.toString())
         MimeTypeMap.getSingleton().getMimeTypeFromExtension(fileExtension.lowercase())
-    }
+    }?: "application/octet-stream"
 }
 
 fun List<ImageURL>.toMessageAttachments(): List<MessageAttachment> {

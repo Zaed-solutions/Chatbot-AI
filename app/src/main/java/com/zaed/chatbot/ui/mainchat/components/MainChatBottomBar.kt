@@ -112,28 +112,27 @@ fun MainChatBottomBar(
                                         .padding(6.dp)
                                 )
                             }
-                            IconButton(
-                                //Todo: add file picker
-                                enabled = false,
-                                onClick = {
-                                    onAddFile()
-                                    isExpanded = false
-                                },
-
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.FileOpen,
-                                    contentDescription = "Upload File",
-                                    tint = MaterialTheme.colorScheme.primary,
-                                    modifier = modifier
-                                        .size(32.dp)
-                                        .background(
-                                            color = MaterialTheme.colorScheme.surfaceContainer,
-                                            shape = CircleShape
-                                        )
-                                        .padding(6.dp)
-                                )
-                            }
+//                            IconButton(
+//                                enabled = false,
+//                                onClick = {
+//                                    onAddFile()
+//                                    isExpanded = false
+//                                },
+//
+//                            ) {
+//                                Icon(
+//                                    imageVector = Icons.Default.FileOpen,
+//                                    contentDescription = "Upload File",
+//                                    tint = MaterialTheme.colorScheme.primary,
+//                                    modifier = modifier
+//                                        .size(32.dp)
+//                                        .background(
+//                                            color = MaterialTheme.colorScheme.surfaceContainer,
+//                                            shape = CircleShape
+//                                        )
+//                                        .padding(6.dp)
+//                                )
+//                            }
                         }
                     }
 
@@ -167,8 +166,8 @@ fun MainChatBottomBar(
                     Column(
                         modifier = Modifier
                             .weight(1f)
-                            .padding(8.dp),
-                        verticalArrangement = Arrangement.Top
+                            .padding(vertical = 8.dp, horizontal = 16.dp),
+                        verticalArrangement = Arrangement.SpaceBetween,
                     ) {
                         BasicTextField(
                             value = prompt,
@@ -180,7 +179,9 @@ fun MainChatBottomBar(
                                 .fillMaxWidth()
                                 .heightIn(min = 32.dp)
                         )
-                        PreviewedAttachments(attachments = attachments, onDeleteAttachment = onDeleteAttachment)
+                        AnimatedVisibility(visible = attachments.isNotEmpty()) {
+                            PreviewedAttachments(modifier = Modifier.padding(top = 8.dp),attachments = attachments, onDeleteAttachment = onDeleteAttachment)
+                        }
                     }
                     AnimatedVisibility(visible = prompt.isBlank()) {
                         IconButton(
@@ -199,7 +200,7 @@ fun MainChatBottomBar(
                 }
             }
             IconButton(
-                enabled = isAnimating || (!isLoading && prompt.isNotBlank()),
+                enabled = isAnimating || (!isLoading && (prompt.isNotBlank()|| attachments.isNotEmpty())),
                 onClick = {
                     if(isAnimating){
                         onStopAnimation()

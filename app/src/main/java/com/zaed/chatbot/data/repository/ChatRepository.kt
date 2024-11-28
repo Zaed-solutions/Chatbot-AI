@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.Flow
 
 interface ChatRepository {
     suspend fun sendPrompt(chatQuery: ChatQuery,modelId: ModelId,isFirstMessage: Boolean): Flow<ChatCompletion>
-    suspend fun createImage(chatQuery:ChatQuery,n: Int = 1, size: ImageSize , isFirstMessage: Boolean): List<ImageURL>
+    suspend fun createImage(chatQuery:ChatQuery,n: Int = 1, size: ImageSize , isFirstMessage: Boolean): Flow<List<ImageURL>>
     suspend fun listModels(): List<Model>
 
     suspend fun getChatById(chatId: String): Flow<Result<List<ChatQuery>>>

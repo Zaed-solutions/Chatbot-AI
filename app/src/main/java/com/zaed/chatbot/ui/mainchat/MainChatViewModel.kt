@@ -72,7 +72,7 @@ class MainChatViewModel(
         when (action) {
             is MainChatUiAction.OnAddAttachment -> addAttachment(action.attachment)
             MainChatUiAction.OnCancelSubscription -> cancelSubscription()
-            is MainChatUiAction.OnChangeModel -> changeChatModel(action.model)
+            is MainChatUiAction.OnChangeModel -> clearChat(action.model)
             is MainChatUiAction.OnDeleteAttachment -> deleteAttachment(action.attachmentUri)
             MainChatUiAction.OnNewChatClicked -> clearChat()
             MainChatUiAction.OnRestoreSubscription -> restoreSubscription()
@@ -159,29 +159,26 @@ class MainChatViewModel(
                         totalHitTimes = oldState.totalHitTimes.plus(1)
                     )
                 }
-                val result = chatRepository.createImage(
+                chatRepository.createImage(
                     chatQuery = query,
                     n = 1,
                     size = com.aallam.openai.api.image.ImageSize.is256x256,
                     isFirstMessage = isFirstMessage
-                )
-                _uiState.update { oldState ->
-                    oldState.copy(
-                        queries = oldState.queries.map {
-                            if (it.isLoading) it.copy(
-                                isLoading = false,
-                                response = "",
-                                animateResponse = false,
-                                responseAttachments = result.toMessageAttachments()
-                            ) else it.copy(isLoading = false, animateResponse = false)
-                        }.toMutableList(), isLoading = false, isAnimating = true
-                    )
-
+                ).collect{ result ->
+                    _uiState.update { oldState ->
+                        oldState.copy(
+                            queries = oldState.queries.map {
+                                if (it.isLoading) it.copy(
+                                    isLoading = false,
+                                    response = "",
+                                    animateResponse = false,
+                                    responseAttachments = result.toMessageAttachments()
+                                ) else it.copy(isLoading = false, animateResponse = false)
+                            }.toMutableList(), isLoading = false, isAnimating = true
+                        )
+                    }
                 }
-
             }
-
-
         }
     }
 
@@ -242,20 +239,11 @@ class MainChatViewModel(
 //        TODO("Not yet implemented")
     }
 
-    private fun clearChat(){
+    private fun clearChat(selectedModel: ChatModel = ChatModel.GPT_4O_MINI){
         viewModelScope.launch {
             _uiState.update {
-                MainChatUiState(chatId = UUID.randomUUID().toString())
+                MainChatUiState(chatId = UUID.randomUUID().toString(), selectedModel = selectedModel)
             }
-        }
-    }
-
-    private fun changeChatModel(model: ChatModel) {
-        viewModelScope.launch {
-            _uiState.update {
-                it.copy(selectedModel = model)
-            }
-            Log.d("MainChatViewModel", "changeChatModel: $model")
         }
     }
 

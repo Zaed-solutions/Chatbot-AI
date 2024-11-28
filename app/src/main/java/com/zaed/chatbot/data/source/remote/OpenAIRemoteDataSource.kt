@@ -12,7 +12,10 @@ import com.zaed.chatbot.data.model.ChatQuery
 import kotlinx.coroutines.flow.Flow
 
 interface OpenAIRemoteDataSource {
-    suspend fun sendPrompt(chatQuery: ChatQuery,modelId: ModelId): Flow<Result<ChatCompletion>>
+    suspend fun sendPrompt(
+        chatQuery: ChatQuery,
+        isFirst: Boolean = false,
+        modelId: ModelId): Flow<Result<ChatCompletion>>
 
 
     suspend fun createImage(
