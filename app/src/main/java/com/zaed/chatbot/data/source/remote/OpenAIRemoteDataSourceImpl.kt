@@ -19,12 +19,14 @@ import com.aallam.openai.api.file.Purpose
 import com.aallam.openai.api.image.ImageCreation
 import com.aallam.openai.api.image.ImageEdit
 import com.aallam.openai.api.image.ImageSize
+import com.aallam.openai.api.image.ImageURL
 import com.aallam.openai.api.image.ImageVariation
 import com.aallam.openai.api.model.Model
 import com.aallam.openai.api.model.ModelId
 import com.aallam.openai.api.moderation.ModerationRequest
 import com.aallam.openai.client.OpenAI
 import com.zaed.chatbot.data.model.ChatQuery
+import com.zaed.chatbot.ui.mainchat.components.ChatModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import okio.Source
@@ -33,11 +35,11 @@ class OpenAIRemoteDataSourceImpl(
     val openAI: OpenAI
 ) : OpenAIRemoteDataSource {
 
-    suspend fun listModels(): List<Model> = openAI.models()
+    override suspend fun listModels(): List<Model> = openAI.models()
     suspend fun retrieveModel(modelId: String): Model = openAI.model(ModelId(modelId))
-    override suspend fun sendPrompt(chatQuery: ChatQuery): Flow<ChatCompletion> = flow {
+    override suspend fun sendPrompt(chatQuery: ChatQuery,modelId: ModelId): Flow<ChatCompletion> = flow {
         val chatCompletionRequest = ChatCompletionRequest(
-            model = ModelId("gpt-4o-mini"),
+            model = modelId,
             messages = listOf(
                 ChatMessage(
                     role = ChatRole.User,
@@ -47,20 +49,17 @@ class OpenAIRemoteDataSourceImpl(
         )
 
         emit(openAI.chatCompletion(chatCompletionRequest))
-
-
     }
 
-    suspend fun createImage(
+    override suspend fun createImage(
         prompt: String,
-        n: Int = 1,
-        size: ImageSize = ImageSize.is1024x1024
-    ) = openAI.imageURL( // or openAI.imageJSON
-        //Todo replace model and chat message with the params
+        n: Int,
+        size: ImageSize
+    ) : List<ImageURL> = openAI.imageURL( // or openAI.imageJSON
         creation = ImageCreation(
-            prompt = "A cute baby sea otter",
-            model = ModelId("dall-e-3"),
-            n = 2,
+            prompt = prompt,
+            model = ChatModel.AI_ART_GENERATOR.modelId,
+            n = 1,
             size = ImageSize.is1024x1024
         )
     )
@@ -98,7 +97,6 @@ class OpenAIRemoteDataSourceImpl(
     )
 
     suspend fun createSpeech(): ByteArray = openAI.speech(
-        //Todo replace model and chat message with the params
         request = SpeechRequest(
             model = ModelId("tts-1"),
             input = "The quick brown fox jumped over the lazy dog.",

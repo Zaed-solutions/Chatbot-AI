@@ -1,9 +1,6 @@
 package com.zaed.chatbot.ui.mainchat
 
-import android.app.Activity
-import android.content.Intent
 import android.net.Uri
-import android.speech.RecognizerIntent
 import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
@@ -41,10 +38,8 @@ import com.zaed.chatbot.ui.mainchat.components.SpeechRecognitionBottomSheet
 import com.zaed.chatbot.ui.theme.ChatbotTheme
 import com.zaed.chatbot.ui.util.createImageFile
 import com.zaed.chatbot.ui.util.getFileNameFromUri
-import com.zaed.chatbot.ui.util.getMimeType
 import com.zaed.chatbot.ui.util.uriToBitmap
 import org.koin.androidx.compose.koinViewModel
-import java.util.Locale
 
 private val TAG = "MainChatScreen"
 @Composable
@@ -64,7 +59,7 @@ fun MainChatScreen(
     val context = LocalContext.current
     val imagePicker = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
         uri?.let {
-            val attachment = MessageAttachment(uri = it, type = FileType.IMAGE, bitmap = uriToBitmap(context,uri))
+            val attachment = MessageAttachment(uri = it, type = FileType.IMAGE)
             viewModel.handleAction(MainChatUiAction.OnAddAttachment(attachment))
         }
     }
@@ -78,7 +73,7 @@ fun MainChatScreen(
     var photoUri by remember { mutableStateOf<Uri?>(null) }
     val cameraCaptureLauncher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { success ->
         if (success && photoUri != null) {
-            val attachment = MessageAttachment(uri = photoUri?:Uri.EMPTY, type = FileType.IMAGE, bitmap = uriToBitmap(context,photoUri?:Uri.EMPTY))
+            val attachment = MessageAttachment(uri = photoUri?:Uri.EMPTY, type = FileType.IMAGE)
             viewModel.handleAction(MainChatUiAction.OnAddAttachment(attachment))
         } else {
             Log.d(TAG, "Image capture failed.")
@@ -167,6 +162,9 @@ fun MainChatScreenContent(
                 modifier = Modifier.fillMaxWidth(),
                 selectedModel = selectedModel,
                 onAction = onAction,
+                onChangeModel = {
+                    onAction(MainChatUiAction.OnChangeModel(it))
+                },
                 onProClicked = { isBottomSheetVisible = true }
             )
         },
@@ -174,6 +172,7 @@ fun MainChatScreenContent(
             MainChatBottomBar(
                 modifier = Modifier.fillMaxWidth(),
                 isLoading =isLoading ,
+                isAttachmentButtonsVisible = selectedModel!=ChatModel.AI_ART_GENERATOR,
                 isAnimating = isAnimating,
                 onSend = { onAction(MainChatUiAction.OnSendPrompt) },
                 onStopAnimation = { onAction(MainChatUiAction.OnStopAnimation) },

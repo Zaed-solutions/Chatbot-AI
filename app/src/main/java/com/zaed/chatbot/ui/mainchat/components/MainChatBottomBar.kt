@@ -45,6 +45,7 @@ import com.zaed.chatbot.ui.theme.ChatbotTheme
 fun MainChatBottomBar(
     modifier: Modifier = Modifier,
     isLoading : Boolean = false,
+    isAttachmentButtonsVisible: Boolean = true,
     isAnimating: Boolean = false,
     onSend: () -> Unit = {},
     onUpdateText: (String) -> Unit = {},
@@ -68,9 +69,10 @@ fun MainChatBottomBar(
                 .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 16.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            AnimatedContent(targetState = isExpanded, label = "Attachment buttons") { state ->
+            AnimatedContent(targetState = isExpanded to !isAttachmentButtonsVisible, label = "Attachment buttons") { state ->
                 when {
-                    state -> {
+                    state.second->{}
+                    state.first -> {
                         Row {
                             IconButton(
                                 onClick = {

@@ -4,10 +4,12 @@ import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.aallam.openai.api.model.ModelId
 import com.zaed.chatbot.data.model.ChatQuery
 import com.zaed.chatbot.data.model.MessageAttachment
 import com.zaed.chatbot.data.repository.ChatRepository
 import com.zaed.chatbot.ui.mainchat.components.ChatModel
+import com.zaed.chatbot.ui.util.toMessageAttachments
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -74,6 +76,13 @@ class MainChatViewModel(
         }
     }
 
+    private fun listModels() {
+        viewModelScope.launch(Dispatchers.IO) {
+            val models = chatRepository.listModels()
+            Log.d("MainChatViewModel", "listModels: $models")
+        }
+    }
+
     private fun stopAnimation() {
         viewModelScope.launch {
             Log.d("MainChatViewModel1", "${uiState.value.queries}")
@@ -109,7 +118,60 @@ class MainChatViewModel(
         }
     }
 
+    private fun createImages() {
+        viewModelScope.launch(Dispatchers.IO) {
+            viewModelScope.launch(Dispatchers.IO) {
+                val query = ChatQuery(
+                    chatId = uiState.value.chatId,
+                    prompt = uiState.value.currentPrompt,
+                    response = "",
+                    promptAttachments = uiState.value.attachments,
+                    isLoading = true,
+                    animateResponse = true
+                )
+                _uiState.update { oldState ->
+                    oldState.queries.add(0, query)
+                    oldState.copy(
+                        currentPrompt = "",
+                        attachments = mutableListOf(),
+                        isLoading = true
+                    )
+                }
+                val result = chatRepository.createImage(
+                    prompt = query.prompt,
+                    n = 1,
+                    size = com.aallam.openai.api.image.ImageSize.is256x256
+                )
+                _uiState.update { oldState ->
+                    oldState.copy(
+                        queries = oldState.queries.map {
+                            if (it.isLoading) it.copy(
+                                isLoading = false,
+                                response = "",
+                                animateResponse = false,
+                                responseAttachments = result.toMessageAttachments()
+                            ) else it.copy(isLoading = false, animateResponse = false)
+                        }.toMutableList(), isLoading = false, isAnimating = true
+                    )
+
+                }
+
+            }
+
+
+        }
+    }
+
     private fun sendPrompt() {
+        when (uiState.value.selectedModel) {
+            ChatModel.GPT_4O_MINI -> createText(ChatModel.GPT_4O_MINI.modelId)
+            ChatModel.GPT_4O -> createText(ChatModel.GPT_4O.modelId)
+            ChatModel.AI_ART_GENERATOR -> createImages()
+        }
+
+    }
+
+    private fun createText(modelId: ModelId) {
         viewModelScope.launch(Dispatchers.IO) {
             val query = ChatQuery(
                 chatId = uiState.value.chatId,
@@ -128,8 +190,8 @@ class MainChatViewModel(
                 )
             }
 
-            chatRepository.sendPrompt(query)
-                .collect {result->
+            chatRepository.sendPrompt(query, modelId)
+                .collect { result ->
                     _uiState.update { oldState ->
                         oldState.copy(
                             queries = oldState.queries.map {
@@ -147,6 +209,7 @@ class MainChatViewModel(
                 }
         }
     }
+
     private fun restoreSubscription() {
 //        TODO("Not yet implemented")
     }
@@ -160,6 +223,7 @@ class MainChatViewModel(
             _uiState.update {
                 it.copy(selectedModel = model)
             }
+            Log.d("MainChatViewModel", "changeChatModel: $model")
         }
     }
 

@@ -9,6 +9,10 @@ import android.os.Environment
 import android.provider.OpenableColumns
 import android.webkit.MimeTypeMap
 import androidx.core.content.FileProvider
+import androidx.core.net.toUri
+import com.aallam.openai.api.image.ImageURL
+import com.zaed.chatbot.data.model.FileType
+import com.zaed.chatbot.data.model.MessageAttachment
 import java.io.File
 import java.io.InputStream
 import java.text.SimpleDateFormat
@@ -26,12 +30,14 @@ fun getFileNameFromUri(context: Context, uri: Uri): String? {
     }
     return null
 }
+
 fun createImageFile(context: Context): Uri {
     val storageDir = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
     val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
     val file = File.createTempFile("photo_${timestamp}_", ".jpg", storageDir)
     return FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
 }
+
 fun uriToBitmap(context: Context, uri: Uri): Bitmap? {
     val newUri = Uri.parse(uri.toString())
     return try {
@@ -42,6 +48,7 @@ fun uriToBitmap(context: Context, uri: Uri): Bitmap? {
         null
     }
 }
+
 fun createTempFileFromUri(uri: Uri, fileName: String, context: Context): File? {
     return try {
         val tempFile = File(context.cacheDir, fileName)
@@ -57,6 +64,7 @@ fun createTempFileFromUri(uri: Uri, fileName: String, context: Context): File? {
         null
     }
 }
+
 fun getMimeType(context: Context, uri: Uri): String? {
     return if (uri.scheme == ContentResolver.SCHEME_CONTENT) {
         context.contentResolver.getType(uri)
@@ -65,3 +73,13 @@ fun getMimeType(context: Context, uri: Uri): String? {
         MimeTypeMap.getSingleton().getMimeTypeFromExtension(fileExtension.lowercase())
     }
 }
+
+fun List<ImageURL>.toMessageAttachments(): List<MessageAttachment> {
+    return this.map { it.toMessageAttachment() }
+}
+fun ImageURL.toMessageAttachment(): MessageAttachment =
+    MessageAttachment(
+        name = revisedPrompt?:"",
+        FileType.IMAGE,
+        uri = url.toUri()
+    )

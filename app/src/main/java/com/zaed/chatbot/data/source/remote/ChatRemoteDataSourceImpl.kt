@@ -22,13 +22,6 @@ class ChatRemoteDataSourceImpl : ChatRemoteDataSource {
         val prompt = chatQuery.prompt
         val response = generativeModel.generateContent(
             content {
-                if(chatQuery.promptAttachments.isNotEmpty()){
-                    chatQuery.promptAttachments.forEach {
-                        it.bitmap?.let { it1 -> image(it1) }
-//                        it.mimetype?.let { d->fileData(it.uri.toString(),it.mimetype) }
-                    }
-                }
-
                 text(prompt.ifBlank { "?" })
             }
         )

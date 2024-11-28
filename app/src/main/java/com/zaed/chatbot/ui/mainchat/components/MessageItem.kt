@@ -33,6 +33,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
 import com.zaed.chatbot.R
 import com.zaed.chatbot.data.model.MessageAttachment
 import com.zaed.chatbot.ui.mainchat.MainChatUiAction
@@ -82,11 +83,17 @@ fun MessageItem(
                     modifier = Modifier.padding(top = 8.dp, start = 28.dp),
                     contentPadding = PaddingValues(0.dp),
                     attachments = attachments,
-                    attachmentSize = 80.dp,
+                    attachmentSize = 128.dp,
                     isAttachmentRemovable = false
                 )
             } else if (hasAttachments) {
-                //TODO: Display response images
+                    PreviewedAttachments(
+                        modifier = Modifier.padding(top = 8.dp, start = 28.dp),
+                        contentPadding = PaddingValues(0.dp),
+                        attachments =attachments ,
+                        attachmentSize = 256.dp,
+                        isAttachmentRemovable = false
+                    )
             }
         }
     }
