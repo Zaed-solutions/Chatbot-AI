@@ -15,4 +15,8 @@ data class MainChatUiState(
     val lifetimeCost: Double = 0.0,
     val selectedModel: ChatModel = ChatModel.GPT_4O_MINI,
     val attachments: List<MessageAttachment> = emptyList(),
+    val isFreeTrialEnabled: Boolean = false,
+    val imageHitTimes : Int = 0,
+    val textHitTimes : Int = 0,
+    val totalHitTimes : Int = 0
 )

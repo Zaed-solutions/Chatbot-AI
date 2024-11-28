@@ -135,7 +135,9 @@ class MainChatViewModel(
                     oldState.copy(
                         currentPrompt = "",
                         attachments = mutableListOf(),
-                        isLoading = true
+                        isLoading = true,
+                        imageHitTimes = oldState.imageHitTimes.plus(1),
+                        totalHitTimes = oldState.totalHitTimes.plus(1)
                     )
                 }
                 val result = chatRepository.createImage(
@@ -188,7 +190,9 @@ class MainChatViewModel(
                 oldState.copy(
                     currentPrompt = "",
                     attachments = mutableListOf(),
-                    isLoading = true
+                    isLoading = true,
+                    textHitTimes = oldState.textHitTimes.plus(1),
+                    totalHitTimes = oldState.totalHitTimes.plus(1)
                 )
             }
 
