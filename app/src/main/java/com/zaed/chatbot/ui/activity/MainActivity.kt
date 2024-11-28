@@ -57,7 +57,8 @@ class MainActivity : ComponentActivity() {
                     navController = navController,
                     onDefaultChatModeChanged = {
                         viewModel.handleAction(MainAction.OnSetDefaultChatMode(it))
-                    })
+                    }
+                )
             }
         }
     }

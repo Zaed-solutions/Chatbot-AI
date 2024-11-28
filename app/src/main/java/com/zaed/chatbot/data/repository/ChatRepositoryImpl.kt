@@ -47,7 +47,7 @@ class ChatRepositoryImpl(
                                 lastResponse = data.choices.first().message.content.orEmpty(),
                                 lastResponseTime = chatQuery.createdAtEpochSeconds,
                             )
-                        )
+                        ).collect{}
                     }
                 }
             }
@@ -65,15 +65,15 @@ class ChatRepositoryImpl(
         return chatLocalDataSource.getChatById(chatId)
     }
 
-    override suspend fun getChatHistories(): Flow<Result<List<ChatHistory>>> {
+    override suspend fun getChatHistories():  Result<List<ChatHistory>> {
         return chatLocalDataSource.getChatHistories()
     }
 
-    override suspend fun deleteChatHistory(chatId: String) {
+    override suspend fun deleteChatHistory(chatId: String): Flow<Result<Unit>> {
         return chatLocalDataSource.deleteChatHistory(chatId)
     }
 
-    override suspend fun updateChatHistory(chatHistory: ChatHistory) {
+    override suspend fun updateChatHistory(chatHistory: ChatHistory): Flow<Result<Unit>> {
         return chatLocalDataSource.updateChatHistory(chatHistory)
     }
 

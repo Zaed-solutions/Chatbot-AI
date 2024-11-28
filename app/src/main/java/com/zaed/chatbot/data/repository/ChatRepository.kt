@@ -16,8 +16,8 @@ interface ChatRepository {
     suspend fun listModels(): List<Model>
 
     suspend fun getChatById(chatId: String): Flow<Result<List<ChatQuery>>>
-    suspend fun getChatHistories(): Flow<Result<List<ChatHistory>>>
-    suspend fun deleteChatHistory(chatId: String)
-    suspend fun updateChatHistory(chatHistory: ChatHistory)
+    suspend fun getChatHistories():  Result<List<ChatHistory>>
+    suspend fun deleteChatHistory(chatId: String): Flow<Result<Unit>>
+    suspend fun updateChatHistory(chatHistory: ChatHistory): Flow<Result<Unit>>
     suspend fun createChatHistory(chatHistory: ChatHistory)
 }

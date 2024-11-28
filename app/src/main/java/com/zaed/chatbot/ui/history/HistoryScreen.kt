@@ -96,7 +96,6 @@ fun HistoryScreenContent(
         Box(
             modifier = Modifier.padding(innerPadding)
         ) {
-            //History List
             HistoriesList(histories = histories,
                 onHistoryClicked = { chatId -> onAction(HistoryUiAction.OnChatHistoryClicked(chatId)) },
                 onDeleteHistoryClicked = { chatId ->
@@ -114,7 +113,8 @@ fun HistoryScreenContent(
                     onDelete = { onAction(HistoryUiAction.OnDeleteChatHistoryConfirmed(clickedChatId)) }
                 )
             }
-            AnimatedVisibility(visible = isRenameDialogVisible) {
+            AnimatedVisibility(
+                visible = isRenameDialogVisible) {
                 RenameHistoryDialog(
                     onDismiss = { isRenameDialogVisible = false },
                     onRename = { newName -> onAction(HistoryUiAction.OnChatHistoryRenamed(clickedChatId, newName)) }
