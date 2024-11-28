@@ -4,22 +4,29 @@ import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.aallam.openai.api.model.ModelId
 import com.zaed.chatbot.data.model.ChatQuery
 import com.zaed.chatbot.data.model.MessageAttachment
 import com.zaed.chatbot.data.repository.ChatRepository
 import com.zaed.chatbot.ui.mainchat.components.ChatModel
+import com.zaed.chatbot.ui.util.ConnectivityObserver
+import com.zaed.chatbot.ui.util.toMessageAttachments
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.util.UUID
 
 class MainChatViewModel(
-    private val chatRepository: ChatRepository
+    private val chatRepository: ChatRepository,
+    private val connectivityObserver: ConnectivityObserver
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(MainChatUiState())
     val uiState = _uiState.asStateFlow()
+
     fun init(chatId: String) {
         if (chatId.isNotBlank()) {
             fetchChat(chatId)
@@ -31,8 +38,20 @@ class MainChatViewModel(
             }
         }
     }
+    private fun checkInternetConnection() {
+        viewModelScope.launch {
+            connectivityObserver.isConnected
+            .collect {result->
+                _uiState.update {
+                    it.copy(internetConnected = result)
+                }
+            }
+        }
 
+    }
     private fun fetchChat(chatId: String) {
+        checkInternetConnection()
+        if(!uiState.value.internetConnected) return
         viewModelScope.launch(Dispatchers.IO) {
             chatRepository.getChatById(chatId).collect { result ->
                 result.onSuccess {
@@ -53,7 +72,7 @@ class MainChatViewModel(
         when (action) {
             is MainChatUiAction.OnAddAttachment -> addAttachment(action.attachment)
             MainChatUiAction.OnCancelSubscription -> cancelSubscription()
-            is MainChatUiAction.OnChangeModel -> changeChatModel(action.model)
+            is MainChatUiAction.OnChangeModel -> clearChat(action.model)
             is MainChatUiAction.OnDeleteAttachment -> deleteAttachment(action.attachmentUri)
             MainChatUiAction.OnNewChatClicked -> clearChat()
             MainChatUiAction.OnRestoreSubscription -> restoreSubscription()
@@ -64,21 +83,37 @@ class MainChatViewModel(
                 action.isFreeTrialEnabled,
                 action.isLifetime
             )
-            is MainChatUiAction.OnStopAnimation -> stopAnimation()
+
+            is MainChatUiAction.OnStopAnimation -> {
+                Log.d("MainChatViewModel", "handleAction: stop animation")
+                stopAnimation()
+            }
+
             else -> Unit
         }
     }
-    private fun stopAnimation() {
-        viewModelScope.launch {
-            _uiState.update { currentState ->
-                val updatedQueries = currentState.queries
-                if (updatedQueries.isNotEmpty()) {
-                    updatedQueries[0] = updatedQueries[0].copy(animateResponse = false)
-                }
-                currentState.copy(queries = updatedQueries)
-            }
+
+    private fun listModels() {
+        viewModelScope.launch(Dispatchers.IO) {
+            val models = chatRepository.listModels()
+            Log.d("MainChatViewModel", "listModels: $models")
         }
     }
+
+    private fun stopAnimation() {
+        viewModelScope.launch {
+            Log.d("MainChatViewModel1", "${uiState.value.queries}")
+            val updatedQueries = _uiState.value.queries
+            if (updatedQueries.isNotEmpty()) {
+                updatedQueries[0] = updatedQueries[0].copy(animateResponse = false)
+            }
+            _uiState.update { currentState ->
+                currentState.copy(queries = updatedQueries, isAnimating = false)
+            }
+            Log.d("MainChatViewModel2", "${uiState.value.queries}")
+        }
+    }
+
     private fun upgradeSubscription(freeTrialEnabled: Boolean, lifetime: Boolean) {
 //        TODO("Not yet implemented")
     }
@@ -92,6 +127,8 @@ class MainChatViewModel(
     }
 
     private fun sendSuggestion(prompt: String) {
+        checkInternetConnection()
+        if(!uiState.value.internetConnected) return
         viewModelScope.launch(Dispatchers.IO) {
             _uiState.update {
                 it.copy(currentPrompt = prompt)
@@ -100,7 +137,64 @@ class MainChatViewModel(
         }
     }
 
+    private fun createImages() {
+        val isFirstMessage = uiState.value.queries.isEmpty()
+        viewModelScope.launch(Dispatchers.IO) {
+            viewModelScope.launch(Dispatchers.IO) {
+                val query = ChatQuery(
+                    chatId = uiState.value.chatId,
+                    prompt = uiState.value.currentPrompt,
+                    response = "",
+                    promptAttachments = uiState.value.attachments,
+                    isLoading = true,
+                    animateResponse = true
+                )
+                _uiState.update { oldState ->
+                    oldState.queries.add(0, query)
+                    oldState.copy(
+                        currentPrompt = "",
+                        attachments = mutableListOf(),
+                        isLoading = true,
+                        imageHitTimes = oldState.imageHitTimes.plus(1),
+                        totalHitTimes = oldState.totalHitTimes.plus(1)
+                    )
+                }
+                chatRepository.createImage(
+                    chatQuery = query,
+                    n = 1,
+                    size = com.aallam.openai.api.image.ImageSize.is256x256,
+                    isFirstMessage = isFirstMessage
+                ).collect{ result ->
+                    _uiState.update { oldState ->
+                        oldState.copy(
+                            queries = oldState.queries.map {
+                                if (it.isLoading) it.copy(
+                                    isLoading = false,
+                                    response = "",
+                                    animateResponse = false,
+                                    responseAttachments = result.toMessageAttachments()
+                                ) else it.copy(isLoading = false, animateResponse = false)
+                            }.toMutableList(), isLoading = false, isAnimating = true
+                        )
+                    }
+                }
+            }
+        }
+    }
+
     private fun sendPrompt() {
+        checkInternetConnection()
+        if(!uiState.value.internetConnected) return
+        when (uiState.value.selectedModel) {
+            ChatModel.GPT_4O_MINI -> createText(ChatModel.GPT_4O_MINI.modelId)
+            ChatModel.GPT_4O -> createText(ChatModel.GPT_4O.modelId)
+            ChatModel.AI_ART_GENERATOR -> createImages()
+        }
+
+    }
+
+    private fun createText(modelId: ModelId) {
+        val isFirstMessage = uiState.value.queries.isEmpty()
         viewModelScope.launch(Dispatchers.IO) {
             val query = ChatQuery(
                 chatId = uiState.value.chatId,
@@ -115,25 +209,29 @@ class MainChatViewModel(
                 oldState.copy(
                     currentPrompt = "",
                     attachments = mutableListOf(),
-                    isLoading = true
+                    isLoading = true,
+                    textHitTimes = oldState.textHitTimes.plus(1),
+                    totalHitTimes = oldState.totalHitTimes.plus(1)
                 )
             }
-            chatRepository.sendPrompt(query).collect { result ->
-                result.onSuccess { data ->
+
+            chatRepository.sendPrompt(query, modelId,isFirstMessage)
+                .collect { result ->
                     _uiState.update { oldState ->
                         oldState.copy(
                             queries = oldState.queries.map {
                                 if (it.isLoading) it.copy(
                                     isLoading = false,
-                                    response = data.response,
+                                    response = result.choices.first().message.content.orEmpty(),
                                     animateResponse = true,
-                                    responseAttachments = data.responseAttachments
+//                                    responseAttachments = data.responseAttachments
                                 ) else it.copy(isLoading = false, animateResponse = false)
-                            }.toMutableList(), isLoading = false
+                            }.toMutableList(), isLoading = false, isAnimating = true
                         )
+
                     }
+
                 }
-            }
         }
     }
 
@@ -141,14 +239,10 @@ class MainChatViewModel(
 //        TODO("Not yet implemented")
     }
 
-    private fun clearChat() {
-//        TODO("Not yet implemented")
-    }
-
-    private fun changeChatModel(model: ChatModel) {
+    private fun clearChat(selectedModel: ChatModel = ChatModel.GPT_4O_MINI){
         viewModelScope.launch {
             _uiState.update {
-                it.copy(selectedModel = model)
+                MainChatUiState(chatId = UUID.randomUUID().toString(), selectedModel = selectedModel)
             }
         }
     }

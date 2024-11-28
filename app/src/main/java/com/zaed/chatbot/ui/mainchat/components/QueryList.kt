@@ -15,13 +15,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.zaed.chatbot.data.model.ChatQuery
+import com.zaed.chatbot.ui.mainchat.MainChatUiAction
 import com.zaed.chatbot.ui.theme.ChatbotTheme
 
 @Composable
 fun QueryList(
     modifier: Modifier = Modifier,
     queries: List<ChatQuery>,
-    lazyListState: LazyListState = rememberLazyListState()
+    lazyListState: LazyListState = rememberLazyListState(),
+    action: (MainChatUiAction) -> Unit = {}
 ) {
     LaunchedEffect (queries.size){
         lazyListState.animateScrollToItem(0)
@@ -36,6 +38,7 @@ fun QueryList(
         itemsIndexed(queries, key = { _, query -> query.createdAtEpochSeconds }) { _, query ->
             QueryItem(
                 query = query,
+                action = action
             )
         }
     }
@@ -45,6 +48,7 @@ fun QueryList(
 fun QueryItem(
     modifier: Modifier = Modifier,
     query: ChatQuery,
+    action: (MainChatUiAction) -> Unit = {}
 ) {
     Column(
         modifier = modifier.fillMaxWidth(),
@@ -60,6 +64,7 @@ fun QueryItem(
         MessageItem(
             isPrompt = false,
             isLoading = query.isLoading,
+            action = action,
             message = query.response,
             animating = query.animateResponse,
             hasAttachments = query.responseAttachments.isNotEmpty(),

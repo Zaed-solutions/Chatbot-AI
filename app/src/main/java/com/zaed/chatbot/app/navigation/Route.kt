@@ -2,34 +2,34 @@ package com.zaed.chatbot.app.navigation
 
 import kotlinx.serialization.Serializable
 
-sealed interface Route {
     @Serializable
-    data object SettingsRoute : Route
+    data object SettingsRoute
     @Serializable
-    data object ChangeFontScaleRoute : Route
+    object ChangeFontScaleRoute
 
     @Serializable
-    data object ChangeChatModeRoute : Route
+    object ChangeChatModeRoute
 
     @Serializable
-    data object ChangeLanguageRoute : Route
+    object ChangeLanguageRoute
 
     @Serializable
-    data object PromoCodeRoute : Route
+    object PromoCodeRoute
 
     @Serializable
-    data object FaqSupportRoute : Route
+    object FaqSupportRoute
 
 
     @Serializable
-    data object PrivacyPolicyRoute : Route
+    object PrivacyPolicyRoute
 
     @Serializable
-    data object CommunityGuidelinesRoute : Route
+    object CommunityGuidelinesRoute
+    @Serializable
+    class MainChatRoute(val chatId: String = "")
 
     @Serializable
-    data object MainChatRoute : Route
+    object HistoryRoute
 
-    @Serializable
-    data object HistoryRoute : Route
-}
+
+

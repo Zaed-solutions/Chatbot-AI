@@ -2,6 +2,7 @@ package com.zaed.chatbot.app
 
 import android.app.Application
 import com.zaed.chatbot.app.di.appModule
+import com.zaed.chatbot.data.source.local.model.ChatHistoryEntity
 import com.zaed.chatbot.data.source.local.model.ChatQueryEntity
 import com.zaed.chatbot.data.source.local.model.MessageAttachmentEntity
 import io.realm.kotlin.Realm
@@ -26,7 +27,8 @@ class MainApplication : Application() {
             configuration = RealmConfiguration.create(
                 schema = setOf(
                     ChatQueryEntity::class,
-                    MessageAttachmentEntity::class
+                    MessageAttachmentEntity::class,
+                    ChatHistoryEntity::class
                 )
             )
         )

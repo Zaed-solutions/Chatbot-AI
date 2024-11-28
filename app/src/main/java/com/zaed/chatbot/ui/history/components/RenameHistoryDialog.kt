@@ -67,14 +67,18 @@ fun RenameHistoryDialog(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = 16.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    OutlinedButton(onClick = { onDismiss() }) {
+                    OutlinedButton(
+                        modifier = Modifier.weight(1f),
+                        onClick = { onDismiss() }) {
                         Text(text = stringResource(R.string.cancel))
                     }
                     Button(
+                        modifier = Modifier.weight(1f),
                         onClick = {
                             onRename(name)
+                            onDismiss()
                         }
                     ) {
                         Text(text = stringResource(R.string.ok))

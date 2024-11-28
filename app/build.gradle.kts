@@ -4,8 +4,13 @@ plugins {
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.kotlinx.serialization)
     alias(libs.plugins.realm)
-}
 
+}
+configurations.all {
+    resolutionStrategy {
+        force ("org.commonmark:commonmark:0.21.0") // Choose the version you prefer
+    }
+}
 android {
     namespace = "com.zaed.chatbot"
     compileSdk = 34
@@ -71,11 +76,6 @@ dependencies {
 
     //Kotlinx-Serialization
     implementation(libs.kotlinx.serialization.json)
-    //KTor
-    implementation(libs.ktor.serialization.kotlinx.json)
-    implementation(libs.ktor.client.okhttp)
-    implementation(libs.ktor.client.content.negotiation)
-    implementation(libs.ktor.client.core)
     //Kotlinx-DateTime
     implementation(libs.kotlinx.datetime)
     //Compose ViewModel Lifecycle
@@ -104,6 +104,18 @@ dependencies {
     //Google AI
     implementation("com.google.ai.client.generativeai:generativeai:0.7.0")
 
-//    implementation("com.google.mlkit:speech:16.0.0-beta1")
+    implementation (platform("com.aallam.openai:openai-client-bom:3.8.2"))
+
+    // define dependencies without versions
+    implementation ("com.aallam.openai:openai-client")
+    runtimeOnly ("io.ktor:ktor-client-okhttp")
+    implementation("com.halilibo.compose-richtext:richtext-commonmark:1.0.0-alpha01")
+    implementation("com.halilibo.compose-richtext:richtext-ui-material3:1.0.0-alpha01")
+
+
+
+
+
+
 
 }

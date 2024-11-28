@@ -4,6 +4,7 @@ import android.net.Uri
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -40,6 +41,7 @@ fun PreviewedAttachmentItem(
     size: Dp = 64.dp,
     isRemovable: Boolean = true,
     onDeleteAttachment: (Uri) -> Unit = {},
+    onImageClicked: (Uri) -> Unit = {}
 ) {
     Surface(
         modifier = modifier.size(size),
@@ -59,7 +61,9 @@ fun PreviewedAttachmentItem(
                         filterQuality = FilterQuality.Low
                     ),
                     contentDescription = "Attachment BackGround",
-                    modifier = Modifier.fillMaxSize()
+                    modifier = Modifier.fillMaxSize().clickable {
+                        onImageClicked(attachment.uri)
+                    }
                 )
             } else {
                 Column(

@@ -24,4 +24,5 @@ sealed interface MainChatUiAction {
     data object OnCancelSubscription: MainChatUiAction
     data object OnPrivacyTermsClicked: MainChatUiAction
     data class OnAddAttachment(val attachment: MessageAttachment): MainChatUiAction
+    data class OnImageClicked(val imageUri: Uri): MainChatUiAction
 }

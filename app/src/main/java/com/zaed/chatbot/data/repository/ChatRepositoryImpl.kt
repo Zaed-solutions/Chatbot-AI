@@ -1,47 +1,130 @@
 package com.zaed.chatbot.data.repository
 
 import android.util.Log
+import com.aallam.openai.api.chat.ChatCompletion
+import com.aallam.openai.api.image.ImageSize
+import com.aallam.openai.api.image.ImageURL
+import com.aallam.openai.api.model.Model
+import com.aallam.openai.api.model.ModelId
 import com.zaed.chatbot.data.model.ChatHistory
 import com.zaed.chatbot.data.model.ChatQuery
 import com.zaed.chatbot.data.source.local.ChatLocalDataSource
-import com.zaed.chatbot.data.source.remote.ChatRemoteDataSource
+import com.zaed.chatbot.data.source.remote.OpenAIRemoteDataSource
+import com.zaed.chatbot.ui.util.toMessageAttachments
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 
 class ChatRepositoryImpl(
-    private val chatRemoteDataSource: ChatRemoteDataSource,
+    private val chatRemoteDataSource: OpenAIRemoteDataSource,
     private val chatLocalDataSource: ChatLocalDataSource
 ) : ChatRepository {
-    override suspend fun sendPrompt(chatQuery: ChatQuery): Flow<Result<ChatQuery>> {
-        val result =  chatRemoteDataSource.sendPrompt(chatQuery)
-        result.collect{data->
-            data.onSuccess {
-                Log.d("ChatRepositoryImpl", "sendPrompt: $it")
-                chatLocalDataSource.saveChat(it.copy(isLoading = false, animateResponse = false)).collect{}
+    override suspend fun sendPrompt(
+        chatQuery: ChatQuery,
+        modelId: ModelId,
+        isFirstMessage: Boolean
+    ): Flow<ChatCompletion> = flow {
+        chatRemoteDataSource.sendPrompt(chatQuery, isFirst = isFirstMessage, modelId).collect { result ->
+            result.onSuccess { data ->
+                Log.d("ChatRepositoryImpl", "sendPrompt received data: $data")
+                chatLocalDataSource.saveChat(
+                    chatQuery.copy(
+                        isLoading = false,
+                        animateResponse = false,
+                        response = data.choices.first().message.content.toString()
+                    )
+                ).collect { result ->
+                    result.onSuccess {
+                        if (isFirstMessage) {
+                            //todo chat title
+                            chatLocalDataSource.createChatHistory(
+                                ChatHistory(
+                                    chatId = chatQuery.chatId,
+                                    lastResponse = data.choices.first().message.content.toString(),
+                                    lastResponseTime = chatQuery.createdAtEpochSeconds,
+                                    title = chatQuery.prompt
+                                )
+                            )
+                        } else {
+                            chatLocalDataSource.updateChatHistory(
+                                ChatHistory(
+                                    chatId = chatQuery.chatId,
+                                    lastResponse = data.choices.first().message.content.orEmpty(),
+                                    lastResponseTime = chatQuery.createdAtEpochSeconds,
+                                )
+                            ).collect {}
+                        }
+                    }
+                }
+                emit(data)
             }.onFailure {
-                Log.d("ChatRepositoryImpl", "sendPrompt: $it")
+                Log.e("ChatRepositoryImpl", "sendPrompt: $it")
             }
         }
-        return result
     }
 
-    override suspend fun getChatById(chatId: String): Flow<Result<List<ChatQuery>>> {
-        return chatLocalDataSource.getChatById(chatId)
-    }
+    override suspend fun createImage(
+        chatQuery: ChatQuery, n: Int, size: ImageSize, isFirstMessage: Boolean
+    ): Flow<List<ImageURL>> = flow {
+        val remoteResult = chatRemoteDataSource.createImage(chatQuery, n, size)
+        remoteResult.onSuccess { remoteResult ->
+            chatLocalDataSource.saveChat(
+                chatQuery.copy(
+                    isLoading = false,
+                    animateResponse = false,
+                    response = remoteResult.first().revisedPrompt?:"",
+                    responseAttachments = remoteResult.toMessageAttachments()
+                )
+            ).collect { result ->
+                result.onSuccess {
+                    if (isFirstMessage) {
+                        //todo chat title
+                        chatLocalDataSource.createChatHistory(
+                            ChatHistory(
+                                chatId = chatQuery.chatId,
+                                lastResponse = remoteResult.first().revisedPrompt?:"",
+                                lastResponseTime = chatQuery.createdAtEpochSeconds,
+                                title = chatQuery.prompt,
 
-    override suspend fun getChatHistories(): Flow<Result<List<ChatHistory>>> {
-        return chatLocalDataSource.getChatHistories()
-    }
+                                )
+                        )
+                    } else {
+                        chatLocalDataSource.updateChatHistory(
+                            ChatHistory(
+                                chatId = chatQuery.chatId,
+                                lastResponse = remoteResult.first().revisedPrompt?:"",
+                                lastResponseTime = chatQuery.createdAtEpochSeconds,
+                            )
+                        ).collect {}
+                    }
+                }
+            }
+            emit(remoteResult)
+        }.onFailure {
+            Log.e("ChatRepositoryImpl", "createImage: $it")
+        }
+}
 
-    override suspend fun deleteChatHistory(chatId: String) {
-        return chatLocalDataSource.deleteChatHistory(chatId)
-    }
+override suspend fun listModels(): List<Model> = chatRemoteDataSource.listModels()
 
-    override suspend fun updateChatHistory(chatHistory: ChatHistory) {
-        return chatLocalDataSource.updateChatHistory(chatHistory)
-    }
 
-    override suspend fun createChatHistory(chatHistory: ChatHistory) {
-        return chatLocalDataSource.createChatHistory(chatHistory)
-    }
+override suspend fun getChatById(chatId: String): Flow<Result<List<ChatQuery>>> {
+    return chatLocalDataSource.getChatById(chatId)
+}
+
+override suspend fun getChatHistories(): Result<List<ChatHistory>> {
+    return chatLocalDataSource.getChatHistories()
+}
+
+override suspend fun deleteChatHistory(chatId: String): Flow<Result<Unit>> {
+    return chatLocalDataSource.deleteChatHistory(chatId)
+}
+
+override suspend fun updateChatHistory(chatHistory: ChatHistory): Flow<Result<Unit>> {
+    return chatLocalDataSource.updateChatHistory(chatHistory)
+}
+
+override suspend fun createChatHistory(chatHistory: ChatHistory) {
+    return chatLocalDataSource.createChatHistory(chatHistory)
+}
 
 }
