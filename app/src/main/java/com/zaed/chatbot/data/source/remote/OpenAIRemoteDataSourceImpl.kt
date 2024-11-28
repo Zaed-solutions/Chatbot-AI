@@ -1,6 +1,5 @@
 package com.zaed.chatbot.data.source.remote
 
-import android.util.Log
 import com.aallam.openai.api.audio.SpeechRequest
 import com.aallam.openai.api.audio.Transcription
 import com.aallam.openai.api.audio.TranscriptionRequest
@@ -8,7 +7,6 @@ import com.aallam.openai.api.audio.Translation
 import com.aallam.openai.api.audio.TranslationRequest
 import com.aallam.openai.api.audio.Voice
 import com.aallam.openai.api.chat.ChatCompletion
-import com.aallam.openai.api.chat.ChatCompletionChunk
 import com.aallam.openai.api.chat.ChatCompletionRequest
 import com.aallam.openai.api.chat.ChatMessage
 import com.aallam.openai.api.chat.ChatRole
@@ -37,32 +35,49 @@ class OpenAIRemoteDataSourceImpl(
 
     override suspend fun listModels(): List<Model> = openAI.models()
     suspend fun retrieveModel(modelId: String): Model = openAI.model(ModelId(modelId))
-    override suspend fun sendPrompt(chatQuery: ChatQuery,modelId: ModelId): Flow<ChatCompletion> = flow {
-        val chatCompletionRequest = ChatCompletionRequest(
-            model = modelId,
-            messages = listOf(
-                ChatMessage(
-                    role = ChatRole.User,
-                    content = chatQuery.prompt
+    override suspend fun sendPrompt(
+        chatQuery: ChatQuery,
+        modelId: ModelId
+    ): Flow<Result<ChatCompletion>> = flow {
+        try {
+            val chatCompletionRequest = ChatCompletionRequest(
+                model = modelId,
+                messages = listOf(
+                    ChatMessage(
+                        role = ChatRole.User,
+                        content = chatQuery.prompt
+                    )
                 )
             )
-        )
-
-        emit(openAI.chatCompletion(chatCompletionRequest))
+            emit(Result.success(openAI.chatCompletion(chatCompletionRequest)))
+        }catch (e:Exception){
+            emit(Result.failure(e))
+            e.printStackTrace()
+        }
     }
 
     override suspend fun createImage(
         chatQuery: ChatQuery,
         n: Int,
         size: ImageSize
-    ) : List<ImageURL> = openAI.imageURL( // or openAI.imageJSON
-        creation = ImageCreation(
-            prompt = chatQuery.prompt,
-            model = ChatModel.AI_ART_GENERATOR.modelId,
-            n = 1,
-            size = ImageSize.is1024x1024
-        )
-    )
+    ): Result<List<ImageURL>> {
+        return try {
+            Result.success(
+                openAI.imageURL( // or openAI.imageJSON
+                    creation = ImageCreation(
+                        prompt = chatQuery.prompt,
+                        model = ChatModel.AI_ART_GENERATOR.modelId,
+                        n = 1,
+                        size = ImageSize.is1024x1024
+                    )
+                )
+            )
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Result.failure(e)
+        }
+    }
+
 
     suspend fun editImage(
         modelId: String,
