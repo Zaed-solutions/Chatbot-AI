@@ -10,6 +10,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
+import com.android.billingclient.api.ProductDetails
 import com.zaed.chatbot.ui.activity.SubscriptionAction
 import com.zaed.chatbot.ui.history.HistoryScreen
 import com.zaed.chatbot.ui.mainchat.MainChatScreen
@@ -28,6 +29,7 @@ fun NavigationHost(
     navController: NavHostController,
     defaultChatMode: ChatModel,
     isPro: Boolean = false,
+    products: List<ProductDetails> = emptyList(),
     fontScale: Float,
     onSubscriptionAction: (SubscriptionAction) -> Unit,
     onFontScaleChanged: (Float) -> Unit,
@@ -59,6 +61,7 @@ fun NavigationHost(
                     navController.navigate(HistoryRoute)
                 },
                 isPro = isPro,
+                products = products,
                 onSubscriptionAction = onSubscriptionAction,
                 onNavigateToSettingsScreen = { navController.navigate(SettingsRoute) },
                 onNavigateToPrivacyAndTerms = { navController.navigate(PrivacyPolicyRoute) },
@@ -66,6 +69,8 @@ fun NavigationHost(
         }
         composable<SettingsRoute> {
             SettingsScreen(
+                isPro = isPro,
+                products = products,
                 onNavigateBack = { navController.popBackStack() },
                 onNavigateToFontScale = { navController.navigate(ChangeFontScaleRoute) },
                 onNavigateToChatMode = { navController.navigate(ChangeChatModeRoute) },
@@ -86,6 +91,8 @@ fun NavigationHost(
         }
         composable<ChangeChatModeRoute> {
             ChatModeScreen(
+                isPro = isPro,
+                products = products,
                 defaultChatMode = defaultChatMode,
                 onSetDefaultChatMode = {
                     onDefaultChatModeChanged(it)

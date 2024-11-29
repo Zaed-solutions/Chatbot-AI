@@ -22,7 +22,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -40,6 +39,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.android.billingclient.api.ProductDetails
 import com.zaed.chatbot.R
 import com.zaed.chatbot.ui.theme.ChatbotTheme
 
@@ -48,15 +48,13 @@ fun ProSubscriptionBottomSheet(
     modifier: Modifier = Modifier,
     onDismiss: () -> Unit = {},
     onRestore: () -> Unit = {},
-    monthlyCost: Double = 0.0,
-    lifetimeCost: Double = 0.0,
+    products: List<ProductDetails> = emptyList(),
     onContinue: (Boolean, Boolean) -> Unit = { _, _ -> },
     onPrivacyTermsClicked: () -> Unit = {},
 ) {
     var isFreeTrialEnabled by remember { mutableStateOf(false) }
     var isLifeTimeSelected by remember { mutableStateOf(false) }
-    val selectedOutlineColor = MaterialTheme.colorScheme.onBackground
-    val unSelectedOutlineColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
+    var selectedIndex by remember { mutableStateOf(0) }
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -82,7 +80,10 @@ fun ProSubscriptionBottomSheet(
             }
             FilledTonalButton(
                 modifier = Modifier.heightIn(min = 24.dp),
-                onClick = { onRestore() },
+                onClick = {
+                    onRestore()
+                    onDismiss()
+                },
                 contentPadding = PaddingValues(vertical = 4.dp, horizontal = 12.dp)
             ) {
                 Text(
@@ -161,75 +162,18 @@ fun ProSubscriptionBottomSheet(
                 modifier = Modifier.padding(end = 16.dp, top = 2.dp, bottom = 2.dp)
             )
         }
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 8.dp)
-                .border(
-                    width = 1.dp,
-                    color = if (isLifeTimeSelected) unSelectedOutlineColor else selectedOutlineColor,
-                    shape = MaterialTheme.shapes.extraLarge
-                )
-                .clickable {
-                    isLifeTimeSelected = false
-                }
-        ) {
-            Text(
-                modifier = Modifier.padding(start = 16.dp, top = 12.dp),
-                text = stringResource(id = R.string.weekly_subscription_cost, monthlyCost),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-            )
-            Text(
-                modifier = Modifier.padding(start = 16.dp, bottom = 12.dp),
-                text = stringResource(R.string.auto_renewal),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.outlineVariant,
-            )
-        }
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 8.dp)
-                .border(
-                    width = 1.dp,
-                    color = if (isLifeTimeSelected) selectedOutlineColor else unSelectedOutlineColor,
-                    shape = MaterialTheme.shapes.extraLarge
-                )
-                .clickable {
-                    isLifeTimeSelected = true
+        products.forEachIndexed { index, product ->
+            SubscriptionItem(
+                isSelected = selectedIndex == index,
+                onClick = {
+                    selectedIndex = index
+                    isLifeTimeSelected = index == 1
                 },
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(vertical = 12.dp, horizontal = 16.dp)
-            ) {
-                Text(
-                    text = stringResource(id = R.string.life_time_subscription_cost, lifetimeCost),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                )
-                Text(
-                    text = stringResource(R.string.billed_once),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.outlineVariant,
-                )
-            }
-            Surface(
-                modifier = Modifier.padding(end = 16.dp),
-                shape = MaterialTheme.shapes.medium,
-                color = MaterialTheme.colorScheme.primary,
-            ) {
-                Text(
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                    text = stringResource(R.string.save_70),
-                    maxLines = 1,
-                    style = MaterialTheme.typography.bodySmall,
-                )
-            }
+                name = product.name,
+                formattedPrice = product.subscriptionOfferDetails?.first()?.pricingPhases?.pricingPhaseList?.first()?.formattedPrice
+                    ?: "Unknown",
+                isLifeTime = product.subscriptionOfferDetails?.first()?.pricingPhases?.pricingPhaseList?.first()?.billingPeriod == "P1W"
+            )
         }
         Button(
             modifier = Modifier
@@ -237,6 +181,7 @@ fun ProSubscriptionBottomSheet(
                 .padding(top = 24.dp),
             onClick = {
                 onContinue(isFreeTrialEnabled, isLifeTimeSelected)
+                onDismiss()
             },
             shape = MaterialTheme.shapes.large,
         ) {
@@ -272,6 +217,58 @@ fun ProSubscriptionBottomSheet(
     }
 }
 
+@Composable
+fun SubscriptionItem(
+    modifier: Modifier = Modifier,
+    isSelected: Boolean = false,
+    onClick: () -> Unit = {},
+    name: String = "Weekly Subscription",
+    formattedPrice: String = "EGP 279.99",
+    isLifeTime: Boolean = false,
+) {
+    val selectedOutlineColor = MaterialTheme.colorScheme.onBackground
+    val unSelectedOutlineColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(top = 8.dp)
+            .border(
+                width = 1.dp,
+                color = if (isSelected) unSelectedOutlineColor else selectedOutlineColor,
+                shape = MaterialTheme.shapes.extraLarge
+            )
+            .clickable {
+                onClick()
+            }
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 12.dp, horizontal = 16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                modifier = Modifier.weight(1f),
+                text = name,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Text(
+                text = formattedPrice,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+            )
+
+        }
+        Text(
+            modifier = Modifier.padding(start = 16.dp, bottom = 12.dp),
+            text = if (isLifeTime) stringResource(id = R.string.billed_once) else stringResource(R.string.auto_renewal),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.outlineVariant,
+        )
+    }
+}
+
 enum class ProBenefit(val titleRes: Int, val subtitleRes: Int, val iconRes: Int) {
     ANSWERS_FROM_GPT_4O(
         R.string.answers_from_gpt_4o,
@@ -296,12 +293,12 @@ enum class ProBenefit(val titleRes: Int, val subtitleRes: Int, val iconRes: Int)
 @Composable
 private fun ProPreview() {
     ChatbotTheme {
-        Box(modifier = Modifier
-            .fillMaxSize()
-            .padding(top = 16.dp)) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(top = 16.dp)
+        ) {
             ProSubscriptionBottomSheet(
-                monthlyCost = 249.99,
-                lifetimeCost = 1399.99,
             )
         }
     }

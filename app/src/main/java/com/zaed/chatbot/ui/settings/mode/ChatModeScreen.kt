@@ -42,6 +42,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.android.billingclient.api.ProductDetails
 import com.zaed.chatbot.R
 import com.zaed.chatbot.ui.activity.SubscriptionAction
 import com.zaed.chatbot.ui.mainchat.components.ChatModel
@@ -58,14 +59,15 @@ fun ChatModeScreen(
     onSubscriptionAction: (SubscriptionAction) -> Unit = {},
     onSetDefaultChatMode: (ChatModel) -> Unit,
     onNavigateBack: () -> Unit,
-    viewModel: SettingsViewModel = koinViewModel()
+    viewModel: SettingsViewModel = koinViewModel(),
+    isPro: Boolean = false,
+    products: List<ProductDetails> = emptyList()
 ) {
-    val state by viewModel.uiState.collectAsStateWithLifecycle()
     ChatModeScreenContent(
         modifier = modifier,
         defaultChatMode = defaultChatMode,
         onAction = { action ->
-            when(action){
+            when (action) {
                 SettingsUiAction.OnBackPressed -> onNavigateBack()
                 is SettingsUiAction.OnSetDefaultChatMode -> onSetDefaultChatMode(action.chatModel)
                 is SettingsUiAction.OnUpgradeSubscription -> onSubscriptionAction(
@@ -74,17 +76,18 @@ fun ChatModeScreen(
                         action.isLifetime
                     )
                 )
+
                 is SettingsUiAction.OnSubmitPromoCode -> onSubscriptionAction(
                     SubscriptionAction.OnApplyPromoCode(action.promoCode)
                 )
+
                 SettingsUiAction.OnRestorePurchaseClicked -> onSubscriptionAction(SubscriptionAction.RestoreSubscription)
-                SettingsUiAction.OnCancelSubscription -> onSubscriptionAction(SubscriptionAction.CancelSubscription)
+                SettingsUiAction.OnCancelSubscription -> onSubscriptionAction(SubscriptionAction.ManageSubscription)
                 else -> viewModel.handleAction(action)
             }
         },
-        isPro = state.isPro,
-        monthlyCost = state.monthlyCost,
-        lifetimeCost = state.lifetimeCost
+        isPro = isPro,
+        products = products
     )
 
 }
@@ -96,8 +99,7 @@ private fun ChatModeScreenContent(
     onAction: (SettingsUiAction) -> Unit = {},
     defaultChatMode: ChatModel = ChatModel.GPT_4O_MINI,
     isPro: Boolean = false,
-    monthlyCost: Double = 0.0,
-    lifetimeCost: Double = 0.0,
+    products: List<ProductDetails> = emptyList(),
 ) {
     var isBottomSheetVisible by remember { mutableStateOf(false) }
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -199,9 +201,11 @@ private fun ChatModeScreenContent(
                     ProSubscriptionBottomSheet(
                         modifier = Modifier.fillMaxSize(),
                         onDismiss = { isBottomSheetVisible = false },
-                        onRestore = { onAction(SettingsUiAction.OnRestorePurchaseClicked) },
-                        monthlyCost = monthlyCost,
-                        lifetimeCost = lifetimeCost,
+                        onRestore = {
+                            onAction(SettingsUiAction.OnRestorePurchaseClicked)
+                            isBottomSheetVisible = false
+                        },
+                        products = products,
                         onContinue = { b: Boolean, b1: Boolean ->
                             onAction(
                                 SettingsUiAction.OnUpgradeSubscription(
@@ -209,8 +213,12 @@ private fun ChatModeScreenContent(
                                     b1
                                 )
                             )
+                            isBottomSheetVisible = false
                         },
-                        onPrivacyTermsClicked = { onAction(SettingsUiAction.OnPrivacyTermsClicked) },
+                        onPrivacyTermsClicked = {
+                            onAction(SettingsUiAction.OnPrivacyTermsClicked)
+                            isBottomSheetVisible = false
+                        },
                     )
                 }
 
