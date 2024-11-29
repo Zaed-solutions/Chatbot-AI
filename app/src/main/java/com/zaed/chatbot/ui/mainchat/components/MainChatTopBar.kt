@@ -56,6 +56,7 @@ import com.zaed.chatbot.ui.theme.ChatbotTheme
 fun MainChatTopBar(
     modifier: Modifier = Modifier,
     selectedModel: ChatModel = ChatModel.GPT_4O_MINI,
+    isPro: Boolean = false,
     onAction: (MainChatUiAction) -> Unit = {},
     onChangeModel: (ChatModel) -> Unit = {},
     onProClicked: () -> Unit = {}
@@ -109,23 +110,25 @@ fun MainChatTopBar(
             )
             Spacer(modifier = Modifier.weight(1f))
             //Pro Button
-            Box(
-                modifier = Modifier
-                    .scale(scale)
-                    .clip(MaterialTheme.shapes.small)
-                    .gradientBackground(
-                        colors = gradientColors,
-                        angle = animatedAngle
+            if(!isPro){
+                Box(
+                    modifier = Modifier
+                        .scale(scale)
+                        .clip(MaterialTheme.shapes.small)
+                        .gradientBackground(
+                            colors = gradientColors,
+                            angle = animatedAngle
+                        )
+                        .clickable { onProClicked() },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = stringResource(R.string.pro),
+                        color = MaterialTheme.colorScheme.onPrimary,
+                        style = MaterialTheme.typography.labelSmall,
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 4.dp)
                     )
-                    .clickable { onProClicked() },
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = stringResource(R.string.pro),
-                    color = MaterialTheme.colorScheme.onPrimary,
-                    style = MaterialTheme.typography.labelSmall,
-                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 4.dp)
-                )
+                }
             }
             //Model Drop Down Menu
             Box{

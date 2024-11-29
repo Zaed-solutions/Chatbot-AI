@@ -13,11 +13,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Loop
 import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.PrivacyTip
@@ -26,7 +24,6 @@ import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Support
 import androidx.compose.material.icons.filled.Title
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -53,6 +50,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.android.billingclient.api.ProductDetails
 import com.zaed.chatbot.R
 import com.zaed.chatbot.ui.activity.SubscriptionAction
 import com.zaed.chatbot.ui.mainchat.components.ProSubscriptionBottomSheet
@@ -70,8 +68,12 @@ fun SettingsScreen(
     onNavigateToPrivacyPolicy: () -> Unit = {},
     onNavigateToCommunityGuidelines: () -> Unit = {},
     onSubscriptionAction: (SubscriptionAction) -> Unit = {},
+    isPro: Boolean = false,
+    products: List<ProductDetails> = emptyList()
 ) {
     SettingsScreenContent(
+        isPro = isPro,
+        products = products,
         onAction = { action ->
             when (action) {
                 SettingsUiAction.OnBackPressed -> onNavigateBack()
@@ -98,7 +100,7 @@ fun SettingsScreen(
                     SubscriptionAction.OnApplyPromoCode(action.promoCode)
                 )
                 SettingsUiAction.OnRestorePurchaseClicked -> onSubscriptionAction(SubscriptionAction.RestoreSubscription)
-                SettingsUiAction.OnCancelSubscription -> onSubscriptionAction(SubscriptionAction.CancelSubscription)
+                SettingsUiAction.OnCancelSubscription -> onSubscriptionAction(SubscriptionAction.ManageSubscription)
                 else -> viewModel.handleAction(action)
             }
         },
@@ -112,8 +114,7 @@ fun SettingsScreenContent(
     modifier: Modifier = Modifier,
     onAction: (SettingsUiAction) -> Unit = {},
     isPro: Boolean = false,
-    monthlyCost: Double = 0.0,
-    lifetimeCost: Double = 0.0,
+    products: List<ProductDetails> = emptyList()
 ) {
     var isBottomSheetVisible by remember { mutableStateOf(false) }
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -147,8 +148,7 @@ fun SettingsScreenContent(
                         modifier = Modifier.fillMaxSize(),
                         onDismiss = { isBottomSheetVisible = false },
                         onRestore = { onAction(SettingsUiAction.OnRestorePurchaseClicked) },
-                        monthlyCost = monthlyCost,
-                        lifetimeCost = lifetimeCost,
+                        products = products,
                         onContinue = { b: Boolean, b1: Boolean ->
                             onAction(
                                 SettingsUiAction.OnUpgradeSubscription(

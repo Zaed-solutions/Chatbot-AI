@@ -1,5 +1,6 @@
 package com.zaed.chatbot.ui.activity
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.android.billingclient.api.ProductDetails
@@ -17,11 +18,13 @@ class MainViewModel(
     val uiState = _uiState.asStateFlow()
 
     fun init(onInitialized: () -> Unit) {
+        Log.d(TAG, "init")
         initializePreferences(onInitialized)
     }
 
     private fun initializePreferences(onInitialized: () -> Unit) {
         viewModelScope.launch {
+            Log.d("MainViewModel", "initializePreferences: ")
             val chatMode = settingsRepo.getChatMode()
             val fontScale = settingsRepo.getFontScale()
             _uiState.update {
@@ -32,8 +35,9 @@ class MainViewModel(
             onInitialized()
         }
     }
-
+    private val TAG = "MainViewModel"
     fun handleAction(action: MainAction) {
+        Log.d(TAG, "handleAction: $action")
         when (action) {
             is MainAction.OnSetDefaultChatMode -> setDefaultMode(action.chatModel)
             is MainAction.OnSetFontScale -> setFontScale(action.fontScale)
@@ -45,12 +49,14 @@ class MainViewModel(
 
     private fun updateSubscribedPlan(planId: String) {
         viewModelScope.launch {
+            Log.d("MainViewModel", "updateSubscribedPlan: $planId")
             _uiState.update { it.copy(subscribedPlan = it.products.find { it.productId == planId }) }
         }
     }
 
     private fun updateProductsList(products: List<ProductDetails>) {
         viewModelScope.launch {
+            Log.d("MainViewModel", "updateProductsList: $products")
             _uiState.update { it.copy(products = products) }
         }
     }
@@ -58,12 +64,14 @@ class MainViewModel(
 
     private fun setFontScale(fontScale: Float) {
         viewModelScope.launch {
+            Log.d(TAG, "setFontScale: $fontScale")
             settingsRepo.setDefaultFontScale(fontScale)
         }
     }
 
     private fun setDefaultMode(chatModel: ChatModel) {
         viewModelScope.launch {
+            Log.d(TAG, "setDefaultMode: $chatModel")
             _uiState.value = uiState.value.copy(chatMode = chatModel)
             settingsRepo.setDefaultChatMode(chatModel.name)
         }

@@ -12,16 +12,11 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBarsPadding
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -29,17 +24,16 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.rememberAsyncImagePainter
+import com.android.billingclient.api.ProductDetails
 import com.zaed.chatbot.data.model.ChatQuery
 import com.zaed.chatbot.data.model.FileType
 import com.zaed.chatbot.data.model.MessageAttachment
@@ -66,6 +60,7 @@ fun MainChatScreen(
     viewModel: MainChatViewModel = koinViewModel(),
     chatId: String = "",
     isPro: Boolean = false,
+    products: List<ProductDetails> = emptyList(),
     onSubscriptionAction: (SubscriptionAction) -> Unit = {},
     onNavigateToHistoryScreen: () -> Unit = {},
     onNavigateToPersonalizationScreen: () -> Unit = {},
@@ -145,7 +140,7 @@ fun MainChatScreen(
                     onNavigateToSettingsScreen()
                 }
                 MainChatUiAction.OnCancelSubscription -> {
-                    onSubscriptionAction(SubscriptionAction.CancelSubscription)
+                    onSubscriptionAction(SubscriptionAction.ManageSubscription)
                 }
                 MainChatUiAction.OnRestoreSubscription -> {
                     onSubscriptionAction(SubscriptionAction.RestoreSubscription)
@@ -164,6 +159,7 @@ fun MainChatScreen(
         prompt = state.currentPrompt,
         isChatEmpty = state.queries.isEmpty(),
         isPro = isPro,
+        products = products,
         isLoading = state.isLoading,
         queries = state.queries,
         selectedModel = state.selectedModel,
@@ -212,10 +208,9 @@ fun MainChatScreenContent(
     onAction: (MainChatUiAction) -> Unit = {},
     isChatEmpty: Boolean = true,
     isPro: Boolean = false,
+    products: List<ProductDetails> = emptyList(),
     prompt: String,
     isLoading: Boolean = false,
-    monthlyCost: Double = 0.0,
-    lifetimeCost: Double = 0.0,
     queries: List<ChatQuery> = emptyList(),
     isAnimating: Boolean = false,
     selectedModel: ChatModel = ChatModel.GPT_4O_MINI,
@@ -229,6 +224,7 @@ fun MainChatScreenContent(
             MainChatTopBar(
                 modifier = Modifier.fillMaxWidth(),
                 selectedModel = selectedModel,
+                isPro = isPro,
                 onAction = onAction,
                 onChangeModel = {
                     onAction(MainChatUiAction.OnChangeModel(it))
@@ -286,7 +282,6 @@ fun MainChatScreenContent(
                         )
                     }
                 }
-
             }
             AnimatedVisibility(visible = isBottomSheetVisible) {
                 ModalBottomSheet(
@@ -297,8 +292,7 @@ fun MainChatScreenContent(
                         modifier = Modifier.fillMaxSize(),
                         onDismiss = { isBottomSheetVisible = false },
                         onRestore = { onAction(MainChatUiAction.OnRestoreSubscription) },
-                        monthlyCost = monthlyCost,
-                        lifetimeCost = lifetimeCost,
+                        products = products,
                         onContinue = { isFreeTrialEnabled, isLifetimeSelected ->
                             onAction(
                                 MainChatUiAction.OnUpgradeSubscription(

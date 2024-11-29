@@ -1,5 +1,7 @@
 package com.zaed.chatbot.ui.activity
 
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
@@ -31,7 +33,6 @@ import com.android.billingclient.api.QueryPurchaseHistoryParams
 import com.android.billingclient.api.QueryPurchasesParams
 import com.android.billingclient.api.queryProductDetails
 import com.android.billingclient.api.queryPurchaseHistory
-import com.android.billingclient.api.queryPurchasesAsync
 import com.zaed.chatbot.app.navigation.NavigationHost
 import com.zaed.chatbot.ui.theme.ChatbotTheme
 import com.zaed.chatbot.ui.theme.LocalFontScale
@@ -69,6 +70,7 @@ class MainActivity : ComponentActivity(), BillingClientStateListener {
         }
     private lateinit var billingClient: BillingClient
     private val viewModel: MainViewModel by inject<MainViewModel>()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         billingClient = BillingClient.newBuilder(this)
@@ -112,7 +114,7 @@ class MainActivity : ComponentActivity(), BillingClientStateListener {
                     },
                     onSubscriptionAction = { action ->
                         when (action) {
-                            SubscriptionAction.CancelSubscription -> cancelSubscription()
+                            SubscriptionAction.ManageSubscription -> manageSubscriptions()
                             is SubscriptionAction.OnApplyPromoCode -> applyPromoCode(action.promoCode)
                             SubscriptionAction.RestoreSubscription -> restoreSubscription()
                             is SubscriptionAction.UpgradeSubscription -> upgradeSubscription(
@@ -121,7 +123,8 @@ class MainActivity : ComponentActivity(), BillingClientStateListener {
                             )
                         }
                     },
-                    isPro = state.isPro
+                    isPro = state.isPro,
+                    products = state.products
                 )
             }
         }
@@ -168,11 +171,15 @@ class MainActivity : ComponentActivity(), BillingClientStateListener {
     }
 
     private fun applyPromoCode(promoCode: String) {
-        TODO("Not yet implemented")
+//        TODO("Not yet implemented")
     }
 
-    private fun cancelSubscription() {
-        TODO("Not yet implemented")
+    private fun manageSubscriptions() {
+        val intent = Intent(Intent.ACTION_VIEW).apply {
+            data = Uri.parse("https://play.google.com/store/account/subscriptions")
+            putExtra("package", this@MainActivity.packageName)
+        }
+        startActivity(intent)
     }
 
     override fun onBillingServiceDisconnected() {
@@ -217,6 +224,7 @@ class MainActivity : ComponentActivity(), BillingClientStateListener {
             BillingClient.BillingResponseCode.OK -> {
                 Log.d(TAG, "Query product details success")
                 if (productDetailsResult.productDetailsList?.isNotEmpty() == true) {
+                    Log.d(TAG, "Product details list: ${productDetailsResult.productDetailsList}")
                     viewModel.handleAction(
                         MainAction.OnUpdateProductsList(
                             products = productDetailsResult.productDetailsList ?: emptyList()
@@ -235,6 +243,7 @@ class MainActivity : ComponentActivity(), BillingClientStateListener {
             }
         }
     }
+
     private suspend fun queryPurchases() {
         if(billingClient.isReady == false){
             Log.e(TAG, "Billing client is not ready")
@@ -264,7 +273,9 @@ class MainActivity : ComponentActivity(), BillingClientStateListener {
             }
         }
     }
+
     private suspend fun acknowledgePurchase(purchase: Purchase){
+        Log.d(TAG, "Acknowledging purchase: $purchase")
         if(purchase.purchaseState == Purchase.PurchaseState.PURCHASED){
             if(!purchase.isAcknowledged){
                 val acknowledgePurchaseParams = AcknowledgePurchaseParams.newBuilder()
@@ -272,12 +283,12 @@ class MainActivity : ComponentActivity(), BillingClientStateListener {
                 withContext(Dispatchers.IO){
                     billingClient.acknowledgePurchase(acknowledgePurchaseParams.build()) { billingResult ->
                         val responseCode = billingResult.responseCode
+                        Log.d(TAG, "Acknowledged purchase response: ${responseCode}")
                         when(responseCode){
                             BillingClient.BillingResponseCode.OK -> {
-                                //TODO: optional save purchase to your backend
+                                Log.d(TAG, "Purchase acknowledged")
                                 Toast.makeText(this@MainActivity, "You are now subscribed to the app!", Toast.LENGTH_SHORT).show()
                                 viewModel.handleAction(MainAction.OnUpdateSubscribedPlan(purchase.products.first()))
-                                Log.d(TAG, "Purchase acknowledged")
                             }
                             else -> {
                                 Log.d(TAG, "Purchase acknowledge failed: ${billingResult.debugMessage}")
@@ -286,10 +297,12 @@ class MainActivity : ComponentActivity(), BillingClientStateListener {
                     }
                 }
             } else {
-                //TODO: optional save purchase to your backend
+                Log.d(TAG, "Purchase already acknowledged")
+                viewModel.handleAction(MainAction.OnUpdateSubscribedPlan(purchase.products.first()))
             }
         }
     }
+
     private suspend fun queryUserHistory(){
         withContext(Dispatchers.IO){
             val params = QueryPurchaseHistoryParams.newBuilder()
