@@ -1,13 +1,16 @@
 package com.zaed.chatbot.data.repository
 
+import android.net.Uri
 import android.util.Log
 import com.aallam.openai.api.chat.ChatCompletion
+import com.aallam.openai.api.file.FileId
 import com.aallam.openai.api.image.ImageSize
 import com.aallam.openai.api.image.ImageURL
 import com.aallam.openai.api.model.Model
 import com.aallam.openai.api.model.ModelId
 import com.zaed.chatbot.data.model.ChatHistory
 import com.zaed.chatbot.data.model.ChatQuery
+import com.zaed.chatbot.data.model.MessageAttachment
 import com.zaed.chatbot.data.source.local.ChatLocalDataSource
 import com.zaed.chatbot.data.source.remote.OpenAIRemoteDataSource
 import com.zaed.chatbot.ui.util.toMessageAttachments
@@ -18,6 +21,9 @@ class ChatRepositoryImpl(
     private val chatRemoteDataSource: OpenAIRemoteDataSource,
     private val chatLocalDataSource: ChatLocalDataSource
 ) : ChatRepository {
+    override fun uploadNewImage(uri: Uri): Flow<Result<String>> = chatRemoteDataSource.uploadNewImage(uri)
+    override fun uploadNewFile(attachment: MessageAttachment): Flow<Result<FileId>>  = chatRemoteDataSource.uploadNewFile(attachment)
+
     override suspend fun sendPrompt(
         chatQuery: ChatQuery,
         modelId: ModelId,

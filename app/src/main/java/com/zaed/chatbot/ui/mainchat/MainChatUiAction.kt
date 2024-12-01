@@ -23,6 +23,6 @@ sealed interface MainChatUiAction {
     data class OnUpgradeSubscription(val isFreeTrialEnabled: Boolean, val isLifetime: Boolean) : MainChatUiAction
     data object OnCancelSubscription: MainChatUiAction
     data object OnPrivacyTermsClicked: MainChatUiAction
-    data class OnAddAttachment(val attachment: MessageAttachment): MainChatUiAction
+    data class OnAddAttachment(val attachment: MessageAttachment,val fileContent:String): MainChatUiAction
     data class OnImageClicked(val imageUri: Uri): MainChatUiAction
 }

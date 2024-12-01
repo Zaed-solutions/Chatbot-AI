@@ -1,7 +1,9 @@
 package com.zaed.chatbot.ui.mainchat
 
+import android.content.Intent
 import android.net.Uri
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -50,6 +52,8 @@ import com.zaed.chatbot.ui.theme.ChatbotTheme
 import com.zaed.chatbot.ui.util.contentUriToByteArray
 import com.zaed.chatbot.ui.util.createImageFile
 import com.zaed.chatbot.ui.util.getFileNameFromUri
+import com.zaed.chatbot.ui.util.readPdfContent
+import com.zaed.chatbot.ui.util.readWordContent
 import org.koin.androidx.compose.koinViewModel
 
 private val TAG = "MainChatScreen"
@@ -75,17 +79,60 @@ fun MainChatScreen(
     val imagePicker =
         rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
             uri?.let {
-                val attachment = MessageAttachment(uri = it, type = FileType.IMAGE, byteArray = contentUriToByteArray(context,uri))
-                viewModel.handleAction(MainChatUiAction.OnAddAttachment(attachment))
+                val attachment = MessageAttachment(
+                    uri = it,
+                    type = FileType.IMAGE,
+                )
+                viewModel.handleAction(MainChatUiAction.OnAddAttachment(attachment,""))
             }
         }
     val filePicker =
-        rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
-            uri?.let {
-                val fileName = getFileNameFromUri(context, it)
+        rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            result.data?.data?.let { fileUri ->
+                val mimeType = context.contentResolver.getType(fileUri)
+                Log.d(TAG, "MainChatScreen: file picker $mimeType")
+                val fileName = getFileNameFromUri(context, fileUri)
+                var fileContent =""
+                // Filter MIME types for PDF, Word, and Excel files
+                if (mimeType != null) {
+                    when {
+                        mimeType == "application/pdf" -> {
+                            fileContent = readPdfContent(context, fileUri)
+                        }
+                        mimeType == "application/msword" || mimeType == "application/vnd.openxmlformats-officedocument.wordprocessingml.document" -> {
+                            fileContent = readWordContent(context, fileUri)
+                            Log.d(TAG, "MainChatScreen: file picker $fileContent")
+
+                        }
+
+                        mimeType == "application/vnd.ms-excel" || mimeType == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" -> {
+                            fileContent = readWordContent(context, fileUri)
+                        }
+                        else -> {
+                            // Handle invalid file type
+                            Toast.makeText(
+                                context,
+                                "Invalid file type. Please select a PDF, Word, or Excel file.",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    }
+                } else {
+                    // Handle null MIME type (shouldn't happen, but can be a fallback)
+                    Toast.makeText(
+                        context,
+                        "Unable to determine the file type.",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+                Log.d(TAG, "MainChatScreen: file picker $fileUri")
                 val attachment =
-                    MessageAttachment(name = fileName ?: "", uri = it, type = FileType.ALL)
-                viewModel.handleAction(MainChatUiAction.OnAddAttachment(attachment))
+                    MessageAttachment(
+                        name = fileName ?: "", uri = fileUri, type = FileType.ALL,
+                        text = fileContent
+                    )
+                viewModel.handleAction(MainChatUiAction.OnAddAttachment(attachment,""))
+
             }
         }
     var photoUri by remember { mutableStateOf<Uri?>(null) }
@@ -93,8 +140,11 @@ fun MainChatScreen(
         rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { success ->
             if (success && photoUri != null) {
                 val attachment =
-                    MessageAttachment(uri = photoUri ?: Uri.EMPTY, type = FileType.IMAGE, byteArray = contentUriToByteArray(context,photoUri ?: Uri.EMPTY))
-                viewModel.handleAction(MainChatUiAction.OnAddAttachment(attachment))
+                    MessageAttachment(
+                        uri = photoUri ?: Uri.EMPTY,
+                        type = FileType.IMAGE,
+                    )
+                viewModel.handleAction(MainChatUiAction.OnAddAttachment(attachment,""))
             } else {
                 Log.d(TAG, "Image capture failed.")
             }
@@ -108,7 +158,21 @@ fun MainChatScreen(
         onAction = { action ->
             when (action) {
                 MainChatUiAction.OnAddFileClicked -> {
-                    filePicker.launch("*/*")
+                    val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
+                        type = "*/*" // Allow all files
+                        // Restrict file types to PDF, Word, and Excel
+                        putExtra(
+                            Intent.EXTRA_MIME_TYPES,
+                            arrayOf(
+                                "application/pdf",
+//                                "application/msword",
+//                                "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+//                                "application/vnd.ms-excel",
+//                                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                            )
+                        )
+                    }
+                    filePicker.launch(intent)
                 }
 
                 MainChatUiAction.OnAddImageClicked -> {
@@ -139,14 +203,22 @@ fun MainChatScreen(
                 MainChatUiAction.OnSettingsClicked -> {
                     onNavigateToSettingsScreen()
                 }
+
                 MainChatUiAction.OnCancelSubscription -> {
                     onSubscriptionAction(SubscriptionAction.ManageSubscription)
                 }
+
                 MainChatUiAction.OnRestoreSubscription -> {
                     onSubscriptionAction(SubscriptionAction.RestoreSubscription)
                 }
+
                 is MainChatUiAction.OnUpgradeSubscription -> {
-                    onSubscriptionAction(SubscriptionAction.UpgradeSubscription(action.isFreeTrialEnabled, action.isLifetime))
+                    onSubscriptionAction(
+                        SubscriptionAction.UpgradeSubscription(
+                            action.isFreeTrialEnabled,
+                            action.isLifetime
+                        )
+                    )
                 }
 
                 is MainChatUiAction.OnImageClicked -> {
@@ -185,7 +257,7 @@ fun MainChatScreen(
             ),
             onDismissRequest = { previewImageFullScreen = false to "" }
         ) {
-            Column (Modifier.fillMaxWidth()){
+            Column(Modifier.fillMaxWidth()) {
                 Image(
                     painter = rememberAsyncImagePainter(
                         model = previewImageFullScreen.second,

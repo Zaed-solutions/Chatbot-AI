@@ -1,5 +1,8 @@
 package com.zaed.chatbot.data.source.remote
 
+import android.net.Uri
+import android.util.Log
+import androidx.core.net.toFile
 import com.aallam.openai.api.audio.SpeechRequest
 import com.aallam.openai.api.audio.Transcription
 import com.aallam.openai.api.audio.TranscriptionRequest
@@ -24,21 +27,30 @@ import com.aallam.openai.api.model.Model
 import com.aallam.openai.api.model.ModelId
 import com.aallam.openai.api.moderation.ModerationRequest
 import com.aallam.openai.client.OpenAI
+import com.google.firebase.storage.FirebaseStorage
 import com.zaed.chatbot.data.model.ChatQuery
+import com.zaed.chatbot.data.model.FileType
+import com.zaed.chatbot.data.model.MessageAttachment
+import com.zaed.chatbot.data.model.toFileType
 import com.zaed.chatbot.ui.mainchat.components.ChatModel
-
+import com.zaed.chatbot.ui.util.convertJsonToJsonl
+import com.zaed.chatbot.ui.util.convertToJsonl
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.flow
-import okhttp3.MediaType.Companion.toMediaTypeOrNull
-import okhttp3.MultipartBody
-import okhttp3.RequestBody
+import kotlinx.serialization.json.Json
+import okhttp3.internal.readBomAsCharset
+import okio.FileSystem
+import okio.Path.Companion.toPath
 import okio.Source
+import okio.source
 import java.io.File
-import java.util.UUID
+import java.nio.charset.StandardCharsets
 
 class OpenAIRemoteDataSourceImpl(
     val openAI: OpenAI,
-//    val supabase: SupabaseClient
+    val storage: FirebaseStorage
 ) : OpenAIRemoteDataSource {
 
     override suspend fun listModels(): List<Model> = openAI.models()
@@ -49,6 +61,7 @@ class OpenAIRemoteDataSourceImpl(
         modelId: ModelId
     ): Flow<Result<ChatCompletion>> = flow {
         try {
+            Log.d("RemoteDataSourceImpl", "sendPrompt: $chatQuery")
             val message = if (chatQuery.promptAttachments.isEmpty()) {
                 chatMessage {
                     role = ChatRole.User
@@ -57,15 +70,26 @@ class OpenAIRemoteDataSourceImpl(
                     }
                 }
             } else {
-//                val url = chatQuery.promptAttachments.first().byteArray?.let { uploadAttachment(it) }
-//                if(url.isNullOrEmpty()) throw Exception("Attachment url is null or empty")
-                chatMessage {
-                    role = ChatRole.User
-                    content {
-                        text(chatQuery.prompt)
-//                        image(url)
+                when (chatQuery.promptAttachments[0].type) {
+                    FileType.IMAGE -> {
+                        chatMessage {
+                            role = ChatRole.User
+                            content {
+                                text(chatQuery.prompt)
+                                image(chatQuery.promptAttachments[0].uri.toString())
+                            }
+                        }
+                    }
+                    FileType.ALL -> {
+                        chatMessage {
+                            role = ChatRole.User
+                            content {
+                                text("the file content is "+chatQuery.promptAttachments[0].name+"\n"+"the prompt is "+chatQuery.prompt)
+                            }
+                        }
                     }
                 }
+
             }
             val messages = mutableListOf(message)
             if (isFirst) {
@@ -84,6 +108,36 @@ class OpenAIRemoteDataSourceImpl(
             emit(Result.failure(e))
             e.printStackTrace()
         }
+    }
+    override fun uploadNewImage(uri: Uri): Flow<Result<String>> = callbackFlow {
+        Log.d("RemoteDataSourceImpl5", "uploadNewFile: $uri")
+        val timeStamp = System.currentTimeMillis().toString()
+        val filePathAndName = "ChatGPT/$timeStamp"
+        val ref = storage.reference.child(filePathAndName)
+        val uploadTask = ref.putFile(uri)
+        uploadTask.continueWithTask { task ->
+            if (!task.isSuccessful) {
+                task.exception?.let {
+                    throw it
+                }
+            }
+            ref.downloadUrl
+        }.addOnCompleteListener { task ->
+            if (task.isSuccessful) {
+                val downloadUri = task.result.toString()
+                Log.d("RemoteDataSourceImpl6", "uploadNewImage: $downloadUri")
+                trySend(Result.success(downloadUri))
+            } else {
+                trySend(Result.failure(task.exception ?: Exception("Unknown error")))
+                task.exception?.printStackTrace()
+                Log.d("RemoteDataSourceImpl7", "uploadNewImage: ${task.exception?.message}")
+            }
+        }
+        awaitClose { }
+    }
+
+    override fun uploadNewFile(attachment: MessageAttachment): Flow<Result<FileId>> = flow {
+
     }
 
     override suspend fun createImage(
@@ -119,7 +173,7 @@ class OpenAIRemoteDataSourceImpl(
         //Todo replace model and chat message with the params
         edit = ImageEdit(
             image = FileSource(name = fileName, source = imageSource),
-            model = ModelId("dall-e-2"),
+            model = ModelId("dall-e-3"),
             mask = FileSource(name = "<filename>", source = maskSource),
             prompt = "a sunlit indoor lounge area with a pool containing a flamingo",
             n = 1,

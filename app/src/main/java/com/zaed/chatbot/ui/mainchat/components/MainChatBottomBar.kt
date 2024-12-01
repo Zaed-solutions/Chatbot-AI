@@ -112,27 +112,27 @@ fun MainChatBottomBar(
                                         .padding(6.dp)
                                 )
                             }
-//                            IconButton(
-//                                enabled = false,
-//                                onClick = {
-//                                    onAddFile()
-//                                    isExpanded = false
-//                                },
-//
-//                            ) {
-//                                Icon(
-//                                    imageVector = Icons.Default.FileOpen,
-//                                    contentDescription = "Upload File",
-//                                    tint = MaterialTheme.colorScheme.primary,
-//                                    modifier = modifier
-//                                        .size(32.dp)
-//                                        .background(
-//                                            color = MaterialTheme.colorScheme.surfaceContainer,
-//                                            shape = CircleShape
-//                                        )
-//                                        .padding(6.dp)
-//                                )
-//                            }
+                            IconButton(
+                                enabled = true,
+                                onClick = {
+                                    onAddFile()
+                                    isExpanded = false
+                                },
+
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.FileOpen,
+                                    contentDescription = "Upload File",
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = modifier
+                                        .size(32.dp)
+                                        .background(
+                                            color = MaterialTheme.colorScheme.surfaceContainer,
+                                            shape = CircleShape
+                                        )
+                                        .padding(6.dp)
+                                )
+                            }
                         }
                     }
 

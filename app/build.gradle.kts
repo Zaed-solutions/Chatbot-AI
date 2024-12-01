@@ -18,10 +18,10 @@ android {
 
     defaultConfig {
         applicationId = "com.zaed.chatbot"
-        minSdk = 24
+        minSdk = 26
         targetSdk = 34
-        versionCode = 3
-        versionName = "0.0.2-alpha"
+        versionCode = 4
+        versionName = "0.0.3-alpha"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -52,6 +52,13 @@ android {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
+    }
+    packagingOptions {
+        exclude("META-INF/DEPENDENCIES")
+        exclude("META-INF/LICENSE")
+        exclude("META-INF/LICENSE.txt")
+        exclude("META-INF/NOTICE")
+        exclude("META-INF/NOTICE.txt")
     }
 }
 
@@ -115,6 +122,9 @@ dependencies {
     implementation("com.halilibo.compose-richtext:richtext-ui-material3:1.0.0-alpha01")
     implementation(platform("com.google.firebase:firebase-bom:33.6.0"))
     implementation("com.google.firebase:firebase-storage-ktx")
+
+    implementation ("com.tom-roush:pdfbox-android:2.0.27.0")
+
 
 
 

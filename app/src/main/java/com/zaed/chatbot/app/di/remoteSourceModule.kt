@@ -2,6 +2,9 @@ package com.zaed.chatbot.app.di
 
 import com.aallam.openai.api.http.Timeout
 import com.aallam.openai.client.OpenAI
+import com.google.firebase.ktx.Firebase
+import com.google.firebase.storage.FirebaseStorage
+import com.google.firebase.storage.ktx.storage
 import com.zaed.chatbot.data.source.remote.ChatRemoteDataSource
 import com.zaed.chatbot.data.source.remote.ChatRemoteDataSourceImpl
 import com.zaed.chatbot.data.source.remote.OpenAIRemoteDataSource
@@ -20,4 +23,7 @@ val remoteSourceModule = module {
         )
     }
     singleOf(::OpenAIRemoteDataSourceImpl) { bind<OpenAIRemoteDataSource>() }
+    single<FirebaseStorage> {
+        Firebase.storage
+    }
 }
