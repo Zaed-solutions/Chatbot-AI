@@ -140,7 +140,7 @@ class MainActivity : ComponentActivity(), BillingClientStateListener {
                                 QueryProductDetailsParams.Product.newBuilder()
                                     .setProductId(
                                         if (lifeTime) Constants.LIFETIME_SUBSCRIPTION_ID
-                                        else Constants.WEEKLY_SUBSCRIPTION_ID
+                                        else Constants.YEARLY_SUBSCRIPTION_ID
                                     )
                                     .setProductType(BillingClient.ProductType.SUBS)
                                     .build()
@@ -206,7 +206,7 @@ class MainActivity : ComponentActivity(), BillingClientStateListener {
                 listOf(
                     QueryProductDetailsParams.Product
                         .newBuilder()
-                        .setProductId(Constants.WEEKLY_SUBSCRIPTION_ID)
+                        .setProductId(Constants.YEARLY_SUBSCRIPTION_ID)
                         .setProductType(BillingClient.ProductType.SUBS)
                         .build(),
                     QueryProductDetailsParams.Product

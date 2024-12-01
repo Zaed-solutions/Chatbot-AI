@@ -84,7 +84,7 @@ class OpenAIRemoteDataSourceImpl(
                         chatMessage {
                             role = ChatRole.User
                             content {
-                                text("the file content is "+chatQuery.promptAttachments[0].name+"\n"+"the prompt is "+chatQuery.prompt)
+                                text("the file content is "+chatQuery.promptAttachments[0].text+"\n"+"the prompt is "+chatQuery.prompt)
                             }
                         }
                     }
