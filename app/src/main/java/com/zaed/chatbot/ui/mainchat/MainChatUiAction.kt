@@ -1,6 +1,7 @@
 package com.zaed.chatbot.ui.mainchat
 
 import android.net.Uri
+import com.android.billingclient.api.ProductDetails
 import com.zaed.chatbot.data.model.MessageAttachment
 import com.zaed.chatbot.ui.mainchat.components.ChatModel
 
@@ -20,7 +21,7 @@ sealed interface MainChatUiAction {
     data object OnOpenCameraClicked : MainChatUiAction
     data class OnSendSuggestion(val suggestionPrompt: String) : MainChatUiAction
     data object OnRestoreSubscription : MainChatUiAction
-    data class OnUpgradeSubscription(val isFreeTrialEnabled: Boolean, val isLifetime: Boolean) : MainChatUiAction
+    data class OnUpgradeSubscription(val product: ProductDetails) : MainChatUiAction
     data object OnCancelSubscription: MainChatUiAction
     data object OnPrivacyTermsClicked: MainChatUiAction
     data class OnAddAttachment(val attachment: MessageAttachment,val fileContent:String): MainChatUiAction

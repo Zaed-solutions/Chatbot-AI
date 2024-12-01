@@ -28,6 +28,10 @@ import com.aallam.openai.api.model.ModelId
 import com.aallam.openai.api.moderation.ModerationRequest
 import com.aallam.openai.client.OpenAI
 import com.google.firebase.storage.FirebaseStorage
+import com.google.mlkit.nl.languageid.LanguageIdentification
+import com.google.mlkit.nl.languageid.LanguageIdentifier
+import com.google.mlkit.nl.translate.TranslateLanguage
+import com.google.mlkit.nl.translate.TranslatorOptions
 import com.zaed.chatbot.data.model.ChatQuery
 import com.zaed.chatbot.data.model.FileType
 import com.zaed.chatbot.data.model.MessageAttachment
@@ -109,6 +113,7 @@ class OpenAIRemoteDataSourceImpl(
             e.printStackTrace()
         }
     }
+
     override fun uploadNewImage(uri: Uri): Flow<Result<String>> = callbackFlow {
         Log.d("RemoteDataSourceImpl5", "uploadNewFile: $uri")
         val timeStamp = System.currentTimeMillis().toString()
@@ -146,6 +151,7 @@ class OpenAIRemoteDataSourceImpl(
         size: ImageSize
     ): Result<List<ImageURL>> {
         return try {
+
             Result.success(
                 openAI.imageURL( // or openAI.imageJSON
                     creation = ImageCreation(

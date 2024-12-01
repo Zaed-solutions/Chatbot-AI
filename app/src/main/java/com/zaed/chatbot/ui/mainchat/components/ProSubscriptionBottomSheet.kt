@@ -1,5 +1,7 @@
 package com.zaed.chatbot.ui.mainchat.components
 
+import android.util.Log
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -12,9 +14,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
@@ -22,6 +28,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -42,6 +49,7 @@ import androidx.compose.ui.unit.sp
 import com.android.billingclient.api.ProductDetails
 import com.zaed.chatbot.R
 import com.zaed.chatbot.ui.theme.ChatbotTheme
+import com.zaed.chatbot.ui.util.Constants
 
 @Composable
 fun ProSubscriptionBottomSheet(
@@ -49,16 +57,16 @@ fun ProSubscriptionBottomSheet(
     onDismiss: () -> Unit = {},
     onRestore: () -> Unit = {},
     products: List<ProductDetails> = emptyList(),
-    onContinue: (Boolean, Boolean) -> Unit = { _, _ -> },
+    onContinue: (ProductDetails) -> Unit = {},
     onPrivacyTermsClicked: () -> Unit = {},
 ) {
-    var isFreeTrialEnabled by remember { mutableStateOf(false) }
+    var selectedProduct by remember { mutableStateOf<ProductDetails?>(null) }
     var isLifeTimeSelected by remember { mutableStateOf(false) }
     var selectedIndex by remember { mutableStateOf(0) }
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 24.dp),
+            .padding(horizontal = 24.dp).verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.SpaceBetween
     ) {
@@ -136,38 +144,38 @@ fun ProSubscriptionBottomSheet(
                 }
             )
         }
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 16.dp)
-                .border(
-                    width = 1.dp,
-                    color = MaterialTheme.colorScheme.outlineVariant,
-                    shape = MaterialTheme.shapes.large
-                ),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = stringResource(R.string.enable_free_trial),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.padding(start = 16.dp)
-            )
-            Switch(
-                checked = isFreeTrialEnabled,
-                onCheckedChange = {
-                    isFreeTrialEnabled = it
-                },
-                modifier = Modifier.padding(end = 16.dp, top = 2.dp, bottom = 2.dp)
-            )
-        }
-        products.forEachIndexed { index, product ->
+//        Row(
+//            modifier = Modifier
+//                .fillMaxWidth()
+//                .padding(top = 16.dp)
+//                .border(
+//                    width = 1.dp,
+//                    color = MaterialTheme.colorScheme.outlineVariant,
+//                    shape = MaterialTheme.shapes.large
+//                ),
+//            horizontalArrangement = Arrangement.SpaceBetween,
+//            verticalAlignment = Alignment.CenterVertically
+//        ) {
+//            Text(
+//                text = stringResource(R.string.enable_free_trial),
+//                style = MaterialTheme.typography.titleMedium,
+//                fontWeight = FontWeight.SemiBold,
+//                modifier = Modifier.padding(start = 16.dp)
+//            )
+//            Switch(
+//                checked = isFreeTrialEnabled,
+//                onCheckedChange = {
+//                    isFreeTrialEnabled = it
+//                },
+//                modifier = Modifier.padding(end = 16.dp, top = 2.dp, bottom = 2.dp)
+//            )
+//        }
+        products.forEachIndexed { _, product ->
             SubscriptionItem(
-                isSelected = selectedIndex == index,
+                isSelected = selectedProduct == product,
                 onClick = {
-                    selectedIndex = index
-                    isLifeTimeSelected = index == 1
+                    selectedProduct = product
+                    Log.d("momo", "ProSubscriptionBottomSheet: ${selectedProduct?.name}")
                 },
                 name = product.name,
                 formattedPrice = product.subscriptionOfferDetails?.first()?.pricingPhases?.pricingPhaseList?.first()?.formattedPrice
@@ -180,7 +188,7 @@ fun ProSubscriptionBottomSheet(
                 .fillMaxWidth()
                 .padding(top = 24.dp),
             onClick = {
-                onContinue(isFreeTrialEnabled, isLifeTimeSelected)
+                selectedProduct?.let {onContinue(it) }
                 onDismiss()
             },
             shape = MaterialTheme.shapes.large,
@@ -226,20 +234,18 @@ fun SubscriptionItem(
     formattedPrice: String = "EGP 279.99",
     isLifeTime: Boolean = false,
 ) {
+    Log.d("momo", " $name + SubscriptionItem: $isSelected")
     val selectedOutlineColor = MaterialTheme.colorScheme.onBackground
     val unSelectedOutlineColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
-    Column(
+    OutlinedCard(
         modifier = modifier
             .fillMaxWidth()
-            .padding(top = 8.dp)
-            .border(
-                width = 1.dp,
-                color = if (isSelected) unSelectedOutlineColor else selectedOutlineColor,
-                shape = MaterialTheme.shapes.extraLarge
-            )
-            .clickable {
-                onClick()
-            }
+            .padding(top = 8.dp),
+        onClick = onClick,
+        border = BorderStroke(
+            width = 1.dp,
+            color = if (isSelected) selectedOutlineColor else unSelectedOutlineColor
+        )
     ) {
         Row(
             modifier = Modifier

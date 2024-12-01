@@ -92,8 +92,7 @@ fun SettingsScreen(
                 SettingsUiAction.OnCommunityGuidelinesClicked -> onNavigateToCommunityGuidelines()
                 is SettingsUiAction.OnUpgradeSubscription -> onSubscriptionAction(
                     SubscriptionAction.UpgradeSubscription(
-                        action.isFreeTrialEnabled,
-                        action.isLifetime
+                        action.productDetails
                     )
                 )
                 is SettingsUiAction.OnSubmitPromoCode -> onSubscriptionAction(
@@ -149,10 +148,10 @@ fun SettingsScreenContent(
                         onDismiss = { isBottomSheetVisible = false },
                         onRestore = { onAction(SettingsUiAction.OnRestorePurchaseClicked) },
                         products = products,
-                        onContinue = { b: Boolean, b1: Boolean ->
+                        onContinue = { product ->
                             onAction(
                                 SettingsUiAction.OnUpgradeSubscription(
-                                    b, b1
+                                    product
                                 )
                             )
                         },

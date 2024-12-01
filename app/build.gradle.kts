@@ -20,8 +20,8 @@ android {
         applicationId = "com.zaed.chatbot"
         minSdk = 24
         targetSdk = 34
-        versionCode = 4
-        versionName = "0.0.3-alpha"
+        versionCode = 6
+        versionName = "0.0.5-alpha"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -74,6 +74,8 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
     implementation(libs.androidx.foundation.layout.android)
+    implementation(libs.language.id.common)
+    implementation(libs.translate)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -125,6 +127,8 @@ dependencies {
     implementation("com.google.firebase:firebase-storage-ktx")
 
     implementation ("com.tom-roush:pdfbox-android:2.0.27.0")
+//    implementation("com.google.mlkit:translation:17.0.3")
+
 
 
 

@@ -215,8 +215,7 @@ fun MainChatScreen(
                 is MainChatUiAction.OnUpgradeSubscription -> {
                     onSubscriptionAction(
                         SubscriptionAction.UpgradeSubscription(
-                            action.isFreeTrialEnabled,
-                            action.isLifetime
+                            action.product
                         )
                     )
                 }
@@ -365,11 +364,10 @@ fun MainChatScreenContent(
                         onDismiss = { isBottomSheetVisible = false },
                         onRestore = { onAction(MainChatUiAction.OnRestoreSubscription) },
                         products = products,
-                        onContinue = { isFreeTrialEnabled, isLifetimeSelected ->
+                        onContinue = { product ->
                             onAction(
                                 MainChatUiAction.OnUpgradeSubscription(
-                                    isFreeTrialEnabled,
-                                    isLifetimeSelected
+                                    product
                                 )
                             )
                         },

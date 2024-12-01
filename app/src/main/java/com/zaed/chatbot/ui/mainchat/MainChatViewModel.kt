@@ -11,7 +11,9 @@ import com.zaed.chatbot.data.model.MessageAttachment
 import com.zaed.chatbot.data.repository.ChatRepository
 import com.zaed.chatbot.ui.mainchat.components.ChatModel
 import com.zaed.chatbot.ui.util.ConnectivityObserver
+import com.zaed.chatbot.ui.util.detectLanguage
 import com.zaed.chatbot.ui.util.toMessageAttachments
+import com.zaed.chatbot.ui.util.translateToEnglish
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -124,13 +126,13 @@ class MainChatViewModel(
         }
     }
 
-    private fun createImages() {
+    private fun createImages(translatedPrompt: String) {
         val isFirstMessage = uiState.value.queries.isEmpty()
         viewModelScope.launch(Dispatchers.IO) {
             viewModelScope.launch(Dispatchers.IO) {
                 val query = ChatQuery(
                     chatId = uiState.value.chatId,
-                    prompt = uiState.value.currentPrompt,
+                    prompt = translatedPrompt,
                     response = "",
                     promptAttachments = uiState.value.attachments,
                     isLoading = true,
@@ -175,7 +177,18 @@ class MainChatViewModel(
         when (uiState.value.selectedModel) {
             ChatModel.GPT_4O_MINI -> createText(ChatModel.GPT_4O_MINI.modelId)
             ChatModel.GPT_4O -> createText(ChatModel.GPT_4O.modelId)
-            ChatModel.AI_ART_GENERATOR -> createImages()
+            ChatModel.AI_ART_GENERATOR -> {
+                detectLanguage(uiState.value.currentPrompt){ languageCode ->
+                    if (languageCode == "ar") {
+                        translateToEnglish(uiState.value.currentPrompt) { translatedPrompt ->
+                            createImages(translatedPrompt)
+                        }
+                    } else {
+                        createImages(uiState.value.currentPrompt)
+                    }
+                }
+
+            }
         }
 
     }

@@ -118,8 +118,7 @@ class MainActivity : ComponentActivity(), BillingClientStateListener {
                             is SubscriptionAction.OnApplyPromoCode -> applyPromoCode(action.promoCode)
                             SubscriptionAction.RestoreSubscription -> restoreSubscription()
                             is SubscriptionAction.UpgradeSubscription -> upgradeSubscription(
-                                action.freeTrialEnabled,
-                                action.isLifeTime
+                                action.product
                             )
                         }
                     },
@@ -130,7 +129,7 @@ class MainActivity : ComponentActivity(), BillingClientStateListener {
         }
     }
 
-    private fun upgradeSubscription(freeTrialEnabled: Boolean, lifeTime: Boolean) {
+    private fun upgradeSubscription(product: ProductDetails) {
         lifecycleScope.launch {
             try {
                 val productDetails = billingClient.queryProductDetails(
@@ -139,8 +138,7 @@ class MainActivity : ComponentActivity(), BillingClientStateListener {
                             listOf(
                                 QueryProductDetailsParams.Product.newBuilder()
                                     .setProductId(
-                                        if (lifeTime) Constants.LIFETIME_SUBSCRIPTION_ID
-                                        else Constants.YEARLY_SUBSCRIPTION_ID
+                                        product.productId
                                     )
                                     .setProductType(BillingClient.ProductType.SUBS)
                                     .build()
@@ -211,7 +209,7 @@ class MainActivity : ComponentActivity(), BillingClientStateListener {
                         .build(),
                     QueryProductDetailsParams.Product
                         .newBuilder()
-                        .setProductId(Constants.LIFETIME_SUBSCRIPTION_ID)
+                        .setProductId(Constants.MONTHLY_SUBSCRIPTION_ID)
                         .setProductType(BillingClient.ProductType.SUBS)
                         .build(),
                 )
