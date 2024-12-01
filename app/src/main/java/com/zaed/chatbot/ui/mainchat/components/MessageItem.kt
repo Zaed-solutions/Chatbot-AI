@@ -63,9 +63,9 @@ fun MessageItem(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
-                painter = painterResource(id = if (isPrompt) R.drawable.ic_profile else R.drawable.ic_openai),
+                painter = painterResource(id = if (isPrompt) R.drawable.ic_profile else R.drawable.chatbot_ai),
                 contentDescription = "Message Icon",
-                modifier = Modifier.size(20.dp),
+                modifier = Modifier.size(24.dp),
             )
             Text(
                 text = stringResource(id = if (isPrompt) R.string.you else R.string.app_name),

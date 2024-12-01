@@ -18,7 +18,7 @@ android {
 
     defaultConfig {
         applicationId = "com.zaed.chatbot"
-        minSdk = 26
+        minSdk = 24
         targetSdk = 34
         versionCode = 4
         versionName = "0.0.3-alpha"
@@ -32,6 +32,7 @@ android {
     buildTypes {
         release {
             isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"

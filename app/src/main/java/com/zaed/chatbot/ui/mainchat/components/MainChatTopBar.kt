@@ -7,6 +7,7 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -41,8 +42,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -97,10 +101,10 @@ fun MainChatTopBar(
             verticalAlignment = Alignment.CenterVertically
         ) {
             //App Icon and Name
-            Icon(
-                painterResource(id = R.drawable.ic_openai),
+            Image(
+                imageVector = ImageVector.vectorResource(R.drawable.chatbot_ai),
                 contentDescription = "App Icon",
-                modifier = Modifier.size(24.dp)
+                modifier = Modifier.size(32.dp)
             )
             Text(
                 text = stringResource(id = R.string.app_name),
