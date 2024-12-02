@@ -20,8 +20,8 @@ android {
         applicationId = "com.zaed.chatbot"
         minSdk = 24
         targetSdk = 34
-        versionCode =17
-        versionName = "0.1.7-beta"
+        versionCode =10
+        versionName = "1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -84,6 +84,7 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
     implementation(libs.kotlin.compose.compiler.plugin)
+
     //Kotlinx-Serialization
     implementation(libs.kotlinx.serialization.json)
     //Kotlinx-DateTime

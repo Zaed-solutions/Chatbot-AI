@@ -1,7 +1,9 @@
 package com.zaed.chatbot.ui.mainchat
 
+import android.Manifest
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -11,12 +13,15 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Download
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -29,6 +34,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.layout.ContentScale
@@ -36,6 +42,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.rememberAsyncImagePainter
 import com.android.billingclient.api.ProductDetails
@@ -53,11 +60,13 @@ import com.zaed.chatbot.ui.mainchat.components.QueryList
 import com.zaed.chatbot.ui.mainchat.components.SpeechRecognitionBottomSheet
 import com.zaed.chatbot.ui.theme.ChatbotTheme
 import com.zaed.chatbot.ui.util.createImageFile
+import com.zaed.chatbot.ui.util.downloadImage
+import com.zaed.chatbot.ui.util.downloadImageWithMediaStore
 import com.zaed.chatbot.ui.util.getFileNameFromUri
 import com.zaed.chatbot.ui.util.readPdfContent
 import com.zaed.chatbot.ui.util.readWordContent
+import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
-import java.lang.Error
 
 private val TAG = "MainChatScreen"
 
@@ -144,6 +153,7 @@ fun MainChatScreen(
 
             }
         }
+    val scope = rememberCoroutineScope()
     var photoUri by remember { mutableStateOf<Uri?>(null) }
     val cameraCaptureLauncher =
         rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { success ->
@@ -158,9 +168,20 @@ fun MainChatScreen(
                 Log.d(TAG, "Image capture failed.")
             }
         }
+    var previewImageFullScreen by remember { mutableStateOf(false to "") }
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            scope.launch {
+                downloadImage(context, previewImageFullScreen.second)
+            }
+        } else {
+            Toast.makeText(context, "Permission denied", Toast.LENGTH_SHORT).show()
+        }
+    }
 
     var recordingBottomSheetVisible by remember { mutableStateOf(false) }
-    var previewImageFullScreen by remember { mutableStateOf(false to "") }
     MainChatScreenContent(
         isConnected = state.internetConnected,
         modifier = modifier,
@@ -267,7 +288,7 @@ fun MainChatScreen(
             ),
             onDismissRequest = { previewImageFullScreen = false to "" }
         ) {
-            Column(Modifier.fillMaxWidth()) {
+            Box(Modifier.fillMaxWidth()) {
                 Image(
                     painter = rememberAsyncImagePainter(
                         model = previewImageFullScreen.second,
@@ -276,6 +297,24 @@ fun MainChatScreen(
                     ),
                     contentDescription = "Attachment BackGround",
                 )
+                IconButton(
+                    onClick = {
+                        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+                            // Request permission for devices below Android 10
+                            permissionLauncher.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                        } else {
+                            // Start the download directly for Android 10 and above
+                            scope.launch {
+                                downloadImageWithMediaStore(context, previewImageFullScreen.second)
+                            }
+                        }                    },
+                    modifier = Modifier.align(Alignment.BottomEnd)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Download,
+                        contentDescription = "Close",
+                    )
+                }
             }
         }
     }
@@ -294,7 +333,7 @@ fun MainChatScreenContent(
     onDecrementFreeTrialCount: () -> Unit = {},
     products: List<ProductDetails> = emptyList(),
     prompt: String,
-    isError: String="",
+    isError: String = "",
     isLoading: Boolean = false,
     queries: List<ChatQuery> = emptyList(),
     isAnimating: Boolean = false,
@@ -419,7 +458,6 @@ fun MainChatScreenContent(
         }
     }
     if (!isConnected) {
-
         InfoDialog(
             title = "Whoops!",
             desc = "No Internet Connection found.\n" +
