@@ -76,6 +76,7 @@ fun MainChatScreen(
     onDecrementFreeTrialCount: () -> Unit,
     freeTrialCount: Int,
 ) {
+    Log.d("tenoo", "mainChatScreen: ${isPro}")
 
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     LaunchedEffect(true) {
@@ -300,6 +301,7 @@ fun MainChatScreenContent(
     selectedModel: ChatModel = ChatModel.GPT_4O_MINI,
     attachments: List<MessageAttachment> = emptyList()
 ) {
+    Log.d("tenoo", "mainChatScreenContent: ${isPro}")
     var isBottomSheetVisible by remember { mutableStateOf(isPro) }
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val infoDialog = remember { mutableStateOf(false) }

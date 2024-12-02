@@ -53,7 +53,7 @@ class MainViewModel(
         }
     }
 
-    private val TAG = "MainViewModel"
+    private val TAG = "MainActivity"
     fun handleAction(action: MainAction) {
         Log.d(TAG, "handleAction: $action")
         when (action) {
@@ -61,19 +61,18 @@ class MainViewModel(
             is MainAction.OnSetFontScale -> setFontScale(action.fontScale)
             is MainAction.OnUpdateProductsList -> updateProductsList(action.products)
             is MainAction.OnUpdateSubscribedPlan -> updateSubscribedPlan(action.planId)
-            else -> Unit
         }
     }
 
     private fun updateSubscribedPlan(planId: String) {
         viewModelScope.launch {
-            Log.d("MainViewModel", "updateSubscribedPlan: $planId")
-            _uiState.update {
-                it.copy(
-                    subscribedPlan = it.products.find { it.productId == planId }, isPro = true
+            Log.d(TAG, "updateSubscribedPlan: $planId")
+            _uiState.update {oldState->
+                oldState.copy(
+                    subscribedPlan = oldState.products.find { it.productId == planId }, isPro = true
                 )
             }
-
+            Log.d(TAG, "updateSubscribedPlan: ${uiState.value.isPro}")
         }
     }
 

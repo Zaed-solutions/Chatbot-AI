@@ -20,8 +20,8 @@ android {
         applicationId = "com.zaed.chatbot"
         minSdk = 24
         targetSdk = 34
-        versionCode =12
-        versionName = "0.1.2-beta"
+        versionCode =17
+        versionName = "0.1.7-beta"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {

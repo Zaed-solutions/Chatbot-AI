@@ -53,17 +53,51 @@ class MainActivity : ComponentActivity(), BillingClientStateListener {
         PurchasesUpdatedListener { billingResult, purchases ->
             Log.d(TAG, "Purchases Updated Listener: result: $billingResult, purchases: $purchases ")
             val responseCode = billingResult.responseCode
+            Log.d(TAG, "Purchases Updated Listener: response code: $responseCode")
             when(responseCode){
                 BillingClient.BillingResponseCode.OK -> {
                     Log.d(TAG, "Query purchases success")
                     if(purchases?.isNotEmpty() == true){
                         purchases.forEach{ purchase ->
-                            Log.d(TAG, "Purchase: ${purchase}")
+                            Log.d(TAG, "Purchase: ${purchase.purchaseState}")
                             lifecycleScope.launch {
                                 acknowledgePurchase(purchase)
                             }
                         }
                     }
+                }
+                BillingClient.BillingResponseCode.ITEM_ALREADY_OWNED->{
+                    Log.d(TAG, "Item already owned")
+                }
+                BillingClient.BillingResponseCode.USER_CANCELED->{
+                    Log.d(TAG, "User canceled")
+                }
+                BillingClient.BillingResponseCode.SERVICE_DISCONNECTED->{
+                    Log.d(TAG, "Service disconnected")
+                }
+                BillingClient.BillingResponseCode.SERVICE_UNAVAILABLE->{
+                    Log.d(TAG, "Service unavailable")
+                }
+                BillingClient.BillingResponseCode.BILLING_UNAVAILABLE->{
+                    Log.d(TAG, "Billing unavailable")
+                }
+                BillingClient.BillingResponseCode.DEVELOPER_ERROR-> {
+                    Log.d(TAG, "Developer error")
+                }
+                BillingClient.BillingResponseCode.ERROR->{
+                    Log.d(TAG, "Error")
+                }
+                BillingClient.BillingResponseCode.ITEM_UNAVAILABLE->{
+                    Log.d(TAG, "Item unavailable")
+                }
+                BillingClient.BillingResponseCode.FEATURE_NOT_SUPPORTED->{
+                    Log.d(TAG, "Feature not supported")
+                }
+                BillingClient.BillingResponseCode.ITEM_NOT_OWNED->{
+                    Log.d(TAG, "Item not owned")
+                }
+                BillingClient.BillingResponseCode.NETWORK_ERROR ->{
+                    Log.d(TAG, "Network error")
                 }
                 else -> {
                     Log.d(TAG, "Query purchases failed: ${billingResult.debugMessage}")
@@ -101,6 +135,7 @@ class MainActivity : ComponentActivity(), BillingClientStateListener {
         val state by viewModel.uiState.collectAsStateWithLifecycle()
         var fontScale by remember { mutableFloatStateOf(state.fontScale) }
         CompositionLocalProvider(LocalFontScale provides fontScale) {
+            Log.d("tenoo", "mainActivity: ${state.isPro}")
             ChatbotTheme {
                 val navController = rememberNavController()
                 NavigationHost(modifier = Modifier
@@ -251,7 +286,7 @@ class MainActivity : ComponentActivity(), BillingClientStateListener {
     }
 
     private suspend fun queryPurchases() {
-        if(billingClient.isReady == false){
+        if(!billingClient.isReady){
             Log.e(TAG, "Billing client is not ready")
             return
         }
@@ -281,7 +316,7 @@ class MainActivity : ComponentActivity(), BillingClientStateListener {
     }
 
     private suspend fun acknowledgePurchase(purchase: Purchase){
-        Log.d(TAG, "Acknowledging purchase: $purchase")
+        Log.d(TAG, "Acknowledging purchase: ${purchase.isAcknowledged}")
         if(purchase.purchaseState == Purchase.PurchaseState.PURCHASED){
             if(!purchase.isAcknowledged){
                 val acknowledgePurchaseParams = AcknowledgePurchaseParams.newBuilder()
@@ -289,11 +324,10 @@ class MainActivity : ComponentActivity(), BillingClientStateListener {
                 withContext(Dispatchers.IO){
                     billingClient.acknowledgePurchase(acknowledgePurchaseParams.build()) { billingResult ->
                         val responseCode = billingResult.responseCode
-                        Log.d(TAG, "Acknowledged purchase response: ${responseCode}")
+                        Log.d(TAG, "Acknowledged purchase response: $responseCode")
                         when(responseCode){
                             BillingClient.BillingResponseCode.OK -> {
                                 Log.d(TAG, "Purchase acknowledged")
-                                Toast.makeText(this@MainActivity, "You are now subscribed to the app!", Toast.LENGTH_SHORT).show()
                                 viewModel.handleAction(MainAction.OnUpdateSubscribedPlan(purchase.products.first()))
                             }
                             else -> {
@@ -306,6 +340,8 @@ class MainActivity : ComponentActivity(), BillingClientStateListener {
                 Log.d(TAG, "Purchase already acknowledged")
                 viewModel.handleAction(MainAction.OnUpdateSubscribedPlan(purchase.products.first()))
             }
+        }else {
+            Log.d(TAG, "Purchase not acknowledged${purchase.purchaseState}")
         }
     }
 
@@ -325,6 +361,7 @@ class MainActivity : ComponentActivity(), BillingClientStateListener {
                             Log.d(TAG, "Product: $product")
                         }
                     }
+                    Log.d(TAG, "Purchase history list size: ${historyList.size}")
                 } else {
                     Log.d(TAG, "Purchase history list is empty")
                 }
@@ -344,7 +381,7 @@ class MainActivity : ComponentActivity(), BillingClientStateListener {
         val billingFlowParams = BillingFlowParams.newBuilder()
             .setProductDetailsParamsList(productDetailsParamsList)
             .build()
-        if(billingClient.isReady == false){
+        if(!billingClient.isReady){
             Log.e(TAG, "Billing client is not ready")
         }
         val billingResult = billingClient.launchBillingFlow(this, billingFlowParams)

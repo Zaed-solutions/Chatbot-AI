@@ -1,5 +1,6 @@
 package com.zaed.chatbot.app.navigation
 
+import android.util.Log
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -37,6 +38,7 @@ fun NavigationHost(
     onDecrementFreeTrialCount: () -> Unit,
     freeTrialCount: Int,
 ) {
+    Log.d("tenoo", "naviHos: ${isPro}")
     NavHost(modifier = modifier,
         navController = navController,
         startDestination = MainChatRoute(),
