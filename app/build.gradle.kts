@@ -124,6 +124,15 @@ dependencies {
     runtimeOnly ("io.ktor:ktor-client-okhttp")
     implementation("com.halilibo.compose-richtext:richtext-commonmark:1.0.0-alpha01")
     implementation("com.halilibo.compose-richtext:richtext-ui-material3:1.0.0-alpha01")
+    implementation(platform("com.google.firebase:firebase-bom:33.6.0"))
+    implementation("com.google.firebase:firebase-storage-ktx")
+    implementation("com.google.firebase:firebase-firestore-ktx")
+
+    implementation ("com.tom-roush:pdfbox-android:2.0.27.0")
+
+    implementation("androidx.core:core-splashscreen:1.0.0-beta02")
+
+
 
 
 

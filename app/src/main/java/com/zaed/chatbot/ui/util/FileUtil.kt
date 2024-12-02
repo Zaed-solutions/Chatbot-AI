@@ -1,6 +1,7 @@
 package com.zaed.chatbot.ui.util
 
 import android.content.ContentResolver
+import android.content.ContentValues
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -11,6 +12,7 @@ import android.provider.MediaStore
 import android.provider.OpenableColumns
 import android.util.Log
 import android.webkit.MimeTypeMap
+import android.widget.Toast
 import androidx.core.content.FileProvider
 import androidx.core.net.toUri
 import com.aallam.openai.api.image.ImageURL
@@ -19,11 +21,16 @@ import com.tom_roush.pdfbox.pdmodel.PDDocument
 import com.tom_roush.pdfbox.text.PDFTextStripper
 import com.zaed.chatbot.data.model.FileType
 import com.zaed.chatbot.data.model.MessageAttachment
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import okhttp3.OkHttpClient
+import okhttp3.Request
 import org.json.JSONArray
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileOutputStream
 import java.io.InputStream
+import java.io.OutputStream
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -215,3 +222,64 @@ fun ImageURL.toMessageAttachment(): MessageAttachment =
         FileType.IMAGE,
         uri = url.toUri()
     )
+suspend fun downloadImageWithMediaStore(context: Context, imageUrl: String) {
+    val client = OkHttpClient()
+
+    // Make network call to download the image
+    val request = Request.Builder().url(imageUrl).build()
+    val response = withContext(Dispatchers.IO) { client.newCall(request).execute() }
+
+    if (response.isSuccessful) {
+        val imageBytes = response.body?.byteStream()
+        val fileName = "downloaded_image_${System.currentTimeMillis()}.jpg"
+
+        // Save image using MediaStore for Android 10 and higher
+        val resolver = context.contentResolver
+        val contentValues = ContentValues().apply {
+            put(MediaStore.Images.Media.DISPLAY_NAME, fileName)
+            put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg")
+            put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_DCIM)
+        }
+
+        val uri: Uri? = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
+
+        if (uri != null) {
+            withContext(Dispatchers.IO) {
+                resolver.openOutputStream(uri)?.use { outputStream: OutputStream ->
+                    imageBytes?.copyTo(outputStream)
+                }
+            }
+            Toast.makeText(context, "Image saved to Downloads", Toast.LENGTH_SHORT).show()
+        } else {
+            Toast.makeText(context, "Failed to save image", Toast.LENGTH_SHORT).show()
+        }
+    } else {
+        Toast.makeText(context, "Failed to download image", Toast.LENGTH_SHORT).show()
+    }
+}
+suspend fun downloadImage(context: Context, imageUrl: String) {
+    val client = OkHttpClient()
+
+    // Make network call to download the image
+    val request = Request.Builder().url(imageUrl).build()
+    val response = withContext(Dispatchers.IO) { client.newCall(request).execute() }
+
+    if (response.isSuccessful) {
+        val imageBytes = response.body?.byteStream()
+        val fileName = "downloaded_image_${System.currentTimeMillis()}.jpg"
+        val downloadsDir =
+            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+        val file = File(downloadsDir, fileName)
+
+        // Write to file
+        withContext(Dispatchers.IO) {
+            FileOutputStream(file).use { output ->
+                imageBytes?.copyTo(output)
+            }
+        }
+
+        Toast.makeText(context, "Image saved to Downloads", Toast.LENGTH_SHORT).show()
+    } else {
+        Toast.makeText(context, "Failed to download image", Toast.LENGTH_SHORT).show()
+    }
+}
