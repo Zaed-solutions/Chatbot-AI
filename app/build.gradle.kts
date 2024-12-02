@@ -20,8 +20,8 @@ android {
         applicationId = "com.zaed.chatbot"
         minSdk = 24
         targetSdk = 34
-        versionCode =17
-        versionName = "0.1.7-beta"
+        versionCode =10
+        versionName = "1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -84,6 +84,7 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
     implementation(libs.kotlin.compose.compiler.plugin)
+
     //Kotlinx-Serialization
     implementation(libs.kotlinx.serialization.json)
     //Kotlinx-DateTime
@@ -123,15 +124,6 @@ dependencies {
     runtimeOnly ("io.ktor:ktor-client-okhttp")
     implementation("com.halilibo.compose-richtext:richtext-commonmark:1.0.0-alpha01")
     implementation("com.halilibo.compose-richtext:richtext-ui-material3:1.0.0-alpha01")
-    implementation(platform("com.google.firebase:firebase-bom:33.6.0"))
-    implementation("com.google.firebase:firebase-storage-ktx")
-    implementation("com.google.firebase:firebase-firestore-ktx")
-
-    implementation ("com.tom-roush:pdfbox-android:2.0.27.0")
-
-    implementation("androidx.core:core-splashscreen:1.0.0-beta02")
-
-
 
 
 
