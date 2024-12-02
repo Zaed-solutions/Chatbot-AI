@@ -2,6 +2,7 @@ package com.zaed.chatbot.ui.mainchat
 
 import android.net.Uri
 import android.util.Log
+import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aallam.openai.api.model.ModelId
@@ -10,12 +11,12 @@ import com.zaed.chatbot.data.model.MessageAttachment
 import com.zaed.chatbot.data.repository.ChatRepository
 import com.zaed.chatbot.ui.mainchat.components.ChatModel
 import com.zaed.chatbot.ui.util.ConnectivityObserver
+import com.zaed.chatbot.ui.util.detectLanguage
 import com.zaed.chatbot.ui.util.toMessageAttachments
+import com.zaed.chatbot.ui.util.translateToEnglish
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.util.UUID
@@ -38,20 +39,22 @@ class MainChatViewModel(
             }
         }
     }
+
     private fun checkInternetConnection() {
         viewModelScope.launch {
             connectivityObserver.isConnected
-            .collect {result->
-                _uiState.update {
-                    it.copy(internetConnected = result)
+                .collect { result ->
+                    _uiState.update {
+                        it.copy(internetConnected = result)
+                    }
                 }
-            }
         }
 
     }
+
     private fun fetchChat(chatId: String) {
         checkInternetConnection()
-        if(!uiState.value.internetConnected) return
+        if (!uiState.value.internetConnected) return
         viewModelScope.launch(Dispatchers.IO) {
             chatRepository.getChatById(chatId).collect { result ->
                 result.onSuccess {
@@ -114,7 +117,7 @@ class MainChatViewModel(
 
     private fun sendSuggestion(prompt: String) {
         checkInternetConnection()
-        if(!uiState.value.internetConnected) return
+        if (!uiState.value.internetConnected) return
         viewModelScope.launch(Dispatchers.IO) {
             _uiState.update {
                 it.copy(currentPrompt = prompt)
@@ -123,13 +126,13 @@ class MainChatViewModel(
         }
     }
 
-    private fun createImages() {
+    private fun createImages(translatedPrompt: String) {
         val isFirstMessage = uiState.value.queries.isEmpty()
         viewModelScope.launch(Dispatchers.IO) {
             viewModelScope.launch(Dispatchers.IO) {
                 val query = ChatQuery(
                     chatId = uiState.value.chatId,
-                    prompt = uiState.value.currentPrompt,
+                    prompt = translatedPrompt,
                     response = "",
                     promptAttachments = uiState.value.attachments,
                     isLoading = true,
@@ -150,18 +153,33 @@ class MainChatViewModel(
                     n = 1,
                     size = com.aallam.openai.api.image.ImageSize.is256x256,
                     isFirstMessage = isFirstMessage
-                ).collect{ result ->
-                    _uiState.update { oldState ->
-                        oldState.copy(
-                            queries = oldState.queries.map {
-                                if (it.isLoading) it.copy(
-                                    isLoading = false,
-                                    response = "",
-                                    animateResponse = false,
-                                    responseAttachments = result.toMessageAttachments()
-                                ) else it.copy(isLoading = false, animateResponse = false)
-                            }.toMutableList(), isLoading = false, isAnimating = true
-                        )
+                ).collect { imageCreation ->
+                    imageCreation.onSuccess { result ->
+                        _uiState.update { oldState ->
+                            oldState.copy(
+                                queries = oldState.queries.map {
+                                    if (it.isLoading) it.copy(
+                                        isLoading = false,
+                                        response = "",
+                                        animateResponse = false,
+                                        responseAttachments = result.toMessageAttachments()
+                                    ) else it.copy(isLoading = false, animateResponse = false)
+                                }.toMutableList(), isLoading = false, isAnimating = true
+                            )
+                        }
+                    }.onFailure { error ->
+                        Log.d("tetooo", "createImages: ${error.message}")
+                        _uiState.update { oldState ->
+                            oldState.copy(
+                                queries = oldState.queries.map {
+                                    if (it.isLoading) it.copy(
+                                        isLoading = false,
+                                        response = error.message ?: "",
+                                        animateResponse = false,
+                                    ) else it.copy(isLoading = false, animateResponse = false)
+                                }.toMutableList(), isLoading = false, isAnimating = true
+                            )
+                        }
                     }
                 }
             }
@@ -170,11 +188,22 @@ class MainChatViewModel(
 
     private fun sendPrompt() {
         checkInternetConnection()
-        if(!uiState.value.internetConnected) return
+        if (!uiState.value.internetConnected) return
         when (uiState.value.selectedModel) {
             ChatModel.GPT_4O_MINI -> createText(ChatModel.GPT_4O_MINI.modelId)
             ChatModel.GPT_4O -> createText(ChatModel.GPT_4O.modelId)
-            ChatModel.AI_ART_GENERATOR -> createImages()
+            ChatModel.AI_ART_GENERATOR -> {
+                detectLanguage(uiState.value.currentPrompt) { languageCode ->
+                    if (languageCode == "ar") {
+                        translateToEnglish(uiState.value.currentPrompt) { translatedPrompt ->
+                            createImages(translatedPrompt)
+                        }
+                    } else {
+                        createImages(uiState.value.currentPrompt)
+                    }
+                }
+
+            }
         }
 
     }
@@ -200,33 +229,143 @@ class MainChatViewModel(
                     totalHitTimes = oldState.totalHitTimes.plus(1)
                 )
             }
-
-            chatRepository.sendPrompt(query, modelId,isFirstMessage)
-                .collect { result ->
-                    _uiState.update { oldState ->
-                        oldState.copy(
-                            queries = oldState.queries.map {
-                                if (it.isLoading) it.copy(
-                                    isLoading = false,
-                                    response = result.choices.first().message.content.orEmpty(),
-                                    animateResponse = true,
+            Log.d("MainChatViewModel25", "createText: $query")
+            if (query.promptAttachments.isNotEmpty()) {
+                query.promptAttachments.filter {
+                    it.type == com.zaed.chatbot.data.model.FileType.IMAGE
+                }.forEach { attachment ->
+                    chatRepository.uploadNewImage(attachment.uri).collect { result ->
+                        result.onSuccess { uri ->
+                            Log.d("MainChatViewModel36", "createText: $uri")
+                            chatRepository.sendPrompt(
+                                query.copy(
+                                    promptAttachments = listOf(
+                                        attachment.copy(
+                                            uri = uri.toUri()
+                                        )
+                                    )
+                                ),
+                                modelId,
+                                isFirstMessage
+                            ).collect { response ->
+                                response.onSuccess { result ->
+                                    _uiState.update { oldState ->
+                                        oldState.copy(
+                                            queries = oldState.queries.map {
+                                                if (it.isLoading) it.copy(
+                                                    isLoading = false,
+                                                    response = result.choices.first().message.content.orEmpty(),
+                                                    animateResponse = true,
 //                                    responseAttachments = data.responseAttachments
-                                ) else it.copy(isLoading = false, animateResponse = false)
-                            }.toMutableList(), isLoading = false, isAnimating = true
-                        )
+                                                ) else it.copy(
+                                                    isLoading = false,
+                                                    animateResponse = false
+                                                )
+                                            }.toMutableList(), isLoading = false, isAnimating = true
+                                        )
 
+                                    }
+                                }.onFailure {error->
+                                    _uiState.update { oldState ->
+                                        oldState.copy(
+                                            queries = oldState.queries.map {
+                                                if (it.isLoading) it.copy(
+                                                    isLoading = false,
+                                                    response = error.message ?: "",
+                                                    animateResponse = false,
+                                                ) else it.copy(isLoading = false, animateResponse = false)
+                                            }.toMutableList(), isLoading = false, isAnimating = true
+                                        )
+                                    }
+                                }
+                            }
+                        }.onFailure {error->
+                            _uiState.update { oldState ->
+                                oldState.copy(
+                                    queries = oldState.queries.map {
+                                        if (it.isLoading) it.copy(
+                                            isLoading = false,
+                                            response = error.message ?: "",
+                                            animateResponse = false,
+                                        ) else it.copy(isLoading = false, animateResponse = false)
+                                    }.toMutableList(), isLoading = false, isAnimating = true
+                                )
+                            }
+                        }
                     }
-
                 }
+                query.promptAttachments.filter {
+                    it.type != com.zaed.chatbot.data.model.FileType.IMAGE
+                }.forEach { attachment ->
+                    chatRepository.sendPrompt(query, modelId, isFirstMessage).collect { response ->
+                        response.onSuccess { result ->
+                            _uiState.update { oldState ->
+                                oldState.copy(
+                                    queries = oldState.queries.map {
+                                        if (it.isLoading) it.copy(
+                                            isLoading = false,
+                                            response = result.choices.first().message.content.orEmpty(),
+                                            animateResponse = true,
+                                        ) else it.copy(isLoading = false, animateResponse = false)
+                                    }.toMutableList(), isLoading = false, isAnimating = true
+                                )
+                            }
+                        }.onFailure {error->
+                            _uiState.update { oldState ->
+                                oldState.copy(
+                                    queries = oldState.queries.map {
+                                        if (it.isLoading) it.copy(
+                                            isLoading = false,
+                                            response = error.message ?: "",
+                                            animateResponse = false,
+                                        ) else it.copy(isLoading = false, animateResponse = false)
+                                    }.toMutableList(), isLoading = false, isAnimating = true
+                                )
+                            }
+                        }
+                    }
+                }
+            } else {
+                chatRepository.sendPrompt(query, modelId, isFirstMessage).collect { response ->
+                    response.onSuccess { result ->
+                        _uiState.update { oldState ->
+                            oldState.copy(
+                                queries = oldState.queries.map {
+                                    if (it.isLoading) it.copy(
+                                        isLoading = false,
+                                        response = result.choices.first().message.content.orEmpty(),
+                                        animateResponse = true,
+//                                    responseAttachments = data.responseAttachments
+                                    ) else it.copy(isLoading = false, animateResponse = false)
+                                }.toMutableList(), isLoading = false, isAnimating = true
+                            )
+                        }
+                    }.onFailure {error->
+                        _uiState.update { oldState ->
+                            oldState.copy(
+                                queries = oldState.queries.map {
+                                    if (it.isLoading) it.copy(
+                                        isLoading = false,
+                                        response = error.message ?: "",
+                                        animateResponse = false,
+                                    ) else it.copy(isLoading = false, animateResponse = false)
+                                }.toMutableList(), isLoading = false, isAnimating = true
+                            )
+                        }
+                    }
+                }
+            }
         }
     }
 
 
-
-    private fun clearChat(selectedModel: ChatModel = ChatModel.GPT_4O_MINI){
+    private fun clearChat(selectedModel: ChatModel = ChatModel.GPT_4O_MINI) {
         viewModelScope.launch {
             _uiState.update {
-                MainChatUiState(chatId = UUID.randomUUID().toString(), selectedModel = selectedModel)
+                MainChatUiState(
+                    chatId = UUID.randomUUID().toString(),
+                    selectedModel = selectedModel
+                )
             }
         }
     }

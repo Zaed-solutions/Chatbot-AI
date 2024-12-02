@@ -72,8 +72,7 @@ fun ChatModeScreen(
                 is SettingsUiAction.OnSetDefaultChatMode -> onSetDefaultChatMode(action.chatModel)
                 is SettingsUiAction.OnUpgradeSubscription -> onSubscriptionAction(
                     SubscriptionAction.UpgradeSubscription(
-                        action.isFreeTrialEnabled,
-                        action.isLifetime
+                        action.productDetails
                     )
                 )
 
@@ -206,11 +205,10 @@ private fun ChatModeScreenContent(
                             isBottomSheetVisible = false
                         },
                         products = products,
-                        onContinue = { b: Boolean, b1: Boolean ->
+                        onContinue = { product ->
                             onAction(
                                 SettingsUiAction.OnUpgradeSubscription(
-                                    b,
-                                    b1
+                                    product
                                 )
                             )
                             isBottomSheetVisible = false

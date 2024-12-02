@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.kotlinx.serialization)
     alias(libs.plugins.realm)
+    id("com.google.gms.google-services")
 
 }
 configurations.all {
@@ -19,8 +20,8 @@ android {
         applicationId = "com.zaed.chatbot"
         minSdk = 24
         targetSdk = 34
-        versionCode = 3
-        versionName = "0.0.2-alpha"
+        versionCode =17
+        versionName = "0.1.7-beta"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -31,6 +32,7 @@ android {
     buildTypes {
         release {
             isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -52,6 +54,13 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
+    packagingOptions {
+        exclude("META-INF/DEPENDENCIES")
+        exclude("META-INF/LICENSE")
+        exclude("META-INF/LICENSE.txt")
+        exclude("META-INF/NOTICE")
+        exclude("META-INF/NOTICE.txt")
+    }
 }
 
 dependencies {
@@ -65,6 +74,8 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
     implementation(libs.androidx.foundation.layout.android)
+    implementation(libs.language.id.common)
+    implementation(libs.translate)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -73,7 +84,6 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
     implementation(libs.kotlin.compose.compiler.plugin)
-
     //Kotlinx-Serialization
     implementation(libs.kotlinx.serialization.json)
     //Kotlinx-DateTime
@@ -113,6 +123,15 @@ dependencies {
     runtimeOnly ("io.ktor:ktor-client-okhttp")
     implementation("com.halilibo.compose-richtext:richtext-commonmark:1.0.0-alpha01")
     implementation("com.halilibo.compose-richtext:richtext-ui-material3:1.0.0-alpha01")
+    implementation(platform("com.google.firebase:firebase-bom:33.6.0"))
+    implementation("com.google.firebase:firebase-storage-ktx")
+    implementation("com.google.firebase:firebase-firestore-ktx")
+
+    implementation ("com.tom-roush:pdfbox-android:2.0.27.0")
+
+    implementation("androidx.core:core-splashscreen:1.0.0-beta02")
+
+
 
 
 

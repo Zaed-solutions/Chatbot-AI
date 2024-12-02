@@ -1,7 +1,9 @@
 package com.zaed.chatbot.ui.mainchat
 
+import android.content.Intent
 import android.net.Uri
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -17,12 +19,15 @@ import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.FilterQuality
@@ -47,10 +52,12 @@ import com.zaed.chatbot.ui.mainchat.components.ProSubscriptionBottomSheet
 import com.zaed.chatbot.ui.mainchat.components.QueryList
 import com.zaed.chatbot.ui.mainchat.components.SpeechRecognitionBottomSheet
 import com.zaed.chatbot.ui.theme.ChatbotTheme
-import com.zaed.chatbot.ui.util.contentUriToByteArray
 import com.zaed.chatbot.ui.util.createImageFile
 import com.zaed.chatbot.ui.util.getFileNameFromUri
+import com.zaed.chatbot.ui.util.readPdfContent
+import com.zaed.chatbot.ui.util.readWordContent
 import org.koin.androidx.compose.koinViewModel
+import java.lang.Error
 
 private val TAG = "MainChatScreen"
 
@@ -66,7 +73,11 @@ fun MainChatScreen(
     onNavigateToPersonalizationScreen: () -> Unit = {},
     onNavigateToSettingsScreen: () -> Unit = {},
     onNavigateToPrivacyAndTerms: () -> Unit = {},
+    onDecrementFreeTrialCount: () -> Unit,
+    freeTrialCount: Int,
 ) {
+    Log.d("tenoo", "mainChatScreen: ${isPro}")
+
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     LaunchedEffect(true) {
         viewModel.init(chatId)
@@ -75,17 +86,62 @@ fun MainChatScreen(
     val imagePicker =
         rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
             uri?.let {
-                val attachment = MessageAttachment(uri = it, type = FileType.IMAGE, byteArray = contentUriToByteArray(context,uri))
-                viewModel.handleAction(MainChatUiAction.OnAddAttachment(attachment))
+                val attachment = MessageAttachment(
+                    uri = it,
+                    type = FileType.IMAGE,
+                )
+                viewModel.handleAction(MainChatUiAction.OnAddAttachment(attachment, ""))
             }
         }
     val filePicker =
-        rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
-            uri?.let {
-                val fileName = getFileNameFromUri(context, it)
+        rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            result.data?.data?.let { fileUri ->
+                val mimeType = context.contentResolver.getType(fileUri)
+                Log.d(TAG, "MainChatScreen: file picker $mimeType")
+                val fileName = getFileNameFromUri(context, fileUri)
+                var fileContent = ""
+                // Filter MIME types for PDF, Word, and Excel files
+                if (mimeType != null) {
+                    when {
+                        mimeType == "application/pdf" -> {
+                            fileContent = readPdfContent(context, fileUri)
+                        }
+
+                        mimeType == "application/msword" || mimeType == "application/vnd.openxmlformats-officedocument.wordprocessingml.document" -> {
+                            fileContent = readWordContent(context, fileUri)
+                            Log.d(TAG, "MainChatScreen: file picker $fileContent")
+
+                        }
+
+                        mimeType == "application/vnd.ms-excel" || mimeType == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" -> {
+                            fileContent = readWordContent(context, fileUri)
+                        }
+
+                        else -> {
+                            // Handle invalid file type
+                            Toast.makeText(
+                                context,
+                                "Invalid file type. Please select a PDF, Word, or Excel file.",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    }
+                } else {
+                    // Handle null MIME type (shouldn't happen, but can be a fallback)
+                    Toast.makeText(
+                        context,
+                        "Unable to determine the file type.",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+                Log.d(TAG, "MainChatScreen: file picker $fileUri")
                 val attachment =
-                    MessageAttachment(name = fileName ?: "", uri = it, type = FileType.ALL)
-                viewModel.handleAction(MainChatUiAction.OnAddAttachment(attachment))
+                    MessageAttachment(
+                        name = fileName ?: "", uri = fileUri, type = FileType.ALL,
+                        text = fileContent
+                    )
+                viewModel.handleAction(MainChatUiAction.OnAddAttachment(attachment, ""))
+
             }
         }
     var photoUri by remember { mutableStateOf<Uri?>(null) }
@@ -93,8 +149,11 @@ fun MainChatScreen(
         rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { success ->
             if (success && photoUri != null) {
                 val attachment =
-                    MessageAttachment(uri = photoUri ?: Uri.EMPTY, type = FileType.IMAGE, byteArray = contentUriToByteArray(context,photoUri ?: Uri.EMPTY))
-                viewModel.handleAction(MainChatUiAction.OnAddAttachment(attachment))
+                    MessageAttachment(
+                        uri = photoUri ?: Uri.EMPTY,
+                        type = FileType.IMAGE,
+                    )
+                viewModel.handleAction(MainChatUiAction.OnAddAttachment(attachment, ""))
             } else {
                 Log.d(TAG, "Image capture failed.")
             }
@@ -108,7 +167,21 @@ fun MainChatScreen(
         onAction = { action ->
             when (action) {
                 MainChatUiAction.OnAddFileClicked -> {
-                    filePicker.launch("*/*")
+                    val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
+                        type = "*/*" // Allow all files
+                        // Restrict file types to PDF, Word, and Excel
+                        putExtra(
+                            Intent.EXTRA_MIME_TYPES,
+                            arrayOf(
+                                "application/pdf",
+//                                "application/msword",
+//                                "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+//                                "application/vnd.ms-excel",
+//                                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                            )
+                        )
+                    }
+                    filePicker.launch(intent)
                 }
 
                 MainChatUiAction.OnAddImageClicked -> {
@@ -139,14 +212,21 @@ fun MainChatScreen(
                 MainChatUiAction.OnSettingsClicked -> {
                     onNavigateToSettingsScreen()
                 }
+
                 MainChatUiAction.OnCancelSubscription -> {
                     onSubscriptionAction(SubscriptionAction.ManageSubscription)
                 }
+
                 MainChatUiAction.OnRestoreSubscription -> {
                     onSubscriptionAction(SubscriptionAction.RestoreSubscription)
                 }
+
                 is MainChatUiAction.OnUpgradeSubscription -> {
-                    onSubscriptionAction(SubscriptionAction.UpgradeSubscription(action.isFreeTrialEnabled, action.isLifetime))
+                    onSubscriptionAction(
+                        SubscriptionAction.UpgradeSubscription(
+                            action.product
+                        )
+                    )
                 }
 
                 is MainChatUiAction.OnImageClicked -> {
@@ -164,8 +244,10 @@ fun MainChatScreen(
         queries = state.queries,
         selectedModel = state.selectedModel,
         isAnimating = state.isAnimating,
-        attachments = state.attachments
-
+        attachments = state.attachments,
+        freeTrialCount = freeTrialCount,
+        isError = state.error,
+        onDecrementFreeTrialCount = onDecrementFreeTrialCount,
     )
     if (recordingBottomSheetVisible) {
         SpeechRecognitionBottomSheet(
@@ -185,7 +267,7 @@ fun MainChatScreen(
             ),
             onDismissRequest = { previewImageFullScreen = false to "" }
         ) {
-            Column (Modifier.fillMaxWidth()){
+            Column(Modifier.fillMaxWidth()) {
                 Image(
                     painter = rememberAsyncImagePainter(
                         model = previewImageFullScreen.second,
@@ -208,18 +290,31 @@ fun MainChatScreenContent(
     onAction: (MainChatUiAction) -> Unit = {},
     isChatEmpty: Boolean = true,
     isPro: Boolean = false,
+    freeTrialCount: Int = 0,
+    onDecrementFreeTrialCount: () -> Unit = {},
     products: List<ProductDetails> = emptyList(),
     prompt: String,
+    isError: String="",
     isLoading: Boolean = false,
     queries: List<ChatQuery> = emptyList(),
     isAnimating: Boolean = false,
     selectedModel: ChatModel = ChatModel.GPT_4O_MINI,
     attachments: List<MessageAttachment> = emptyList()
 ) {
+    Log.d("tenoo", "mainChatScreenContent: ${isPro}")
     var isBottomSheetVisible by remember { mutableStateOf(isPro) }
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val infoDialog = remember { mutableStateOf(false) }
+    val snackbarHostState = remember { SnackbarHostState() }
+    LaunchedEffect(isError) {
+        if (isError.isNotBlank()) {
+            snackbarHostState.showSnackbar(isError)
+        }
+    }
     Scaffold(
+        snackbarHost = {
+            SnackbarHost(hostState = snackbarHostState)
+        },
         topBar = {
             MainChatTopBar(
                 modifier = Modifier.fillMaxWidth(),
@@ -238,7 +333,17 @@ fun MainChatScreenContent(
                 isLoading = isLoading,
                 isAttachmentButtonsVisible = selectedModel != ChatModel.AI_ART_GENERATOR && !isAnimating && attachments.isEmpty(),
                 isAnimating = isAnimating,
-                onSend = { onAction(MainChatUiAction.OnSendPrompt) },
+                onSend = {
+                    Log.d(TAG, "MainChatScreenContent: $isPro  $freeTrialCount")
+                    if (isPro || freeTrialCount > 0) {
+                        onAction(MainChatUiAction.OnSendPrompt)
+                        if (!isPro) {
+                            onDecrementFreeTrialCount()
+                        }
+                    } else {
+                        isBottomSheetVisible = true
+                    }
+                },
                 onStopAnimation = { onAction(MainChatUiAction.OnStopAnimation) },
                 onUpdateText = { text -> onAction(MainChatUiAction.OnUpdatePrompt(text)) },
                 prompt = prompt,
@@ -247,7 +352,7 @@ fun MainChatScreenContent(
                 onDeleteAttachment = { uri -> onAction(MainChatUiAction.OnDeleteAttachment(uri)) },
                 onAddImage = { onAction(MainChatUiAction.OnAddImageClicked) },
                 onOpenCamera = { onAction(MainChatUiAction.OnOpenCameraClicked) },
-                onAddFile = { onAction(MainChatUiAction.OnAddFileClicked) }
+                onAddFile = { onAction(MainChatUiAction.OnAddFileClicked) },
             )
         },
         modifier = modifier.systemBarsPadding(),
@@ -271,7 +376,14 @@ fun MainChatScreenContent(
                                 )
                             },
                             onSuggestingClicked = { suggestionPrompt ->
-                                onAction(MainChatUiAction.OnSendSuggestion(suggestionPrompt))
+                                if (isPro || freeTrialCount > 0) {
+                                    onAction(MainChatUiAction.OnSendSuggestion(suggestionPrompt))
+                                    if (!isPro) {
+                                        onDecrementFreeTrialCount()
+                                    }
+                                } else {
+                                    isBottomSheetVisible = true
+                                }
                             })
                     }
 
@@ -293,11 +405,10 @@ fun MainChatScreenContent(
                         onDismiss = { isBottomSheetVisible = false },
                         onRestore = { onAction(MainChatUiAction.OnRestoreSubscription) },
                         products = products,
-                        onContinue = { isFreeTrialEnabled, isLifetimeSelected ->
+                        onContinue = { product ->
                             onAction(
                                 MainChatUiAction.OnUpgradeSubscription(
-                                    isFreeTrialEnabled,
-                                    isLifetimeSelected
+                                    product
                                 )
                             )
                         },
@@ -342,7 +453,11 @@ private fun MainChatScreenContentPreview() {
         MainChatScreenContent(
             isChatEmpty = false,
             queries = queries.reversed(),
-            prompt = ""
-        )
+            prompt = "",
+            isLoading = false,
+            onAction = {},
+
+
+            )
     }
 }

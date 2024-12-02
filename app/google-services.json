@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "570915415495",
+    "project_id": "tachgate-ltd",
+    "storage_bucket": "tachgate-ltd.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:570915415495:android:08aefd5774859e26bb65e2",
+        "android_client_info": {
+          "package_name": "com.zaed.chatbot"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD9ympf_IUG_YX80Mi-xXm8rZ6lkHKHhcc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

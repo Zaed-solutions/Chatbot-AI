@@ -1,5 +1,7 @@
 package com.zaed.chatbot.data.source.remote
 
+import android.net.Uri
+import android.util.Log
 import com.aallam.openai.api.audio.SpeechRequest
 import com.aallam.openai.api.audio.Transcription
 import com.aallam.openai.api.audio.TranscriptionRequest
@@ -8,9 +10,9 @@ import com.aallam.openai.api.audio.TranslationRequest
 import com.aallam.openai.api.audio.Voice
 import com.aallam.openai.api.chat.ChatCompletion
 import com.aallam.openai.api.chat.ChatCompletionRequest
-import com.aallam.openai.api.chat.ChatMessage
 import com.aallam.openai.api.chat.ChatRole
 import com.aallam.openai.api.chat.chatMessage
+import com.aallam.openai.api.exception.InvalidRequestException
 import com.aallam.openai.api.file.FileId
 import com.aallam.openai.api.file.FileSource
 import com.aallam.openai.api.file.FileUpload
@@ -24,21 +26,20 @@ import com.aallam.openai.api.model.Model
 import com.aallam.openai.api.model.ModelId
 import com.aallam.openai.api.moderation.ModerationRequest
 import com.aallam.openai.client.OpenAI
+import com.google.firebase.storage.FirebaseStorage
 import com.zaed.chatbot.data.model.ChatQuery
+import com.zaed.chatbot.data.model.FileType
+import com.zaed.chatbot.data.model.MessageAttachment
 import com.zaed.chatbot.ui.mainchat.components.ChatModel
-
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.flow
-import okhttp3.MediaType.Companion.toMediaTypeOrNull
-import okhttp3.MultipartBody
-import okhttp3.RequestBody
 import okio.Source
-import java.io.File
-import java.util.UUID
 
 class OpenAIRemoteDataSourceImpl(
     val openAI: OpenAI,
-//    val supabase: SupabaseClient
+    val storage: FirebaseStorage
 ) : OpenAIRemoteDataSource {
 
     override suspend fun listModels(): List<Model> = openAI.models()
@@ -49,6 +50,7 @@ class OpenAIRemoteDataSourceImpl(
         modelId: ModelId
     ): Flow<Result<ChatCompletion>> = flow {
         try {
+            Log.d("RemoteDataSourceImpl", "sendPrompt: $chatQuery")
             val message = if (chatQuery.promptAttachments.isEmpty()) {
                 chatMessage {
                     role = ChatRole.User
@@ -57,54 +59,101 @@ class OpenAIRemoteDataSourceImpl(
                     }
                 }
             } else {
-//                val url = chatQuery.promptAttachments.first().byteArray?.let { uploadAttachment(it) }
-//                if(url.isNullOrEmpty()) throw Exception("Attachment url is null or empty")
-                chatMessage {
-                    role = ChatRole.User
-                    content {
-                        text(chatQuery.prompt)
-//                        image(url)
+                when (chatQuery.promptAttachments[0].type) {
+                    FileType.IMAGE -> {
+                        chatMessage {
+                            role = ChatRole.User
+                            content {
+                                text(chatQuery.prompt)
+                                image(chatQuery.promptAttachments[0].uri.toString())
+                            }
+                        }
+                    }
+
+                    FileType.ALL -> {
+                        chatMessage {
+                            role = ChatRole.User
+                            content {
+                                text("the file content is " + chatQuery.promptAttachments[0].text + "\n" + "the prompt is " + chatQuery.prompt)
+                            }
+                        }
                     }
                 }
+
             }
             val messages = mutableListOf(message)
-            if (isFirst) {
-                val titleMessage = ChatMessage(
-                    role = ChatRole.System,
-                    content = "Give a title for the other chat message no words before or after just the title"
-                )
-                messages.add(titleMessage)
-            }
+//            if (isFirst) {
+//                val titleMessage = ChatMessage(
+//                    role = ChatRole.System,
+//                    content = "Give a title for the other chat message no words before or after just the title"
+//                )
+//                messages.add(titleMessage)
+//            }
             val chatCompletionRequest = ChatCompletionRequest(
                 model = modelId,
                 messages = messages
             )
-            emit(Result.success(openAI.chatCompletion(chatCompletionRequest)))
-        } catch (e: Exception) {
+            val chatCompletion = openAI.chatCompletion(chatCompletionRequest)
+            chatCompletion.choices.forEach {
+                Log.d("RemoteDataSourceImpl1", "sendPrompt: ${it.message.content}")
+            }
+            emit(Result.success(chatCompletion))
+        } catch (e: InvalidRequestException) {
             emit(Result.failure(e))
             e.printStackTrace()
         }
+    }
+
+    override fun uploadNewImage(uri: Uri): Flow<Result<String>> = callbackFlow {
+        Log.d("RemoteDataSourceImpl5", "uploadNewFile: $uri")
+        val timeStamp = System.currentTimeMillis().toString()
+        val filePathAndName = "ChatGPT/$timeStamp"
+        val ref = storage.reference.child(filePathAndName)
+        val uploadTask = ref.putFile(uri)
+        uploadTask.continueWithTask { task ->
+            if (!task.isSuccessful) {
+                task.exception?.let {
+                    throw it
+                }
+            }
+            ref.downloadUrl
+        }.addOnCompleteListener { task ->
+            if (task.isSuccessful) {
+                val downloadUri = task.result.toString()
+                Log.d("RemoteDataSourceImpl6", "uploadNewImage: $downloadUri")
+                trySend(Result.success(downloadUri))
+            } else {
+                trySend(Result.failure(task.exception ?: Exception("Unknown error")))
+                task.exception?.printStackTrace()
+                Log.d("RemoteDataSourceImpl7", "uploadNewImage: ${task.exception?.message}")
+            }
+        }
+        awaitClose { }
+    }
+
+    override fun uploadNewFile(attachment: MessageAttachment): Flow<Result<FileId>> = flow {
+
     }
 
     override suspend fun createImage(
         chatQuery: ChatQuery,
         n: Int,
         size: ImageSize
-    ): Result<List<ImageURL>> {
-        return try {
-            Result.success(
-                openAI.imageURL( // or openAI.imageJSON
-                    creation = ImageCreation(
-                        prompt = chatQuery.prompt,
-                        model = ChatModel.AI_ART_GENERATOR.modelId,
-                        n = 1,
-                        size = ImageSize.is1024x1024
-                    )
+    ): Flow<Result<List<ImageURL>>> = flow {
+        try {
+            val result = openAI.imageURL( // or openAI.imageJSON
+                creation = ImageCreation(
+                    prompt = chatQuery.prompt,
+                    model = ChatModel.AI_ART_GENERATOR.modelId,
+                    n = 1,
+                    size = ImageSize.is1024x1024
                 )
             )
-        } catch (e: Exception) {
+            emit(Result.success(result))
+        } catch (e: InvalidRequestException) {
             e.printStackTrace()
-            Result.failure(e)
+            emit(Result.failure(e))
+            Log.d("RemoteDataSourceImpl12", "createImage: ${e.message}")
         }
     }
 
@@ -119,7 +168,7 @@ class OpenAIRemoteDataSourceImpl(
         //Todo replace model and chat message with the params
         edit = ImageEdit(
             image = FileSource(name = fileName, source = imageSource),
-            model = ModelId("dall-e-2"),
+            model = ModelId("dall-e-3"),
             mask = FileSource(name = "<filename>", source = maskSource),
             prompt = "a sunlit indoor lounge area with a pool containing a flamingo",
             n = 1,

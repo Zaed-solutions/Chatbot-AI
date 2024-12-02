@@ -5,16 +5,24 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
+import android.os.Build
 import android.os.Environment
+import android.provider.MediaStore
 import android.provider.OpenableColumns
+import android.util.Log
 import android.webkit.MimeTypeMap
 import androidx.core.content.FileProvider
 import androidx.core.net.toUri
 import com.aallam.openai.api.image.ImageURL
+import com.tom_roush.pdfbox.android.PDFBoxResourceLoader
+import com.tom_roush.pdfbox.pdmodel.PDDocument
+import com.tom_roush.pdfbox.text.PDFTextStripper
 import com.zaed.chatbot.data.model.FileType
 import com.zaed.chatbot.data.model.MessageAttachment
+import org.json.JSONArray
 import java.io.ByteArrayOutputStream
 import java.io.File
+import java.io.FileOutputStream
 import java.io.InputStream
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -38,7 +46,15 @@ fun createImageFile(context: Context): Uri {
     val file = File.createTempFile("photo_${timestamp}_", ".jpg", storageDir)
     return FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
 }
-
+fun convertJsonToJsonl(jsonString: String): String {
+    val jsonArray = JSONArray(jsonString)
+    val stringBuilder = StringBuilder()
+    for (i in 0 until jsonArray.length()) {
+        stringBuilder.append(jsonArray.getJSONObject(i).toString())
+        stringBuilder.append("\n")
+    }
+    return stringBuilder.toString()
+}
 fun uriToBitmap(context: Context, uri: Uri): Bitmap? {
     val newUri = Uri.parse(uri.toString())
     return try {
@@ -49,6 +65,46 @@ fun uriToBitmap(context: Context, uri: Uri): Bitmap? {
         null
     }
 }
+fun readPdfContent(context: Context, fileUri: Uri): String {
+    var stringResult = ""
+    PDFBoxResourceLoader.init(context);
+    context.contentResolver.openInputStream(fileUri)?.use { inputStream ->
+        PDDocument.load(inputStream).use { pdfDocument ->
+            if (!pdfDocument.isEncrypted) {
+                stringResult = PDFTextStripper().getText(pdfDocument)
+            }
+        }
+    }
+
+    return stringResult
+}
+fun readExcelContent(context: Context, fileUri: Uri): String {
+
+    return ""
+}
+
+fun readWordContent(context: Context, fileUri: Uri): String {
+    return ""
+}
+
+fun convertToJsonl(sourceFile: File): File {
+    // Read the original file content
+    val originalContent = sourceFile.readText()
+
+    // Assuming the original content is a JSON array, convert it to JSONL
+    val jsonArray = org.json.JSONArray(originalContent) // Requires org.json library
+    val jsonlString = StringBuilder()
+    for (i in 0 until jsonArray.length()) {
+        jsonlString.append(jsonArray.getJSONObject(i).toString())
+        jsonlString.append("\n")
+    }
+
+    // Write the JSONL string to a new file
+    val jsonlFile = File(sourceFile.parent, "${sourceFile.nameWithoutExtension}.jsonl")
+    jsonlFile.writeText(jsonlString.toString())
+    return jsonlFile
+}
+
 fun contentUriToByteArray(context: Context, uri: Uri): ByteArray? {
     return try {
         // Open an InputStream for the content URI
@@ -66,6 +122,62 @@ fun contentUriToByteArray(context: Context, uri: Uri): ByteArray? {
     } catch (e: Exception) {
         e.printStackTrace()
         null // Return null in case of an error
+    }
+}
+private fun allowedMimeTypes(): List<String> {
+    return listOf(
+        "application/pdf", // PDF
+        "application/vnd.ms-excel", // Excel .xls
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", // Excel .xlsx
+        "application/msword", // Word .doc
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document" // Word .docx
+    )
+}
+fun Uri.toFileUri(context: Context): Uri? {
+    return try {
+        if ("file".equals(this.scheme, ignoreCase = true)) {
+            // Already a file URI
+            return this
+        } else if ("content".equals(this.scheme, ignoreCase = true)) {
+            // Handle content:// URI
+            val projection = arrayOf(MediaStore.MediaColumns.DATA)
+            context.contentResolver.query(this, projection, null, null, null)?.use { cursor ->
+                val columnIndex = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.DATA)
+                if (cursor.moveToFirst()) {
+                    val filePath = cursor.getString(columnIndex)
+                    if (!filePath.isNullOrEmpty()) {
+                        return Uri.fromFile(File(filePath))
+                    }
+                }
+            }
+            // For Android Q and above or when DATA column is not available
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                val file = File(context.cacheDir, "tempFile_${System.currentTimeMillis()}")
+                context.contentResolver.openInputStream(this)?.use { inputStream ->
+                    copyStreamToFile(inputStream, file)
+                }
+                return Uri.fromFile(file)
+            }
+        }
+        null
+    } catch (e: Exception) {
+        e.printStackTrace()
+        null
+    }
+}
+fun convertJsonToJsonl(jsonFile: File, jsonlFile: File) {
+    val jsonArray = JSONArray(jsonFile.readText()) // Read JSON Array from the file
+    jsonlFile.bufferedWriter().use { writer ->
+        for (i in 0 until jsonArray.length()) {
+            val jsonObject = jsonArray.getJSONObject(i)
+            writer.write(jsonObject.toString())
+            writer.newLine()
+        }
+    }
+}
+private fun copyStreamToFile(inputStream: InputStream, file: File) {
+    FileOutputStream(file).use { outputStream ->
+        inputStream.copyTo(outputStream)
     }
 }
 

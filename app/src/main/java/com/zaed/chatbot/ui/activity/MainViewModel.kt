@@ -17,9 +17,26 @@ class MainViewModel(
     private val _uiState = MutableStateFlow(MainUiState())
     val uiState = _uiState.asStateFlow()
 
-    fun init(onInitialized: () -> Unit) {
+    fun init(androidId: String, onInitialized: () -> Unit) {
         Log.d(TAG, "init")
         initializePreferences(onInitialized)
+        _uiState.update { it.copy(androidId = androidId) }
+        getFreeTrialCount()
+    }
+
+    private fun getFreeTrialCount() {
+        viewModelScope.launch {
+            settingsRepo.getUserFreeTrialCount(uiState.value.androidId).collect {result->
+                Log.d("MainViewModel", "getFreeTrialCount: $result")
+                _uiState.update { it.copy(freeTrialCount = result) }
+            }
+        }
+    }
+
+    fun decrementFreeTrialCount() {
+        viewModelScope.launch {
+            settingsRepo.incrementUserFreeTrialCount(uiState.value.androidId)
+        }
     }
 
     private fun initializePreferences(onInitialized: () -> Unit) {
@@ -35,7 +52,8 @@ class MainViewModel(
             onInitialized()
         }
     }
-    private val TAG = "MainViewModel"
+
+    private val TAG = "MainActivity"
     fun handleAction(action: MainAction) {
         Log.d(TAG, "handleAction: $action")
         when (action) {
@@ -43,14 +61,18 @@ class MainViewModel(
             is MainAction.OnSetFontScale -> setFontScale(action.fontScale)
             is MainAction.OnUpdateProductsList -> updateProductsList(action.products)
             is MainAction.OnUpdateSubscribedPlan -> updateSubscribedPlan(action.planId)
-            else -> Unit
         }
     }
 
     private fun updateSubscribedPlan(planId: String) {
         viewModelScope.launch {
-            Log.d("MainViewModel", "updateSubscribedPlan: $planId")
-            _uiState.update { it.copy(subscribedPlan = it.products.find { it.productId == planId }) }
+            Log.d(TAG, "updateSubscribedPlan: $planId")
+            _uiState.update {oldState->
+                oldState.copy(
+                    subscribedPlan = oldState.products.find { it.productId == planId }, isPro = true
+                )
+            }
+            Log.d(TAG, "updateSubscribedPlan: ${uiState.value.isPro}")
         }
     }
 
@@ -82,7 +104,7 @@ sealed interface MainAction {
     data class OnSetFontScale(val fontScale: Float) : MainAction
     data class OnSetDefaultChatMode(val chatModel: ChatModel) : MainAction
     data class OnUpdateProductsList(val products: List<ProductDetails>) : MainAction
-    data class OnUpdateSubscribedPlan(val planId: String): MainAction
+    data class OnUpdateSubscribedPlan(val planId: String) : MainAction
 }
 
 data class MainUiState(
@@ -91,5 +113,7 @@ data class MainUiState(
     val products: List<ProductDetails> = emptyList(),
     val subscribedPlan: ProductDetails? = null,
     val isPro: Boolean = false,
+    val androidId: String = "",
+    val freeTrialCount: Int = 5
 
-    )
+)

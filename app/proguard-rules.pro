@@ -19,3 +19,8 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+# Keep all classes in the pdfbox library
+-keep class com.tom_roush.pdfbox.** { *; }
+
+-dontwarn com.tom_roush.pdfbox.filter.JPXFilter
+-dontwarn com.gemalto.jp2.**

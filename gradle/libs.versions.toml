@@ -35,6 +35,8 @@ firebaseFirestoreKtx = "25.1.0"
 firebaseStorageKtx = "21.0.1"
 uiTextGoogleFonts = "1.7.4"
 foundationLayoutAndroid = "1.7.2"
+languageIdCommon = "17.0.6"
+translate = "17.0.3"
 
 
 
@@ -89,6 +91,8 @@ firebase-firestore-ktx = { group = "com.google.firebase", name = "firebase-fires
 firebase-storage-ktx = { group = "com.google.firebase", name = "firebase-storage-ktx", version.ref = "firebaseStorageKtx" }
 androidx-ui-text-google-fonts = { group = "androidx.compose.ui", name = "ui-text-google-fonts", version.ref = "uiTextGoogleFonts" }
 androidx-foundation-layout-android = { group = "androidx.compose.foundation", name = "foundation-layout-android", version.ref = "foundationLayoutAndroid" }
+language-id-common = { group = "com.google.mlkit", name = "language-id", version.ref = "languageIdCommon" }
+translate = { group = "com.google.mlkit", name = "translate", version.ref = "translate" }
 
 
 [plugins]

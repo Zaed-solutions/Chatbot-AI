@@ -1,5 +1,6 @@
 package com.zaed.chatbot.ui.settings
 
+import com.android.billingclient.api.ProductDetails
 import com.zaed.chatbot.ui.mainchat.components.ChatModel
 
 sealed interface SettingsUiAction {
@@ -16,7 +17,7 @@ sealed interface SettingsUiAction {
     data object OnCommunityGuidelinesClicked : SettingsUiAction
     data class OnSetDefaultChatMode(val chatModel: ChatModel): SettingsUiAction
     data object OnBackPressed: SettingsUiAction
-    data class OnUpgradeSubscription(val isFreeTrialEnabled: Boolean, val isLifetime: Boolean):
+    data class OnUpgradeSubscription(val productDetails: ProductDetails):
         SettingsUiAction
     data object OnCancelSubscription: SettingsUiAction
     data object OnPrivacyTermsClicked: SettingsUiAction

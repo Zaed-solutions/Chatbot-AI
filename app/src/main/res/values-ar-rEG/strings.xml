@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">روبوت الدردشة AI</string>
+    <string name="app_name">روبوت الدردشة</string>
     <string name="pro">برو</string>
     <string name="gpt_4o_mini">GPT-4o Mini</string>
     <string name="gpt_4o">GPT-4o</string>
-    <string name="ai_art_generator">مولد الفن بالذكاء الاصطناعي</string>
+    <string name="ai_art_generator">مولد الفن</string>
     <string name="smart_and_fast">ذكي وسريع</string>
     <string name="newest_and_fastest">الأحدث والأسرع</string>
     <string name="create_images">إنشاء الصور</string>

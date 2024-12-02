@@ -16,5 +16,6 @@ data class MainChatUiState(
     val imageHitTimes : Int = 0,
     val textHitTimes : Int = 0,
     val totalHitTimes : Int = 0,
-    val internetConnected : Boolean = true
+    val internetConnected : Boolean = true,
+    val error : String = ""
 )

@@ -44,7 +44,7 @@ import com.zaed.chatbot.ui.theme.ChatbotTheme
 @Composable
 fun MainChatBottomBar(
     modifier: Modifier = Modifier,
-    isLoading : Boolean = false,
+    isLoading: Boolean = false,
     isAttachmentButtonsVisible: Boolean = true,
     isAnimating: Boolean = false,
     onSend: () -> Unit = {},
@@ -69,9 +69,12 @@ fun MainChatBottomBar(
                 .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 16.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            AnimatedContent(targetState = isExpanded to !isAttachmentButtonsVisible, label = "Attachment buttons") { state ->
+            AnimatedContent(
+                targetState = isExpanded to !isAttachmentButtonsVisible,
+                label = "Attachment buttons"
+            ) { state ->
                 when {
-                    state.second->{}
+                    state.second -> {}
                     state.first -> {
                         Row {
                             IconButton(
@@ -112,27 +115,27 @@ fun MainChatBottomBar(
                                         .padding(6.dp)
                                 )
                             }
-//                            IconButton(
-//                                enabled = false,
-//                                onClick = {
-//                                    onAddFile()
-//                                    isExpanded = false
-//                                },
-//
-//                            ) {
-//                                Icon(
-//                                    imageVector = Icons.Default.FileOpen,
-//                                    contentDescription = "Upload File",
-//                                    tint = MaterialTheme.colorScheme.primary,
-//                                    modifier = modifier
-//                                        .size(32.dp)
-//                                        .background(
-//                                            color = MaterialTheme.colorScheme.surfaceContainer,
-//                                            shape = CircleShape
-//                                        )
-//                                        .padding(6.dp)
-//                                )
-//                            }
+                            IconButton(
+                                enabled = true,
+                                onClick = {
+                                    onAddFile()
+                                    isExpanded = false
+                                },
+
+                                ) {
+                                Icon(
+                                    imageVector = Icons.Default.FileOpen,
+                                    contentDescription = "Upload File",
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = modifier
+                                        .size(32.dp)
+                                        .background(
+                                            color = MaterialTheme.colorScheme.surfaceContainer,
+                                            shape = CircleShape
+                                        )
+                                        .padding(6.dp)
+                                )
+                            }
                         }
                     }
 
@@ -178,9 +181,14 @@ fun MainChatBottomBar(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .heightIn(min = 32.dp)
+
                         )
                         AnimatedVisibility(visible = attachments.isNotEmpty()) {
-                            PreviewedAttachments(modifier = Modifier.padding(top = 8.dp),attachments = attachments, onDeleteAttachment = onDeleteAttachment)
+                            PreviewedAttachments(
+                                modifier = Modifier.padding(top = 8.dp),
+                                attachments = attachments,
+                                onDeleteAttachment = onDeleteAttachment
+                            )
                         }
                     }
                     AnimatedVisibility(visible = prompt.isBlank()) {
@@ -200,9 +208,9 @@ fun MainChatBottomBar(
                 }
             }
             IconButton(
-                enabled = isAnimating || (!isLoading && (prompt.isNotBlank()|| attachments.isNotEmpty())),
+                enabled = isAnimating || (!isLoading && (prompt.isNotBlank() || attachments.isNotEmpty())),
                 onClick = {
-                    if(isAnimating){
+                    if (isAnimating) {
                         onStopAnimation()
                     } else {
                         onSend()
@@ -213,7 +221,7 @@ fun MainChatBottomBar(
                 )
             ) {
                 Icon(
-                    imageVector = if(isAnimating) Icons.Default.StopCircle else Icons.AutoMirrored.Filled.Send,
+                    imageVector = if (isAnimating) Icons.Default.StopCircle else Icons.AutoMirrored.Filled.Send,
                     contentDescription = "Send",
                     modifier = Modifier
                         .padding(start = 8.dp)
@@ -234,7 +242,7 @@ private fun MainChatBottomBarPreview() {
                 MessageAttachment(name = "Test1.txt"),
                 MessageAttachment(name = "Test2.txt"),
             ),
-            prompt = "prompt"
+            prompt = "prompt",
         )
     }
 }
