@@ -2,7 +2,6 @@ package com.zaed.chatbot.data.source.remote
 
 import android.net.Uri
 import android.util.Log
-import androidx.core.net.toFile
 import com.aallam.openai.api.audio.SpeechRequest
 import com.aallam.openai.api.audio.Transcription
 import com.aallam.openai.api.audio.TranscriptionRequest
@@ -11,9 +10,9 @@ import com.aallam.openai.api.audio.TranslationRequest
 import com.aallam.openai.api.audio.Voice
 import com.aallam.openai.api.chat.ChatCompletion
 import com.aallam.openai.api.chat.ChatCompletionRequest
-import com.aallam.openai.api.chat.ChatMessage
 import com.aallam.openai.api.chat.ChatRole
 import com.aallam.openai.api.chat.chatMessage
+import com.aallam.openai.api.exception.InvalidRequestException
 import com.aallam.openai.api.file.FileId
 import com.aallam.openai.api.file.FileSource
 import com.aallam.openai.api.file.FileUpload
@@ -28,29 +27,15 @@ import com.aallam.openai.api.model.ModelId
 import com.aallam.openai.api.moderation.ModerationRequest
 import com.aallam.openai.client.OpenAI
 import com.google.firebase.storage.FirebaseStorage
-import com.google.mlkit.nl.languageid.LanguageIdentification
-import com.google.mlkit.nl.languageid.LanguageIdentifier
-import com.google.mlkit.nl.translate.TranslateLanguage
-import com.google.mlkit.nl.translate.TranslatorOptions
 import com.zaed.chatbot.data.model.ChatQuery
 import com.zaed.chatbot.data.model.FileType
 import com.zaed.chatbot.data.model.MessageAttachment
-import com.zaed.chatbot.data.model.toFileType
 import com.zaed.chatbot.ui.mainchat.components.ChatModel
-import com.zaed.chatbot.ui.util.convertJsonToJsonl
-import com.zaed.chatbot.ui.util.convertToJsonl
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.flow
-import kotlinx.serialization.json.Json
-import okhttp3.internal.readBomAsCharset
-import okio.FileSystem
-import okio.Path.Companion.toPath
 import okio.Source
-import okio.source
-import java.io.File
-import java.nio.charset.StandardCharsets
 
 class OpenAIRemoteDataSourceImpl(
     val openAI: OpenAI,
@@ -84,11 +69,12 @@ class OpenAIRemoteDataSourceImpl(
                             }
                         }
                     }
+
                     FileType.ALL -> {
                         chatMessage {
                             role = ChatRole.User
                             content {
-                                text("the file content is "+chatQuery.promptAttachments[0].text+"\n"+"the prompt is "+chatQuery.prompt)
+                                text("the file content is " + chatQuery.promptAttachments[0].text + "\n" + "the prompt is " + chatQuery.prompt)
                             }
                         }
                     }
@@ -96,19 +82,23 @@ class OpenAIRemoteDataSourceImpl(
 
             }
             val messages = mutableListOf(message)
-            if (isFirst) {
-                val titleMessage = ChatMessage(
-                    role = ChatRole.System,
-                    content = "Give a title for the other chat message no words before or after just the title"
-                )
-                messages.add(titleMessage)
-            }
+//            if (isFirst) {
+//                val titleMessage = ChatMessage(
+//                    role = ChatRole.System,
+//                    content = "Give a title for the other chat message no words before or after just the title"
+//                )
+//                messages.add(titleMessage)
+//            }
             val chatCompletionRequest = ChatCompletionRequest(
                 model = modelId,
                 messages = messages
             )
-            emit(Result.success(openAI.chatCompletion(chatCompletionRequest)))
-        } catch (e: Exception) {
+            val chatCompletion = openAI.chatCompletion(chatCompletionRequest)
+            chatCompletion.choices.forEach {
+                Log.d("RemoteDataSourceImpl1", "sendPrompt: ${it.message.content}")
+            }
+            emit(Result.success(chatCompletion))
+        } catch (e: InvalidRequestException) {
             emit(Result.failure(e))
             e.printStackTrace()
         }
@@ -149,22 +139,21 @@ class OpenAIRemoteDataSourceImpl(
         chatQuery: ChatQuery,
         n: Int,
         size: ImageSize
-    ): Result<List<ImageURL>> {
-        return try {
-
-            Result.success(
-                openAI.imageURL( // or openAI.imageJSON
-                    creation = ImageCreation(
-                        prompt = chatQuery.prompt,
-                        model = ChatModel.AI_ART_GENERATOR.modelId,
-                        n = 1,
-                        size = ImageSize.is1024x1024
-                    )
+    ): Flow<Result<List<ImageURL>>> = flow {
+        try {
+            val result = openAI.imageURL( // or openAI.imageJSON
+                creation = ImageCreation(
+                    prompt = chatQuery.prompt,
+                    model = ChatModel.AI_ART_GENERATOR.modelId,
+                    n = 1,
+                    size = ImageSize.is1024x1024
                 )
             )
-        } catch (e: Exception) {
+            emit(Result.success(result))
+        } catch (e: InvalidRequestException) {
             e.printStackTrace()
-            Result.failure(e)
+            emit(Result.failure(e))
+            Log.d("RemoteDataSourceImpl12", "createImage: ${e.message}")
         }
     }
 

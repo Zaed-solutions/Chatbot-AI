@@ -18,13 +18,12 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_lancher"
         android:supportsRtl="true"
-        android:theme="@style/Theme.ProjectTemplate"
         tools:targetApi="31">
         <activity
             android:name="com.zaed.chatbot.ui.activity.MainActivity"
             android:exported="true"
             android:label="@string/app_name"
-            android:theme="@style/Theme.ProjectTemplate">
+            android:theme="@style/Theme.App.Starting">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

@@ -34,6 +34,8 @@ fun NavigationHost(
     onSubscriptionAction: (SubscriptionAction) -> Unit,
     onFontScaleChanged: (Float) -> Unit,
     onDefaultChatModeChanged: (ChatModel) -> Unit,
+    onDecrementFreeTrialCount: () -> Unit,
+    freeTrialCount: Int,
 ) {
     NavHost(modifier = modifier,
         navController = navController,
@@ -55,6 +57,8 @@ fun NavigationHost(
         composable<MainChatRoute> { backStackEntry ->
             val args: MainChatRoute = backStackEntry.toRoute()
             MainChatScreen(
+                onDecrementFreeTrialCount = onDecrementFreeTrialCount,
+                freeTrialCount = freeTrialCount,
                 chatId = args.chatId,
                 onNavigateToPersonalizationScreen = {/*TODO*/ },
                 onNavigateToHistoryScreen = {

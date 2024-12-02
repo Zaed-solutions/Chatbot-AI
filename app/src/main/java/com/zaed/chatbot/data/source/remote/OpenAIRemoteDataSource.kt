@@ -25,7 +25,7 @@ interface OpenAIRemoteDataSource {
         chatQuery: ChatQuery,
         n: Int = 1,
         size: ImageSize = ImageSize.is1024x1024
-    ): Result<List<ImageURL>>
+    ): Flow<Result<List<ImageURL>>>
 
     suspend fun listModels(): List<Model>
     fun uploadNewImage(uri: Uri): Flow<Result<String>>

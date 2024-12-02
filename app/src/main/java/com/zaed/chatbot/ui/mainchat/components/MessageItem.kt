@@ -80,8 +80,8 @@ fun MessageItem(
         if (isLoading) {
             LoadingBubble(
                 modifier = Modifier.padding(
-                    start = 28.dp,
-                    top = 8.dp
+                    start = 32.dp,
+                    top = 16.dp
                 )
             ) // Display animated loading bubble
         } else {
@@ -137,12 +137,14 @@ fun MarkdownViewer(markdownText: String) {
         )
     }
 }
+
 fun isArabic(text: String): Boolean {
     val arabicRange = Regex("[\\u0600-\\u06FF]")
     val arabicCount = text.count { arabicRange.matches(it.toString()) }
     val threshold = text.length / 2 // Adjust threshold as needed
     return arabicCount > threshold
 }
+
 @Composable
 private fun AnimatedText(
     text: String,
@@ -174,28 +176,20 @@ private fun AnimatedText(
     }
     CompositionLocalProvider(LocalLayoutDirection provides if (isArabic) LayoutDirection.Rtl else LayoutDirection.Ltr) {
         RichText(
-            modifier = Modifier
-                .padding(top = 8.dp, start = if (isArabic) 8.dp else 28.dp, end = if (isArabic) 28.dp else 8.dp),
+            modifier = Modifier.fillMaxWidth().padding(start = 32.dp)
         ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 8.dp, start = if (isArabic) 8.dp else 28.dp, end = if (isArabic) 28.dp else 8.dp),
-                contentAlignment = if (isArabic) Alignment.CenterEnd else Alignment.CenterStart
-            ) {
-                RichText {
-                    Markdown(
-                        content = if (animating) {
-                            substringText.trimIndent()
-                        } else {
-                            text.trimIndent()
-                        }
-                    )
+            Markdown(
+                content = if (animating) {
+                    substringText.trimIndent()
+                } else {
+                    text.trimIndent()
                 }
-            }
+            )
         }
     }
+
 }
+//}
 
 @Composable
 fun LoadingBubble(modifier: Modifier = Modifier) {

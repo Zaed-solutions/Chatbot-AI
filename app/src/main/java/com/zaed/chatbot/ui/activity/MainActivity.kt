@@ -3,6 +3,7 @@ package com.zaed.chatbot.ui.activity
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.provider.Settings
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -17,6 +18,7 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.rememberNavController
@@ -56,7 +58,7 @@ class MainActivity : ComponentActivity(), BillingClientStateListener {
                     Log.d(TAG, "Query purchases success")
                     if(purchases?.isNotEmpty() == true){
                         purchases.forEach{ purchase ->
-                            Log.d(TAG, "Purchase: $purchase")
+                            Log.d(TAG, "Purchase: ${purchase}")
                             lifecycleScope.launch {
                                 acknowledgePurchase(purchase)
                             }
@@ -73,13 +75,15 @@ class MainActivity : ComponentActivity(), BillingClientStateListener {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        installSplashScreen()
+        val androidId: String = Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID)
         billingClient = BillingClient.newBuilder(this)
             .setListener(purchasesUpdatedListener)
             .enablePendingPurchases()
             .build()
         establishGoogleBillingConnection()
         enableEdgeToEdge()
-        viewModel.init(onInitialized = {
+        viewModel.init(androidId,onInitialized = {
             setContent {
                 ChatbotTheme {
                     App()
@@ -123,7 +127,9 @@ class MainActivity : ComponentActivity(), BillingClientStateListener {
                         }
                     },
                     isPro = state.isPro,
-                    products = state.products
+                    products = state.products,
+                    onDecrementFreeTrialCount = { viewModel.decrementFreeTrialCount() },
+                    freeTrialCount = state.freeTrialCount
                 )
             }
         }
@@ -222,7 +228,9 @@ class MainActivity : ComponentActivity(), BillingClientStateListener {
             BillingClient.BillingResponseCode.OK -> {
                 Log.d(TAG, "Query product details success")
                 if (productDetailsResult.productDetailsList?.isNotEmpty() == true) {
-                    Log.d(TAG, "Product details list: ${productDetailsResult.productDetailsList}")
+                    productDetailsResult.productDetailsList?.forEach {
+                        Log.d(TAG, "Product details: ${it.name} ${it.productId}")
+                    }
                     viewModel.handleAction(
                         MainAction.OnUpdateProductsList(
                             products = productDetailsResult.productDetailsList ?: emptyList()
@@ -301,6 +309,7 @@ class MainActivity : ComponentActivity(), BillingClientStateListener {
         }
     }
 
+
     private suspend fun queryUserHistory(){
         withContext(Dispatchers.IO){
             val params = QueryPurchaseHistoryParams.newBuilder()
@@ -343,7 +352,7 @@ class MainActivity : ComponentActivity(), BillingClientStateListener {
         when(responseCode){
             BillingClient.BillingResponseCode.OK -> {
                 Log.d(TAG, "Billing flow launched")
-                //TODO: Handle successful purchase
+                queryPurchases()
             }
             else -> {
                 Log.d(TAG, "Billing flow launch failed: ${billingResult.debugMessage}")

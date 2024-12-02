@@ -153,18 +153,33 @@ class MainChatViewModel(
                     n = 1,
                     size = com.aallam.openai.api.image.ImageSize.is256x256,
                     isFirstMessage = isFirstMessage
-                ).collect { result ->
-                    _uiState.update { oldState ->
-                        oldState.copy(
-                            queries = oldState.queries.map {
-                                if (it.isLoading) it.copy(
-                                    isLoading = false,
-                                    response = "",
-                                    animateResponse = false,
-                                    responseAttachments = result.toMessageAttachments()
-                                ) else it.copy(isLoading = false, animateResponse = false)
-                            }.toMutableList(), isLoading = false, isAnimating = true
-                        )
+                ).collect { imageCreation ->
+                    imageCreation.onSuccess { result ->
+                        _uiState.update { oldState ->
+                            oldState.copy(
+                                queries = oldState.queries.map {
+                                    if (it.isLoading) it.copy(
+                                        isLoading = false,
+                                        response = "",
+                                        animateResponse = false,
+                                        responseAttachments = result.toMessageAttachments()
+                                    ) else it.copy(isLoading = false, animateResponse = false)
+                                }.toMutableList(), isLoading = false, isAnimating = true
+                            )
+                        }
+                    }.onFailure { error ->
+                        Log.d("tetooo", "createImages: ${error.message}")
+                        _uiState.update { oldState ->
+                            oldState.copy(
+                                queries = oldState.queries.map {
+                                    if (it.isLoading) it.copy(
+                                        isLoading = false,
+                                        response = error.message ?: "",
+                                        animateResponse = false,
+                                    ) else it.copy(isLoading = false, animateResponse = false)
+                                }.toMutableList(), isLoading = false, isAnimating = true
+                            )
+                        }
                     }
                 }
             }
@@ -178,7 +193,7 @@ class MainChatViewModel(
             ChatModel.GPT_4O_MINI -> createText(ChatModel.GPT_4O_MINI.modelId)
             ChatModel.GPT_4O -> createText(ChatModel.GPT_4O.modelId)
             ChatModel.AI_ART_GENERATOR -> {
-                detectLanguage(uiState.value.currentPrompt){ languageCode ->
+                detectLanguage(uiState.value.currentPrompt) { languageCode ->
                     if (languageCode == "ar") {
                         translateToEnglish(uiState.value.currentPrompt) { translatedPrompt ->
                             createImages(translatedPrompt)
@@ -232,34 +247,87 @@ class MainChatViewModel(
                                 ),
                                 modelId,
                                 isFirstMessage
-                            ).collect { result ->
-                                _uiState.update { oldState ->
-                                    oldState.copy(
-                                        queries = oldState.queries.map {
-                                            if (it.isLoading) it.copy(
-                                                isLoading = false,
-                                                response = result.choices.first().message.content.orEmpty(),
-                                                animateResponse = true,
+                            ).collect { response ->
+                                response.onSuccess { result ->
+                                    _uiState.update { oldState ->
+                                        oldState.copy(
+                                            queries = oldState.queries.map {
+                                                if (it.isLoading) it.copy(
+                                                    isLoading = false,
+                                                    response = result.choices.first().message.content.orEmpty(),
+                                                    animateResponse = true,
 //                                    responseAttachments = data.responseAttachments
-                                            ) else it.copy(
-                                                isLoading = false,
-                                                animateResponse = false
-                                            )
-                                        }.toMutableList(), isLoading = false, isAnimating = true
-                                    )
+                                                ) else it.copy(
+                                                    isLoading = false,
+                                                    animateResponse = false
+                                                )
+                                            }.toMutableList(), isLoading = false, isAnimating = true
+                                        )
 
+                                    }
+                                }.onFailure {error->
+                                    _uiState.update { oldState ->
+                                        oldState.copy(
+                                            queries = oldState.queries.map {
+                                                if (it.isLoading) it.copy(
+                                                    isLoading = false,
+                                                    response = error.message ?: "",
+                                                    animateResponse = false,
+                                                ) else it.copy(isLoading = false, animateResponse = false)
+                                            }.toMutableList(), isLoading = false, isAnimating = true
+                                        )
+                                    }
                                 }
                             }
-                        }.onFailure {
-                            Log.d("MainChatViewModel36", "createText: ${it.message}")
+                        }.onFailure {error->
+                            _uiState.update { oldState ->
+                                oldState.copy(
+                                    queries = oldState.queries.map {
+                                        if (it.isLoading) it.copy(
+                                            isLoading = false,
+                                            response = error.message ?: "",
+                                            animateResponse = false,
+                                        ) else it.copy(isLoading = false, animateResponse = false)
+                                    }.toMutableList(), isLoading = false, isAnimating = true
+                                )
+                            }
                         }
-
                     }
                 }
                 query.promptAttachments.filter {
                     it.type != com.zaed.chatbot.data.model.FileType.IMAGE
                 }.forEach { attachment ->
-                    chatRepository.sendPrompt(query,modelId,isFirstMessage).collect { result ->
+                    chatRepository.sendPrompt(query, modelId, isFirstMessage).collect { response ->
+                        response.onSuccess { result ->
+                            _uiState.update { oldState ->
+                                oldState.copy(
+                                    queries = oldState.queries.map {
+                                        if (it.isLoading) it.copy(
+                                            isLoading = false,
+                                            response = result.choices.first().message.content.orEmpty(),
+                                            animateResponse = true,
+                                        ) else it.copy(isLoading = false, animateResponse = false)
+                                    }.toMutableList(), isLoading = false, isAnimating = true
+                                )
+                            }
+                        }.onFailure {error->
+                            _uiState.update { oldState ->
+                                oldState.copy(
+                                    queries = oldState.queries.map {
+                                        if (it.isLoading) it.copy(
+                                            isLoading = false,
+                                            response = error.message ?: "",
+                                            animateResponse = false,
+                                        ) else it.copy(isLoading = false, animateResponse = false)
+                                    }.toMutableList(), isLoading = false, isAnimating = true
+                                )
+                            }
+                        }
+                    }
+                }
+            } else {
+                chatRepository.sendPrompt(query, modelId, isFirstMessage).collect { response ->
+                    response.onSuccess { result ->
                         _uiState.update { oldState ->
                             oldState.copy(
                                 queries = oldState.queries.map {
@@ -268,28 +336,24 @@ class MainChatViewModel(
                                         response = result.choices.first().message.content.orEmpty(),
                                         animateResponse = true,
 //                                    responseAttachments = data.responseAttachments
+                                    ) else it.copy(isLoading = false, animateResponse = false)
+                                }.toMutableList(), isLoading = false, isAnimating = true
+                            )
+                        }
+                    }.onFailure {error->
+                        _uiState.update { oldState ->
+                            oldState.copy(
+                                queries = oldState.queries.map {
+                                    if (it.isLoading) it.copy(
+                                        isLoading = false,
+                                        response = error.message ?: "",
+                                        animateResponse = false,
                                     ) else it.copy(isLoading = false, animateResponse = false)
                                 }.toMutableList(), isLoading = false, isAnimating = true
                             )
                         }
                     }
                 }
-            } else {
-                chatRepository.sendPrompt(query, modelId, isFirstMessage)
-                    .collect { result ->
-                        _uiState.update { oldState ->
-                            oldState.copy(
-                                queries = oldState.queries.map {
-                                    if (it.isLoading) it.copy(
-                                        isLoading = false,
-                                        response = result.choices.first().message.content.orEmpty(),
-                                        animateResponse = true,
-//                                    responseAttachments = data.responseAttachments
-                                    ) else it.copy(isLoading = false, animateResponse = false)
-                                }.toMutableList(), isLoading = false, isAnimating = true
-                            )
-                        }
-                    }
             }
         }
     }
@@ -309,7 +373,7 @@ class MainChatViewModel(
     private fun addAttachment(attachment: MessageAttachment) {
         viewModelScope.launch {
             _uiState.update {
-                it.copy(attachments = it.attachments + attachment,  )
+                it.copy(attachments = it.attachments + attachment)
             }
         }
     }
