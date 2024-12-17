@@ -249,7 +249,7 @@ suspend fun downloadImageWithMediaStore(context: Context, imageUrl: String) {
                     imageBytes?.copyTo(outputStream)
                 }
             }
-            Toast.makeText(context, "Image saved to Downloads", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, "Image saved to DCIM", Toast.LENGTH_SHORT).show()
         } else {
             Toast.makeText(context, "Failed to save image", Toast.LENGTH_SHORT).show()
         }
