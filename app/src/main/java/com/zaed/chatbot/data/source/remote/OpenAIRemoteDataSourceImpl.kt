@@ -2,6 +2,7 @@ package com.zaed.chatbot.data.source.remote
 
 import android.net.Uri
 import android.util.Log
+import com.aallam.openai.api.BetaOpenAI
 import com.aallam.openai.api.audio.SpeechRequest
 import com.aallam.openai.api.audio.Transcription
 import com.aallam.openai.api.audio.TranscriptionRequest
@@ -10,8 +11,10 @@ import com.aallam.openai.api.audio.TranslationRequest
 import com.aallam.openai.api.audio.Voice
 import com.aallam.openai.api.chat.ChatCompletion
 import com.aallam.openai.api.chat.ChatCompletionRequest
+import com.aallam.openai.api.chat.ChatMessage
 import com.aallam.openai.api.chat.ChatRole
 import com.aallam.openai.api.chat.chatMessage
+import com.aallam.openai.api.core.Role
 import com.aallam.openai.api.exception.InvalidRequestException
 import com.aallam.openai.api.file.FileId
 import com.aallam.openai.api.file.FileSource
@@ -22,9 +25,12 @@ import com.aallam.openai.api.image.ImageEdit
 import com.aallam.openai.api.image.ImageSize
 import com.aallam.openai.api.image.ImageURL
 import com.aallam.openai.api.image.ImageVariation
+import com.aallam.openai.api.message.MessageRequest
 import com.aallam.openai.api.model.Model
 import com.aallam.openai.api.model.ModelId
 import com.aallam.openai.api.moderation.ModerationRequest
+import com.aallam.openai.api.thread.Thread
+import com.aallam.openai.api.thread.ThreadId
 import com.aallam.openai.client.OpenAI
 import com.google.firebase.storage.FirebaseStorage
 import com.zaed.chatbot.data.model.ChatQuery
@@ -41,17 +47,25 @@ class OpenAIRemoteDataSourceImpl(
     val openAI: OpenAI,
     val storage: FirebaseStorage
 ) : OpenAIRemoteDataSource {
+    private val chatHistoryMap: MutableMap<String, MutableList<ChatMessage>> = mutableMapOf()
+    @OptIn(BetaOpenAI::class)
+    override fun createNewThread(): Flow<Result<Thread>> = flow {
+        val thread = openAI.thread()
+        emit(Result.success(thread))
+    }
 
     override suspend fun listModels(): List<Model> = openAI.models()
     suspend fun retrieveModel(modelId: String): Model = openAI.model(ModelId(modelId))
+    @OptIn(BetaOpenAI::class)
     override suspend fun sendPrompt(
         chatQuery: ChatQuery,
         isFirst: Boolean,
         modelId: ModelId
     ): Flow<Result<ChatCompletion>> = flow {
+        val messageHistory = chatHistoryMap.getOrPut(chatQuery.chatId) { mutableListOf() }
         try {
             Log.d("RemoteDataSourceImpl", "sendPrompt: $chatQuery")
-            val message = if (chatQuery.promptAttachments.isEmpty()) {
+            val userMessage = if (chatQuery.promptAttachments.isEmpty()) {
                 chatMessage {
                     role = ChatRole.User
                     content {
@@ -81,22 +95,31 @@ class OpenAIRemoteDataSourceImpl(
                 }
 
             }
-            val messages = mutableListOf(message)
-//            if (isFirst) {
-//                val titleMessage = ChatMessage(
-//                    role = ChatRole.System,
-//                    content = "Give a title for the other chat message no words before or after just the title"
-//                )
-//                messages.add(titleMessage)
-//            }
+            messageHistory.add(userMessage)
+            messageHistory.forEach {
+                Log.d("RemoteDataSourceImpl2", "sendPrompt: ${it.role}")
+            }
             val chatCompletionRequest = ChatCompletionRequest(
                 model = modelId,
-                messages = messages
+                messages = messageHistory
             )
             val chatCompletion = openAI.chatCompletion(chatCompletionRequest)
-            chatCompletion.choices.forEach {
-                Log.d("RemoteDataSourceImpl1", "sendPrompt: ${it.message.content}")
+            chatCompletion.choices.forEach { choice->
+                val assistantMessage = chatMessage {
+                    role = ChatRole.Assistant
+                    content {
+                        choice.message.content?.let { text(it) }
+                    }
+                }
+                messageHistory.add(assistantMessage)
             }
+//            val message2 = openAI.message(
+//                threadId = chatQuery.chatId,
+//                request =  MessageRequest(
+//                    role = Role.User,
+//                    content = chatQuery.prompt
+//                )
+//            )
             emit(Result.success(chatCompletion))
         } catch (e: InvalidRequestException) {
             emit(Result.failure(e))
