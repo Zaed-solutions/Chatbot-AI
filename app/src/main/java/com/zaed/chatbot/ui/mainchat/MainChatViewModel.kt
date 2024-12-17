@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.aallam.openai.api.BetaOpenAI
 import com.aallam.openai.api.model.ModelId
 import com.zaed.chatbot.data.model.ChatQuery
 import com.zaed.chatbot.data.model.MessageAttachment
@@ -32,10 +33,26 @@ class MainChatViewModel(
         if (chatId.isNotBlank()) {
             fetchChat(chatId)
         } else {
-            _uiState.update {
-                it.copy(
-                    chatId = UUID.randomUUID().toString(),
-                )
+            createNewThread()
+//            _uiState.update {
+//                it.copy(
+//                    threadId = UUID.randomUUID().toString(),
+//                )
+//            }
+        }
+    }
+
+    @OptIn(BetaOpenAI::class)
+    private fun createNewThread() {
+        viewModelScope.launch(Dispatchers.IO) {
+            chatRepository.createNewThread().collect{result->
+                result.onSuccess {
+                    _uiState.update {
+                        it.copy(threadId = it.threadId)
+                    }
+                }.onFailure {
+                    Log.d("MainChatViewModel", "createNewThread: ${it.message}")
+                }
             }
         }
     }
@@ -133,7 +150,7 @@ class MainChatViewModel(
         viewModelScope.launch(Dispatchers.IO) {
             viewModelScope.launch(Dispatchers.IO) {
                 val query = ChatQuery(
-                    chatId = uiState.value.chatId,
+                    chatId = uiState.value.threadId,
                     prompt = translatedPrompt,
                     response = "",
                     promptAttachments = uiState.value.attachments,
@@ -214,7 +231,7 @@ class MainChatViewModel(
         val isFirstMessage = uiState.value.queries.isEmpty()
         viewModelScope.launch(Dispatchers.IO) {
             val query = ChatQuery(
-                chatId = uiState.value.chatId,
+                chatId = uiState.value.threadId,
                 prompt = uiState.value.currentPrompt,
                 response = "",
                 promptAttachments = uiState.value.attachments,
@@ -364,8 +381,8 @@ class MainChatViewModel(
     private fun clearChat(selectedModel: ChatModel = ChatModel.GPT_4O_MINI) {
         viewModelScope.launch {
             _uiState.update {
+                createNewThread()
                 MainChatUiState(
-                    chatId = UUID.randomUUID().toString(),
                     selectedModel = selectedModel
                 )
             }

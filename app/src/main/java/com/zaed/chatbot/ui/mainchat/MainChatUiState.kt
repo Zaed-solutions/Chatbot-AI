@@ -6,7 +6,7 @@ import com.zaed.chatbot.ui.mainchat.components.ChatModel
 
 data class MainChatUiState(
     val queries: MutableList<ChatQuery> = mutableListOf(),
-    val chatId: String = "",
+    val threadId: String = "",
     val isLoading : Boolean = false,
     val currentPrompt: String = "",
     val isAnimating: Boolean = false,

@@ -2,12 +2,14 @@ package com.zaed.chatbot.data.repository
 
 import android.net.Uri
 import android.util.Log
+import com.aallam.openai.api.BetaOpenAI
 import com.aallam.openai.api.chat.ChatCompletion
 import com.aallam.openai.api.file.FileId
 import com.aallam.openai.api.image.ImageSize
 import com.aallam.openai.api.image.ImageURL
 import com.aallam.openai.api.model.Model
 import com.aallam.openai.api.model.ModelId
+import com.aallam.openai.api.thread.Thread
 import com.zaed.chatbot.data.model.ChatHistory
 import com.zaed.chatbot.data.model.ChatQuery
 import com.zaed.chatbot.data.model.MessageAttachment
@@ -68,7 +70,10 @@ class ChatRepositoryImpl(
         }
     }
 
-
+    @OptIn(BetaOpenAI::class)
+    override fun createNewThread(): Flow<Result<Thread>> {
+        return chatRemoteDataSource.createNewThread()
+    }
 
     override suspend fun createImage(
         chatQuery: ChatQuery, n: Int, size: ImageSize, isFirstMessage: Boolean
