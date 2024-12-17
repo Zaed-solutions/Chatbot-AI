@@ -1,5 +1,6 @@
 package com.zaed.chatbot.ui.mainchat.components
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -16,7 +17,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -29,6 +33,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -57,6 +62,7 @@ fun MessageItem(
     hasAttachments: Boolean,
     attachments: List<MessageAttachment> = emptyList(),
 ) {
+    val clipboardManager = LocalClipboardManager.current
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -76,6 +82,21 @@ fun MessageItem(
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier.padding(start = 8.dp)
             )
+            AnimatedVisibility(!isPrompt) {
+                IconButton({
+                    clipboardManager.setText(
+                        annotatedString = androidx.compose.ui.text.AnnotatedString(
+                            message
+                        )
+                    )
+                }) {
+                    Icon(
+                        imageVector = Icons.Default.ContentCopy,
+                        contentDescription = "Copy Icon",
+                        modifier = Modifier.size(18.dp),
+                    )
+                }
+            }
         }
         if (isLoading) {
             LoadingBubble(
