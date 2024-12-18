@@ -2,6 +2,7 @@ package com.zaed.chatbot.ui.mainchat
 
 import android.Manifest
 import android.content.Intent
+import android.content.res.Configuration
 import android.net.Uri
 import android.os.Build
 import android.util.Log
@@ -70,6 +71,7 @@ import com.zaed.chatbot.ui.util.readPdfContent
 import com.zaed.chatbot.ui.util.readWordContent
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
+import java.util.Locale
 
 private val TAG = "MainChatScreen"
 
@@ -343,7 +345,7 @@ fun MainChatScreenContent(
     queries: List<ChatQuery> = emptyList(),
     isAnimating: Boolean = false,
     selectedModel: ChatModel = ChatModel.GPT_4O_MINI,
-    attachments: List<MessageAttachment> = emptyList()
+    attachments: List<MessageAttachment> = emptyList(),
 ) {
     Log.d("tenoo", "mainChatScreenContent: ${isPro}")
     var isBottomSheetVisible by remember { mutableStateOf(isPro) }
@@ -355,6 +357,7 @@ fun MainChatScreenContent(
             snackbarHostState.showSnackbar(isError)
         }
     }
+
     Scaffold(
         snackbarHost = {
             SnackbarHost(hostState = snackbarHostState)
@@ -368,7 +371,9 @@ fun MainChatScreenContent(
                 onChangeModel = {
                     onAction(MainChatUiAction.OnChangeModel(it))
                 },
-                onProClicked = { isBottomSheetVisible = true }
+                onProClicked = {
+                    isBottomSheetVisible = true
+                }
             )
         },
         bottomBar = {

@@ -1,12 +1,23 @@
 package com.zaed.chatbot.app.navigation
 
+import android.content.res.Configuration
 import android.util.Log
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -23,10 +34,17 @@ import com.zaed.chatbot.ui.settings.guidelines.CommunityGuidelinesScreen
 import com.zaed.chatbot.ui.settings.mode.ChatModeScreen
 import com.zaed.chatbot.ui.settings.privacy.PrivacyPolicyScreen
 import com.zaed.chatbot.ui.settings.promocode.PromoCodeScreen
+import com.zaed.chatbot.ui.util.LanguagePreferenceManager
+import com.zaed.chatbot.ui.util.LocalStorage
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.launch
+import org.koin.androidx.compose.koinViewModel
+import java.util.Locale
 
 @Composable
 fun NavigationHost(
     modifier: Modifier = Modifier,
+    languageViewModel :LanguageViewModel = koinViewModel(),
     navController: NavHostController,
     defaultChatMode: ChatModel,
     isPro: Boolean = false,
@@ -38,6 +56,20 @@ fun NavigationHost(
     onDecrementFreeTrialCount: () -> Unit,
     freeTrialCount: Int,
 ) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val savedLanguage by languageViewModel.state.collectAsState(initial = Locale.getDefault().language)
+    var currentLocale by remember { mutableStateOf(Locale(savedLanguage ?: Locale.getDefault().language)) }
+    LaunchedEffect(savedLanguage) {
+        savedLanguage?.let {
+            currentLocale = Locale(it)
+            val resources = context.resources
+            val configuration = Configuration(resources.configuration)
+            configuration.setLocale(Locale(it))
+            resources.updateConfiguration(configuration, resources.displayMetrics)
+        }
+    }
+
     Log.d("tenoo", "naviHos: ${isPro}")
     NavHost(modifier = modifier,
         navController = navController,
@@ -71,6 +103,7 @@ fun NavigationHost(
                 onSubscriptionAction = onSubscriptionAction,
                 onNavigateToSettingsScreen = { navController.navigate(SettingsRoute) },
                 onNavigateToPrivacyAndTerms = { navController.navigate(PrivacyPolicyRoute) },
+
             )
         }
         composable<SettingsRoute> {
@@ -87,7 +120,18 @@ fun NavigationHost(
                     navController.navigate(
                         CommunityGuidelinesRoute
                     )
-                }, onSubscriptionAction = onSubscriptionAction
+                }, onSubscriptionAction = onSubscriptionAction,
+                changeLanguage = {
+                    val newLocale = if (currentLocale.language == "en") Locale("ar") else Locale("en")
+                    currentLocale = newLocale
+                    val resources = context.resources
+                    val configuration = Configuration(resources.configuration)
+                    configuration.setLocale(newLocale)
+                    resources.updateConfiguration(configuration, resources.displayMetrics)
+                    scope.launch {
+                        languageViewModel.saveLanguage(newLocale.language)
+                    }
+                }
             )
         }
         composable<ChangeFontScaleRoute> {
@@ -135,4 +179,19 @@ fun NavigationHost(
     }
 
 }
+
+class LanguageViewModel(
+    private val localStorage: LocalStorage
+) :ViewModel(){
+    val state = localStorage.languageFlow
+
+    fun saveLanguage(languageCode: String) {
+        viewModelScope.launch {
+            localStorage.saveLanguage(languageCode)
+        }
+    }
+
+}
+
+
 

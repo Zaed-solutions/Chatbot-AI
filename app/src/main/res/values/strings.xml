@@ -180,4 +180,7 @@
     <string name="rename_chat">Rename Chat</string>
     <string name="new_title">New Title</string>
     <string name="ok">Ok</string>
+    <string name="change_language">Change Language</string>
+    <string name="rate_us">Rate Us</string>
+    <string name="restore_purchase">Restore Purchase</string>
 </resources>

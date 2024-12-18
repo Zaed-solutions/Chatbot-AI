@@ -20,7 +20,7 @@ android {
         applicationId = "com.zaed.chatbot"
         minSdk = 24
         targetSdk = 34
-        versionCode =10
+        versionCode =20
         versionName = "1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -131,6 +131,7 @@ dependencies {
     implementation ("com.tom-roush:pdfbox-android:2.0.27.0")
 
     implementation("androidx.core:core-splashscreen:1.0.0-beta02")
+    implementation("androidx.datastore:datastore-preferences:1.0.0")
 
 
 

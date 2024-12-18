@@ -1,5 +1,6 @@
 package com.zaed.chatbot.app.di
 
+import com.zaed.chatbot.app.navigation.LanguageViewModel
 import com.zaed.chatbot.ui.activity.MainViewModel
 import com.zaed.chatbot.ui.history.HistoryViewModel
 import com.zaed.chatbot.ui.mainchat.MainChatViewModel
@@ -12,4 +13,5 @@ val viewModelModule = module {
    viewModelOf(::SettingsViewModel)
    viewModelOf(::MainViewModel)
    viewModelOf(::HistoryViewModel)
+   viewModelOf(::LanguageViewModel)
 }

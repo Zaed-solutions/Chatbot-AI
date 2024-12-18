@@ -104,6 +104,10 @@ class MainActivity : ComponentActivity(), BillingClientStateListener {
                 }
             }
         }
+    fun refreshUI() {
+        finish()
+        startActivity(intent)
+    }
     private lateinit var billingClient: BillingClient
     private val viewModel: MainViewModel by inject<MainViewModel>()
 

@@ -209,6 +209,9 @@
     <string name="rename_chat">إعادة تسمية الدردشة</string>
     <string name="new_title">عنوان جديد</string>
     <string name="ok">موافق</string>
+    <string name="change_language">تغيير اللغة</string>
+    <string name="rate_us">قيمنا على المتجر</string>
+    <string name="restore_purchase">اعادة الشراء</string>
 
 </resources>
 

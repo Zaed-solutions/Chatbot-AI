@@ -1,6 +1,8 @@
 package com.zaed.chatbot.ui.settings
 
 import android.content.res.Configuration
+import android.util.Log
+import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -16,6 +18,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Loop
 import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.PrivacyTip
@@ -69,7 +72,8 @@ fun SettingsScreen(
     onNavigateToCommunityGuidelines: () -> Unit = {},
     onSubscriptionAction: (SubscriptionAction) -> Unit = {},
     isPro: Boolean = false,
-    products: List<ProductDetails> = emptyList()
+    products: List<ProductDetails> = emptyList(),
+    changeLanguage: () -> Unit = {},
 ) {
     SettingsScreenContent(
         isPro = isPro,
@@ -82,6 +86,10 @@ fun SettingsScreen(
                 SettingsUiAction.OnPromoCodeClicked -> onNavigateToPromoCode()
                 SettingsUiAction.OnRateUsClicked -> {
                     /*TODO*/
+                }
+                SettingsUiAction.OnLanguageClicked -> {
+                    changeLanguage()
+                    onNavigateBack()
                 }
                 SettingsUiAction.OnRestorePurchaseClicked -> {
                     /*TODO*/
@@ -120,7 +128,7 @@ fun SettingsScreenContent(
     Scaffold(modifier = modifier, topBar = {
         TopAppBar(title = {
             Text(
-                text = "Settings", fontWeight = FontWeight.Bold
+                text = stringResource(id = R.string.settings), fontWeight = FontWeight.Bold
             )
         }, actions = {
             IconButton(onClick = { onAction(SettingsUiAction.OnBackPressed) }) {
@@ -171,6 +179,9 @@ private fun SettingItems(
     action: (SettingsUiAction) -> Unit = {},
     onPromoClicked: () -> Unit,
 ) {
+    Log.d("s0s0", "SettingItems: $items")
+    Log.d("s0s0", "SettingItems: $isPro")
+    Log.d("s0s0", "SettingItems: $action")
     val groupedItems = items.groupBy { it.category }
     LazyColumn(
         modifier = Modifier.fillMaxSize()
@@ -200,12 +211,12 @@ private fun SettingItems(
                     ) {
                         Icon(
                             imageVector = item.icon,
-                            contentDescription = item.title,
+                            contentDescription = stringResource( item.title),
                             modifier = Modifier.padding(8.dp)
                         )
                         Spacer(modifier = Modifier.padding(12.dp))
                         Text(
-                            text = item.title,
+                            text = stringResource(id = item.title),
                         )
                     }
                     if (innerIndex < groupedItems.entries.size - 1) {
@@ -223,7 +234,7 @@ private fun SettingItems(
 @Composable
 private fun PromoCard(
     modifier: Modifier = Modifier,
-    onPromoClicked: () -> Unit
+    onPromoClicked: () -> Unit,
 ) {
     Surface(
         onClick = {
@@ -282,54 +293,61 @@ enum class SettingsCategory {
 }
 
 enum class SettingItems(
-    val title: String,
+    @StringRes val title: Int,
     val icon: ImageVector,
     val action: SettingsUiAction,
     val category: SettingsCategory
 ) {
     DEFAULT_CHAT_MODE(
-        "Default Chat Mode",
+        R.string.default_chat_mode,
         Icons.AutoMirrored.Filled.Chat,
         SettingsUiAction.OnDefaultChatModeClicked,
         SettingsCategory.CATEGORY_1
     ),
     FONT_SIZE(
-        "Font Size",
+        R.string.font_size,
         Icons.Default.Title,
         SettingsUiAction.OnFontSizeClicked,
         SettingsCategory.CATEGORY_1
     ),
+    Language(
+        R.string.change_language,
+        Icons.Default.Language,
+        SettingsUiAction.OnLanguageClicked,
+        SettingsCategory.CATEGORY_1
+    ),
     PROMO_CODE(
-        "Promo Code",
+        R.string.promo_code,
         Icons.Default.QrCode,
         SettingsUiAction.OnPromoCodeClicked,
         SettingsCategory.CATEGORY_2
     ),
     RATE_US(
-        "Rate Us", Icons.Default.Star,
+        R.string.rate_us,
+        Icons.Default.Star,
         SettingsUiAction.OnRateUsClicked,
         SettingsCategory.CATEGORY_3
     ),
     RESTORE_PURCHASE(
-        "Restore Purchase",
+        R.string.restore_purchase,
         Icons.Default.Loop,
         SettingsUiAction.OnRestorePurchaseClicked,
         SettingsCategory.CATEGORY_3
     ),
     FAQ_SUPPORT(
-        "FAQ & Support",
+        R.string.faq_support,
         Icons.Default.Support,
         SettingsUiAction.OnFaqSupportClicked,
         SettingsCategory.CATEGORY_3
     ),
     PRIVACY_POLICY(
-        "Privacy Policy | T&C",
+        R.string.privacy_policy_tnc,
         Icons.Default.PrivacyTip,
         SettingsUiAction.OnPrivacyPolicyClicked,
         SettingsCategory.CATEGORY_4
     ),
     COMMUNITY_GUIDELINES(
-        "Community Guidelines",
+        R.string.community_guidelines,
         Icons.Default.People,
         SettingsUiAction.OnCommunityGuidelinesClicked,
         SettingsCategory.CATEGORY_4
