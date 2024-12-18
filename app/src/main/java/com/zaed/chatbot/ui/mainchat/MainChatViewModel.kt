@@ -33,29 +33,15 @@ class MainChatViewModel(
         if (chatId.isNotBlank()) {
             fetchChat(chatId)
         } else {
-            createNewThread()
-//            _uiState.update {
-//                it.copy(
-//                    threadId = UUID.randomUUID().toString(),
-//                )
-//            }
-        }
-    }
-
-    @OptIn(BetaOpenAI::class)
-    private fun createNewThread() {
-        viewModelScope.launch(Dispatchers.IO) {
-            chatRepository.createNewThread().collect{result->
-                result.onSuccess {
-                    _uiState.update {
-                        it.copy(threadId = it.threadId)
-                    }
-                }.onFailure {
-                    Log.d("MainChatViewModel", "createNewThread: ${it.message}")
-                }
+            _uiState.update {
+                it.copy(
+                    threadId = UUID.randomUUID().toString(),
+                )
             }
         }
     }
+
+
 
     private fun checkInternetConnection() {
         viewModelScope.launch {
@@ -381,10 +367,11 @@ class MainChatViewModel(
     private fun clearChat(selectedModel: ChatModel = ChatModel.GPT_4O_MINI) {
         viewModelScope.launch {
             _uiState.update {
-                createNewThread()
+
                 MainChatUiState(
-                    selectedModel = selectedModel
-                )
+                    selectedModel = selectedModel,
+                    threadId = UUID.randomUUID().toString(),
+                    )
             }
         }
     }
