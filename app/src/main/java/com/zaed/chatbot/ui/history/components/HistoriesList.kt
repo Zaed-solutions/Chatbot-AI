@@ -1,5 +1,6 @@
 package com.zaed.chatbot.ui.history.components
 
+import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -25,8 +26,9 @@ fun HistoriesList(
     ) {
         items(
             items = histories,
-            key = { it.chatId }
+//            key = { it.chatId }
         ) { history ->
+            Log.d("HistoryList", "History: ${history.chatId}")
             HistoryItem(
                 modifier = Modifier.animateItem(),
                 title = history.title,
