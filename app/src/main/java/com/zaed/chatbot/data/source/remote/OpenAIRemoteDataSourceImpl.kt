@@ -276,6 +276,38 @@ class OpenAIRemoteDataSourceImpl(
 //        }
 //
 //    }
+override suspend fun editImage(
+    modelId: String,
+    imageSource: Source,
+    maskSource: Source,
+    prompt: String
+): Result<List<ImageURL>> {
+    return try {
+        Log.d("mogo", "editImage:in remote$ ")
+        // Creating an image edit request
+        val imageEditRequest = ImageEdit(
+            image = FileSource(name = "image.png", source = imageSource),
+            mask = FileSource(name = "mask.png", source = maskSource),
+            prompt = prompt, // Description for editing
+            n = 1
 
+        )
+
+        // Sending the request to OpenAI's API
+        val result = openAI.imageURL(edit = imageEditRequest)
+        Log.d("mogo", "editImage: $result")
+        // Process the result as needed
+        result.forEach {
+            Log.d("initimage", "editImage: $it")
+        }
+
+        // Return the result with image URLs
+        Result.success(result)
+    } catch (e: Exception) {
+        Log.d("mogo", "editImage: ${e.message}")
+        e.printStackTrace()
+        Result.failure(e)
+    }
+}
 
 }

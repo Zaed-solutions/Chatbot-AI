@@ -18,6 +18,7 @@ import com.zaed.chatbot.data.source.remote.OpenAIRemoteDataSource
 import com.zaed.chatbot.ui.util.toMessageAttachments
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import okio.Source
 
 class ChatRepositoryImpl(
     private val chatRemoteDataSource: OpenAIRemoteDataSource,
@@ -142,4 +143,13 @@ override suspend fun createChatHistory(chatHistory: ChatHistory) {
     return chatLocalDataSource.createChatHistory(chatHistory)
 }
 
+    override suspend fun editImage(
+        modelId: String,
+        imageSource: Source,
+        maskSource: Source,
+        prompt: String
+    ): Result<List<ImageURL>> {
+        Log.d("mogo", "editImage in repo: $modelId, $imageSource, $maskSource, $prompt")
+        return chatRemoteDataSource.editImage(modelId, imageSource, maskSource, prompt)
+    }
 }

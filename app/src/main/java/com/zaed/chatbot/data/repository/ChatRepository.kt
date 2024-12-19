@@ -14,6 +14,7 @@ import com.zaed.chatbot.data.model.ChatHistory
 import com.zaed.chatbot.data.model.ChatQuery
 import com.zaed.chatbot.data.model.MessageAttachment
 import kotlinx.coroutines.flow.Flow
+import okio.Source
 
 interface ChatRepository {
     suspend fun sendPrompt(chatQuery: ChatQuery,modelId: ModelId,isFirstMessage: Boolean): Flow<Result<ChatCompletion>>
@@ -29,5 +30,11 @@ interface ChatRepository {
     fun uploadNewFile(attachment: MessageAttachment): Flow<Result<FileId>>
     @OptIn(BetaOpenAI::class)
     fun createNewThread(): Flow<Result<Thread>>
+    suspend fun editImage(
+        modelId: String,
+        imageSource: Source,
+        maskSource: Source,
+        prompt: String
+    ): Result<List<ImageURL>>
 
 }

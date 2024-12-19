@@ -1,12 +1,16 @@
 package com.zaed.chatbot.ui.mainchat
 
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.Canvas
+import android.graphics.Paint
 import android.net.Uri
 import android.util.Log
 import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.aallam.openai.api.BetaOpenAI
 import com.aallam.openai.api.model.ModelId
+import com.google.firebase.storage.FirebaseStorage
 import com.zaed.chatbot.data.model.ChatQuery
 import com.zaed.chatbot.data.model.MessageAttachment
 import com.zaed.chatbot.data.repository.ChatRepository
@@ -15,11 +19,23 @@ import com.zaed.chatbot.ui.util.ConnectivityObserver
 import com.zaed.chatbot.ui.util.detectLanguage
 import com.zaed.chatbot.ui.util.toMessageAttachments
 import com.zaed.chatbot.ui.util.translateToEnglish
+import io.ktor.client.HttpClient
+import io.ktor.client.request.get
+import io.ktor.client.statement.HttpResponse
+import io.ktor.client.statement.readBytes
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withContext
+import okio.BufferedSource
+import okio.Source
+import okio.buffer
+import okio.source
+import java.io.ByteArrayOutputStream
+import java.io.IOException
 import java.util.UUID
 
 class MainChatViewModel(
@@ -30,6 +46,7 @@ class MainChatViewModel(
     val uiState = _uiState.asStateFlow()
 
     fun init(chatId: String) {
+        editImage()
         if (chatId.isNotBlank()) {
             fetchChat(chatId)
         } else {
@@ -391,4 +408,90 @@ class MainChatViewModel(
             }
         }
     }
+    private fun editImage(){
+        viewModelScope.launch(Dispatchers.IO) {
+            Log.d("mogo", "editImage: in vm")
+            val imageSource = downloadFileFromUrl()
+            val maskSource = downloadFileFromUrl()
+
+            if (imageSource == null) {
+                throw Exception("Failed to download image from Firebase")
+            }
+            chatRepository.editImage(
+                modelId = "dall-e-2",
+                imageSource = imageSource,
+                maskSource = maskSource?: imageSource,
+                prompt = "convert the car to bmw"
+            )
+        }
+
+    }
+    suspend fun downloadFileFromUrl(): Source? {
+        return try {
+            // Create Ktor client
+            val client = HttpClient()
+
+            // Download the file
+            val response: HttpResponse = client.get("https://cdn.pixabay.com/photo/2015/10/01/17/17/car-967387_1280.png")
+
+            // Read the response as byte array
+            val bytes = response.readBytes()
+
+            // Check the size of the file (optional)
+            if (bytes.size > 4 * 1024 * 1024) { // 4MB size limit
+                throw IOException("File size exceeds 4 MB")
+            }
+            val rgba = convertToRGBA(bytes)
+
+            // Convert to Source (buffered input stream)
+            val byteArrayOutputStream = ByteArrayOutputStream()
+            byteArrayOutputStream.write(rgba)
+
+            // Convert the byte array to a source
+            val bufferedSource = byteArrayOutputStream.toByteArray().inputStream().source().buffer()
+
+            // Close the client
+            client.close()
+
+            // Return the Source
+            bufferedSource
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
+
+    fun convertToRGBA(imageBytes: ByteArray): ByteArray? {
+        // Decode the byte array into a Bitmap
+        val originalBitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
+
+        if (originalBitmap == null) {
+            return null
+        }
+
+        // Create a new Bitmap with RGBA format (ARGB_8888 includes the Alpha channel)
+        val rgbaBitmap = Bitmap.createBitmap(originalBitmap.width, originalBitmap.height, Bitmap.Config.ARGB_8888)
+
+        // Create a Canvas to draw the original image onto the new Bitmap
+        val canvas = Canvas(rgbaBitmap)
+        val paint = Paint()
+        paint.isFilterBitmap = true
+
+        // Draw the original image on the new Bitmap (this converts it to RGBA)
+        canvas.drawBitmap(originalBitmap, 0f, 0f, paint)
+
+        // Convert the RGBA Bitmap to a byte array
+        val byteArrayOutputStream = ByteArrayOutputStream()
+        try {
+            rgbaBitmap.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStream)
+        } catch (e: IOException) {
+            e.printStackTrace()
+            return null
+        }
+
+        return byteArrayOutputStream.toByteArray()
+    }
+
+
+
 }
