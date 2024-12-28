@@ -17,6 +17,22 @@ private val haveFunSuggestions = listOf(
     Suggestion(R.string.tell_a_joke, R.string.for_fun, R.string.tell_a_joke_prompt),
     Suggestion(R.string.suggest_fun_activities, R.string.for_enjoyment, R.string.suggest_fun_activities_prompt),
 )
+private val socialMediaSuggestions = listOf(
+    Suggestion(R.string.become_an_influencer, R.string.in_your_niche, R.string.how_can_i_become_an_influencer_in_my_niche),
+    Suggestion(R.string.monetize_social_media, R.string.channels, R.string.monetize_social_media_prompt),
+    Suggestion(R.string.generate_post_ideas, R.string.for_engagment, R.string.generate_post_ideas_prompt),
+    Suggestion(R.string.plan_social_media_content, R.string.strategically, R.string.plan_social_media_content_prompt),
+    Suggestion(R.string.improve_your_posts, R.string.for_impact, R.string.improve_your_posts_prompt),
+)
+private val doHomeworkSuggestions = listOf(
+    Suggestion(R.string.write_an_essay, R.string.effectively, R.string.write_an_essay_prompt),
+    Suggestion(R.string.solve_a_math_problem, R.string.accurately, R.string.solve_a_math_problem_prompt),
+    Suggestion(R.string.paraphrase_a_paragraph, R.string.clearly, R.string.paraphrase_a_paragraph_prompt),
+    Suggestion(R.string.translate_an_article, R.string.instantly, R.string.translate_an_article_prompt),
+    Suggestion(R.string.create_practice_tests, R.string.for_studying, R.string.create_practice_tests_prompt),
+    Suggestion(R.string.develop_a_study_plan, R.string.for_success, R.string.develop_a_study_plan_prompt),
+    Suggestion(R.string.write_code, R.string.for_projects, R.string.write_code_propmt),
+)
 enum class SuggestionCategory(val titleRes: Int, val suggestions: List<Suggestion>){
     MAKE_MONEY(
         R.string.make_money,
@@ -28,32 +44,32 @@ enum class SuggestionCategory(val titleRes: Int, val suggestions: List<Suggestio
     ),
     SOCIAL_MEDIA(
         R.string.social_media,
-        emptyList()
+        socialMediaSuggestions
     ),
     DO_HOMEWORK(
         R.string.do_homework,
-        emptyList()
+        doHomeworkSuggestions
     ),
-    LEARN_LANGUAGE(
-        R.string.learn_a_language,
-        emptyList()
-    ),
-    UTILITY(
-        R.string.utility,
-        emptyList()
-    ),
-    SEE_THE_FUTURE(
-        R.string.see_the_future,
-        emptyList()
-    ),
-    PHYSICAL_HEALTH(
-        R.string.physical_health,
-        emptyList()
-    ),
-    MENTAL_HEALTH(
-        R.string.mental_health,
-        emptyList()
-    )
+//    LEARN_LANGUAGE(
+//        R.string.learn_a_language,
+//        emptyList()
+//    ),
+//    UTILITY(
+//        R.string.utility,
+//        emptyList()
+//    ),
+//    SEE_THE_FUTURE(
+//        R.string.see_the_future,
+//        emptyList()
+//    ),
+//    PHYSICAL_HEALTH(
+//        R.string.physical_health,
+//        emptyList()
+//    ),
+//    MENTAL_HEALTH(
+//        R.string.mental_health,
+//        emptyList()
+//    )
 }
 
 data class Suggestion(
