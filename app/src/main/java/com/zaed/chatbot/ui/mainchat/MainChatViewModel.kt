@@ -46,7 +46,6 @@ class MainChatViewModel(
     val uiState = _uiState.asStateFlow()
 
     fun init(chatId: String) {
-        editImage()
         if (chatId.isNotBlank()) {
             fetchChat(chatId)
         } else {

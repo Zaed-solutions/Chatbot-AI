@@ -64,7 +64,6 @@ android {
 }
 
 dependencies {
-
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -84,7 +83,6 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
     implementation(libs.kotlin.compose.compiler.plugin)
-
     //Kotlinx-Serialization
     implementation(libs.kotlinx.serialization.json)
     //Kotlinx-DateTime
@@ -116,9 +114,7 @@ dependencies {
     implementation(libs.billing.ktx)
     //Google AI
     implementation("com.google.ai.client.generativeai:generativeai:0.7.0")
-
     implementation (platform("com.aallam.openai:openai-client-bom:3.8.2"))
-
     // define dependencies without versions
     implementation ("com.aallam.openai:openai-client")
     runtimeOnly ("io.ktor:ktor-client-okhttp")
@@ -127,18 +123,10 @@ dependencies {
     implementation(platform("com.google.firebase:firebase-bom:33.6.0"))
     implementation("com.google.firebase:firebase-storage-ktx")
     implementation("com.google.firebase:firebase-firestore-ktx")
-
     implementation ("com.tom-roush:pdfbox-android:2.0.27.0")
-
     implementation("androidx.core:core-splashscreen:1.0.0-beta02")
     implementation("androidx.datastore:datastore-preferences:1.0.0")
-
-
-
-
-
-
-
-
+    implementation("com.google.accompanist:accompanist-webview:0.31.3-beta")
+    implementation("io.getstream:stream-chat-android-compose:6.7.0")
 
 }
