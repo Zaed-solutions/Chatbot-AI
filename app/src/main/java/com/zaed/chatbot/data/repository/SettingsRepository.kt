@@ -8,4 +8,8 @@ interface SettingsRepository {
     suspend fun getChatMode(): String
     suspend fun getFontScale(): Float
     fun getUserFreeTrialCount(androidId: String): Flow<Int>
-    suspend fun incrementUserFreeTrialCount(androidId: String)}
+    suspend fun incrementUserFreeTrialCount(androidId: String)
+    fun getUserImageFreeTrialCount(androidId: String,productId : String): Flow<Int>
+    suspend fun decrementUserImageFreeTrialCount(androidId: String)
+
+}

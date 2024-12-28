@@ -34,4 +34,12 @@ class SettingsRepositoryImpl(
     override suspend fun incrementUserFreeTrialCount(androidId: String) {
         return remoteConfigSource.incrementUserFreeTrialCount(androidId)
     }
+
+    override fun getUserImageFreeTrialCount(androidId: String,productId : String): Flow<Int> {
+        return  remoteConfigSource.getUserImageFreeTrialCount(androidId,productId)
+    }
+
+    override suspend fun decrementUserImageFreeTrialCount(androidId: String) {
+        return remoteConfigSource.decrementUserImageFreeTrialCount(androidId)
+    }
 }

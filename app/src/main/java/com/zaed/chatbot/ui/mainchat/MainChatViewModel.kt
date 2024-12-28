@@ -10,10 +10,10 @@ import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aallam.openai.api.model.ModelId
-import com.google.firebase.storage.FirebaseStorage
 import com.zaed.chatbot.data.model.ChatQuery
 import com.zaed.chatbot.data.model.MessageAttachment
 import com.zaed.chatbot.data.repository.ChatRepository
+import com.zaed.chatbot.data.repository.SettingsRepository
 import com.zaed.chatbot.ui.mainchat.components.ChatModel
 import com.zaed.chatbot.ui.util.ConnectivityObserver
 import com.zaed.chatbot.ui.util.detectLanguage
@@ -28,9 +28,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.tasks.await
-import kotlinx.coroutines.withContext
-import okio.BufferedSource
 import okio.Source
 import okio.buffer
 import okio.source
@@ -40,19 +37,21 @@ import java.util.UUID
 
 class MainChatViewModel(
     private val chatRepository: ChatRepository,
-    private val connectivityObserver: ConnectivityObserver
+    private val connectivityObserver: ConnectivityObserver,
+    private val settingsRepository: SettingsRepository
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(MainChatUiState())
     val uiState = _uiState.asStateFlow()
 
-    fun init(chatId: String) {
-        editImage()
+    fun init(chatId: String, androidId: String) {
+//        editImage()
         if (chatId.isNotBlank()) {
             fetchChat(chatId)
         } else {
             _uiState.update {
                 it.copy(
                     threadId = UUID.randomUUID().toString(),
+                    androidId = androidId
                 )
             }
         }
@@ -70,6 +69,11 @@ class MainChatViewModel(
                 }
         }
 
+    }
+    fun decrementImageSubscriptionLimitCount() {
+        viewModelScope.launch {
+            settingsRepository.decrementUserImageFreeTrialCount(uiState.value.androidId)
+        }
     }
 
     private fun fetchChat(chatId: String) {
@@ -189,6 +193,7 @@ class MainChatViewModel(
                                 }.toMutableList(), isLoading = false, isAnimating = true
                             )
                         }
+                        decrementImageSubscriptionLimitCount()
                     }.onFailure { error ->
                         Log.d("tetooo", "createImages: ${error.message}")
                         _uiState.update { oldState ->

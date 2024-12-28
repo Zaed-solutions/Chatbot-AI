@@ -5,7 +5,6 @@ import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
 import android.util.Log
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -168,7 +167,10 @@ class MainActivity : ComponentActivity(), BillingClientStateListener {
                     isPro = state.isPro,
                     products = state.products,
                     onDecrementFreeTrialCount = { viewModel.decrementFreeTrialCount() },
-                    freeTrialCount = state.freeTrialCount
+                    freeTrialCount = state.freeTrialCount,
+                    imageFreeTrialCount = state.imageFreeTrialCount,
+                    subscriptionName = state.products.firstOrNull()?.name
+
                 )
             }
         }

@@ -38,6 +38,11 @@ class MainViewModel(
             settingsRepo.incrementUserFreeTrialCount(uiState.value.androidId)
         }
     }
+    fun decrementImageSubscriptionLimitCount() {
+        viewModelScope.launch {
+            settingsRepo.decrementUserImageFreeTrialCount(uiState.value.androidId)
+        }
+    }
 
     private fun initializePreferences(onInitialized: () -> Unit) {
         viewModelScope.launch {
@@ -69,10 +74,20 @@ class MainViewModel(
             Log.d(TAG, "updateSubscribedPlan: $planId")
             _uiState.update {oldState->
                 oldState.copy(
-                    subscribedPlan = oldState.products.find { it.productId == planId }, isPro = true
+                    subscribedPlan = oldState.products.find { it.productId == planId }, isPro = true,
                 )
             }
+            getImageFreeTrialCount(planId)
             Log.d(TAG, "updateSubscribedPlan: ${uiState.value.isPro}")
+        }
+    }
+
+    private fun getImageFreeTrialCount(productId :String) {
+        viewModelScope.launch {
+            settingsRepo.getUserImageFreeTrialCount(uiState.value.androidId, productId).collect { result ->
+                Log.d("MainViewModel", "getImageFreeTrialCount: $result")
+                _uiState.update { it.copy(imageFreeTrialCount = result) }
+            }
         }
     }
 
@@ -114,6 +129,8 @@ data class MainUiState(
     val subscribedPlan: ProductDetails? = null,
     val isPro: Boolean = false,
     val androidId: String = "",
-    val freeTrialCount: Int = 5
+    val freeTrialCount: Int = 5,
+    val imageFreeTrialCount: Int = 60,
+
 
 )

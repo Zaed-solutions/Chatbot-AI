@@ -2,9 +2,9 @@ package com.zaed.chatbot.ui.mainchat
 
 import android.Manifest
 import android.content.Intent
-import android.content.res.Configuration
 import android.net.Uri
 import android.os.Build
+import android.provider.Settings
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -71,7 +71,6 @@ import com.zaed.chatbot.ui.util.readPdfContent
 import com.zaed.chatbot.ui.util.readWordContent
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
-import java.util.Locale
 
 private val TAG = "MainChatScreen"
 
@@ -89,14 +88,19 @@ fun MainChatScreen(
     onNavigateToPrivacyAndTerms: () -> Unit = {},
     onDecrementFreeTrialCount: () -> Unit,
     freeTrialCount: Int,
+    imageFreeTrialCount: Int,
+    subscriptionName: String?,
 ) {
+    val context = LocalContext.current
+    val androidId: String = Settings.Secure.getString(context.getContentResolver(), Settings.Secure.ANDROID_ID)
     Log.d("tenoo", "mainChatScreen: ${isPro}")
+    Log.d("tenoo2", "mainChatScreen: $imageFreeTrialCount")
+    Log.d("tenoo2", "mainChatScreen: $subscriptionName")
 
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     LaunchedEffect(true) {
-        viewModel.init(chatId)
+        viewModel.init(chatId,androidId)
     }
-    val context = LocalContext.current
     val imagePicker =
         rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
             uri?.let {
@@ -192,6 +196,14 @@ fun MainChatScreen(
         modifier = modifier,
         onAction = { action ->
             when (action) {
+                is MainChatUiAction.OnChangeModel->{
+                    Log.d("tenoo2", "mainChatScreen: ${action.model}")
+                   if (action.model == ChatModel.AI_ART_GENERATOR && imageFreeTrialCount > 0){
+                       viewModel.handleAction(action)
+                   }else{
+                       //TODO: show toast LIMIT REACHED
+                   }
+                }
                 MainChatUiAction.OnAddFileClicked -> {
                     val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
                         type = "*/*" // Allow all files

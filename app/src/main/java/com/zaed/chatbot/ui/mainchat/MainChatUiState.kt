@@ -17,5 +17,6 @@ data class MainChatUiState(
     val textHitTimes : Int = 0,
     val totalHitTimes : Int = 0,
     val internetConnected : Boolean = true,
-    val error : String = ""
+    val error : String = "",
+    val androidId: String = ""
 )
