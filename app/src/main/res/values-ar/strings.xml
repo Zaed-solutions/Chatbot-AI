@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="privacy_policy">سياسة الخصوصية</string>
     <string name="app_name">روبوت الدردشة</string>
     <string name="pro">برو</string>
     <string name="gpt_4o_mini">GPT-4o Mini</string>
@@ -212,6 +213,5 @@
     <string name="change_language">تغيير اللغة</string>
     <string name="rate_us">قيمنا على المتجر</string>
     <string name="restore_purchase">اعادة الشراء</string>
-
+    <string name="no_internet_connection">لا يوجد اتصال بالانترنت</string>
 </resources>
-

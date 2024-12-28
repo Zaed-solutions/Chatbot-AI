@@ -16,80 +16,8 @@ fun LatexView(
     latex: String,
     isBlock: Boolean
 ) {
-//    var webView: WebView? by remember { mutableStateOf(null) }
-//
-//    val state = rememberWebViewState("file:///android_asset/latex_render.html")
-//
-//    if (state.loadingState is LoadingState.Finished) {
-//        webView?.loadUrl("javascript:addBody('${latex}')")
-//    }
-//    WebView(
-//        state = state,
-//        modifier = modifier,
-//        onCreated = {
-//            it.settings.javaScriptEnabled = true
-//            webView = it
-//            it.setLayerType(WebView.LAYER_TYPE_SOFTWARE, null)
-//            it.setBackgroundColor(0)
-//        }
-//    )
-//    AndroidView(
-//        modifier = Modifier.fillMaxWidth(),
-//        factory = { context ->
-//            WebView(context).apply {
-//                settings.javaScriptEnabled = true
-//                webViewClient = WebViewClient()
-//                layoutParams = ViewGroup.LayoutParams(
-//                    ViewGroup.LayoutParams.MATCH_PARENT,
-//                    ViewGroup.LayoutParams.WRAP_CONTENT
-//                )
-//                setBackgroundColor(0)
-//            }
-//        },
-//        update = { webView ->
-//            val escapedLatex = latex.replace("\\", "\\\\")
-//            val html = """
-//                <!DOCTYPE html>
-//                <html>
-//                <head>
-//                    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
-//                    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
-//                    <style>
-//                        body {
-//                            margin: 0;
-//                            padding: 0;
-//                            display: flex;
-//                            justify-content: center;
-//                            align-items: center;
-//                            min-height: ${if (isBlock) "100px" else "30px"};
-//                        }
-//                        .formula-container {
-//                            ${if (!isBlock) "display: inline-block;" else ""}
-//                            text-align: center;
-//                            width: 100%;
-//                        }
-//                    </style>
-//                </head>
-//                <body>
-//                    <div class="formula-container">
-//                        <span id="formula"></span>
-//                    </div>
-//                    <script>
-//                        katex.render(`$escapedLatex`, document.getElementById('formula'), {
-//                            displayMode: ${isBlock},
-//                            throwOnError: false,
-//                            trust: true,
-//                            strict: false
-//                        });
-//                    </script>
-//                </body>
-//                </html>
-//            """.trimIndent()
-//            webView.loadDataWithBaseURL(null, html, "text/html", "UTF-8", null)
-//        }
-//    )
     AndroidView(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .height(if (isBlock) 80.dp else 35.dp),
         factory = { context ->

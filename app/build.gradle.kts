@@ -127,6 +127,7 @@ dependencies {
     implementation("androidx.core:core-splashscreen:1.0.0-beta02")
     implementation("androidx.datastore:datastore-preferences:1.0.0")
     implementation("com.google.accompanist:accompanist-webview:0.31.3-beta")
-    implementation("io.getstream:stream-chat-android-compose:6.7.0")
+    implementation("com.google.android.play:review:2.0.2")
+    implementation("com.google.android.play:review-ktx:2.0.2")
 
 }

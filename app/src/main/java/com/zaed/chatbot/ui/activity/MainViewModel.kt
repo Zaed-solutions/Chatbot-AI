@@ -6,13 +6,15 @@ import androidx.lifecycle.viewModelScope
 import com.android.billingclient.api.ProductDetails
 import com.zaed.chatbot.data.repository.SettingsRepository
 import com.zaed.chatbot.ui.mainchat.components.ChatModel
+import com.zaed.chatbot.ui.util.ConnectivityObserver
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class MainViewModel(
-    private val settingsRepo: SettingsRepository
+    private val settingsRepo: SettingsRepository,
+    private val connectivityObserver: ConnectivityObserver
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(MainUiState())
     val uiState = _uiState.asStateFlow()
@@ -22,6 +24,18 @@ class MainViewModel(
         initializePreferences(onInitialized)
         _uiState.update { it.copy(androidId = androidId) }
         getFreeTrialCount()
+        checkInternetConnection()
+    }
+
+    private fun checkInternetConnection() {
+        viewModelScope.launch {
+            connectivityObserver.isConnected
+                .collect { result ->
+                    _uiState.update {
+                        it.copy(isConnected = result)
+                    }
+                }
+        }
     }
 
     private fun getFreeTrialCount() {
@@ -108,6 +122,7 @@ sealed interface MainAction {
 }
 
 data class MainUiState(
+    val isConnected: Boolean = false,
     val fontScale: Float = 1f,
     val chatMode: ChatModel = ChatModel.GPT_4O_MINI,
     val products: List<ProductDetails> = emptyList(),
