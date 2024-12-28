@@ -10,7 +10,6 @@ import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aallam.openai.api.model.ModelId
-import com.google.firebase.storage.FirebaseStorage
 import com.zaed.chatbot.data.model.ChatQuery
 import com.zaed.chatbot.data.model.MessageAttachment
 import com.zaed.chatbot.data.repository.ChatRepository
@@ -28,9 +27,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.tasks.await
-import kotlinx.coroutines.withContext
-import okio.BufferedSource
 import okio.Source
 import okio.buffer
 import okio.source
@@ -46,7 +42,6 @@ class MainChatViewModel(
     val uiState = _uiState.asStateFlow()
 
     fun init(chatId: String) {
-        editImage()
         if (chatId.isNotBlank()) {
             fetchChat(chatId)
         } else {
@@ -59,33 +54,30 @@ class MainChatViewModel(
     }
 
 
-
-    private fun checkInternetConnection() {
-        viewModelScope.launch {
-            connectivityObserver.isConnected
-                .collect { result ->
-                    _uiState.update {
-                        it.copy(internetConnected = result)
-                    }
+    private suspend fun checkInternetConnection() {
+        connectivityObserver.isConnected
+            .collect { result ->
+                _uiState.update {
+                    it.copy(internetConnected = result)
                 }
-        }
-
+            }
     }
 
     private fun fetchChat(chatId: String) {
-        checkInternetConnection()
-        if (!uiState.value.internetConnected) return
         viewModelScope.launch(Dispatchers.IO) {
-            chatRepository.getChatById(chatId).collect { result ->
-                result.onSuccess {
-                    Log.d("MainChatViewModel", "fetchChat: $it")
-                    _uiState.update { oldState ->
-                        oldState.copy(
-                            queries = it.reversed().toMutableList()
-                        )
+            checkInternetConnection()
+            if (uiState.value.internetConnected){
+                chatRepository.getChatById(chatId).collect { result ->
+                    result.onSuccess {
+                        Log.d("MainChatViewModel", "fetchChat: $it")
+                        _uiState.update { oldState ->
+                            oldState.copy(
+                                queries = it.reversed().toMutableList()
+                            )
+                        }
+                    }.onFailure {
+                        Log.e("MainChatViewModel", "fetchChat: ${it.message}")
                     }
-                }.onFailure {
-                    Log.e("MainChatViewModel", "fetchChat: ${it.message}")
                 }
             }
         }
@@ -104,7 +96,6 @@ class MainChatViewModel(
             else -> Unit
         }
     }
-
 
 
     private fun listModels() {
@@ -138,13 +129,14 @@ class MainChatViewModel(
     }
 
     private fun sendSuggestion(prompt: String) {
-        checkInternetConnection()
-        if (!uiState.value.internetConnected) return
         viewModelScope.launch(Dispatchers.IO) {
-            _uiState.update {
-                it.copy(currentPrompt = prompt)
+            checkInternetConnection()
+            if (uiState.value.internetConnected){
+                _uiState.update {
+                    it.copy(currentPrompt = prompt)
+                }
+                sendPrompt()
             }
-            sendPrompt()
         }
     }
 
@@ -209,25 +201,28 @@ class MainChatViewModel(
     }
 
     private fun sendPrompt() {
-        checkInternetConnection()
-        if (!uiState.value.internetConnected) return
-        when (uiState.value.selectedModel) {
-            ChatModel.GPT_4O_MINI -> createText(ChatModel.GPT_4O_MINI.modelId)
-            ChatModel.GPT_4O -> createText(ChatModel.GPT_4O.modelId)
-            ChatModel.AI_ART_GENERATOR -> {
-                detectLanguage(uiState.value.currentPrompt) { languageCode ->
-                    if (languageCode == "ar") {
-                        translateToEnglish(uiState.value.currentPrompt) { translatedPrompt ->
-                            createImages(translatedPrompt)
+        viewModelScope.launch {
+            checkInternetConnection()
+            if (uiState.value.internetConnected){
+
+                when (uiState.value.selectedModel) {
+                    ChatModel.GPT_4O_MINI -> createText(ChatModel.GPT_4O_MINI.modelId)
+                    ChatModel.GPT_4O -> createText(ChatModel.GPT_4O.modelId)
+                    ChatModel.AI_ART_GENERATOR -> {
+                        detectLanguage(uiState.value.currentPrompt) { languageCode ->
+                            if (languageCode == "ar") {
+                                translateToEnglish(uiState.value.currentPrompt) { translatedPrompt ->
+                                    createImages(translatedPrompt)
+                                }
+                            } else {
+                                createImages(uiState.value.currentPrompt)
+                            }
                         }
-                    } else {
-                        createImages(uiState.value.currentPrompt)
+
                     }
                 }
-
             }
         }
-
     }
 
     private fun createText(modelId: ModelId) {
@@ -287,7 +282,7 @@ class MainChatViewModel(
                                         )
 
                                     }
-                                }.onFailure {error->
+                                }.onFailure { error ->
                                     _uiState.update { oldState ->
                                         oldState.copy(
                                             queries = oldState.queries.map {
@@ -295,13 +290,16 @@ class MainChatViewModel(
                                                     isLoading = false,
                                                     response = error.message ?: "",
                                                     animateResponse = false,
-                                                ) else it.copy(isLoading = false, animateResponse = false)
+                                                ) else it.copy(
+                                                    isLoading = false,
+                                                    animateResponse = false
+                                                )
                                             }.toMutableList(), isLoading = false, isAnimating = true
                                         )
                                     }
                                 }
                             }
-                        }.onFailure {error->
+                        }.onFailure { error ->
                             _uiState.update { oldState ->
                                 oldState.copy(
                                     queries = oldState.queries.map {
@@ -332,7 +330,7 @@ class MainChatViewModel(
                                     }.toMutableList(), isLoading = false, isAnimating = true
                                 )
                             }
-                        }.onFailure {error->
+                        }.onFailure { error ->
                             _uiState.update { oldState ->
                                 oldState.copy(
                                     queries = oldState.queries.map {
@@ -362,7 +360,7 @@ class MainChatViewModel(
                                 }.toMutableList(), isLoading = false, isAnimating = true
                             )
                         }
-                    }.onFailure {error->
+                    }.onFailure { error ->
                         _uiState.update { oldState ->
                             oldState.copy(
                                 queries = oldState.queries.map {
@@ -388,7 +386,7 @@ class MainChatViewModel(
                 MainChatUiState(
                     selectedModel = selectedModel,
                     threadId = UUID.randomUUID().toString(),
-                    )
+                )
             }
         }
     }
@@ -408,7 +406,8 @@ class MainChatViewModel(
             }
         }
     }
-    private fun editImage(){
+
+    private fun editImage() {
         viewModelScope.launch(Dispatchers.IO) {
             Log.d("mogo", "editImage: in vm")
             val imageSource = downloadFileFromUrl()
@@ -420,19 +419,21 @@ class MainChatViewModel(
             chatRepository.editImage(
                 modelId = "dall-e-2",
                 imageSource = imageSource,
-                maskSource = maskSource?: imageSource,
+                maskSource = maskSource ?: imageSource,
                 prompt = "convert the car to bmw"
             )
         }
 
     }
+
     suspend fun downloadFileFromUrl(): Source? {
         return try {
             // Create Ktor client
             val client = HttpClient()
 
             // Download the file
-            val response: HttpResponse = client.get("https://cdn.pixabay.com/photo/2015/10/01/17/17/car-967387_1280.png")
+            val response: HttpResponse =
+                client.get("https://cdn.pixabay.com/photo/2015/10/01/17/17/car-967387_1280.png")
 
             // Read the response as byte array
             val bytes = response.readBytes()
@@ -470,7 +471,11 @@ class MainChatViewModel(
         }
 
         // Create a new Bitmap with RGBA format (ARGB_8888 includes the Alpha channel)
-        val rgbaBitmap = Bitmap.createBitmap(originalBitmap.width, originalBitmap.height, Bitmap.Config.ARGB_8888)
+        val rgbaBitmap = Bitmap.createBitmap(
+            originalBitmap.width,
+            originalBitmap.height,
+            Bitmap.Config.ARGB_8888
+        )
 
         // Create a Canvas to draw the original image onto the new Bitmap
         val canvas = Canvas(rgbaBitmap)
@@ -491,7 +496,6 @@ class MainChatViewModel(
 
         return byteArrayOutputStream.toByteArray()
     }
-
 
 
 }

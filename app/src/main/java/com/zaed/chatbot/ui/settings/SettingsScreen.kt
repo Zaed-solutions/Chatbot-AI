@@ -1,6 +1,10 @@
 package com.zaed.chatbot.ui.settings
 
+import android.content.ActivityNotFoundException
+import android.content.Context
+import android.content.Intent
 import android.content.res.Configuration
+import android.net.Uri
 import android.util.Log
 import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedVisibility
@@ -40,6 +44,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -48,16 +53,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.aallam.openai.api.image.internal.ImageResponseFormat.Companion.url
 import com.android.billingclient.api.ProductDetails
 import com.zaed.chatbot.R
 import com.zaed.chatbot.ui.activity.SubscriptionAction
 import com.zaed.chatbot.ui.mainchat.components.ProSubscriptionBottomSheet
 import com.zaed.chatbot.ui.theme.ChatbotTheme
+import com.zaed.chatbot.ui.util.Constants.PRIVACY_POLICY_URL
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
@@ -75,6 +83,7 @@ fun SettingsScreen(
     products: List<ProductDetails> = emptyList(),
     changeLanguage: () -> Unit = {},
 ) {
+    val context = LocalContext.current
     SettingsScreenContent(
         isPro = isPro,
         products = products,
@@ -85,17 +94,23 @@ fun SettingsScreen(
                 SettingsUiAction.OnFontSizeClicked -> onNavigateToFontScale()
                 SettingsUiAction.OnPromoCodeClicked -> onNavigateToPromoCode()
                 SettingsUiAction.OnRateUsClicked -> {
-                    /*TODO*/
+                    openPlayStoreListing(context)
                 }
                 SettingsUiAction.OnLanguageClicked -> {
                     changeLanguage()
                     onNavigateBack()
                 }
                 SettingsUiAction.OnRestorePurchaseClicked -> {
-                    /*TODO*/
+                    val intent = Intent(Intent.ACTION_VIEW).apply {
+                        data = Uri.parse("https://play.google.com/store/account/subscriptions")
+                    }
+                    context.startActivity(intent)
                 }
                 SettingsUiAction.OnFaqSupportClicked -> onNavigateToFaqSupport()
-                SettingsUiAction.OnPrivacyPolicyClicked -> onNavigateToPrivacyPolicy()
+                SettingsUiAction.OnPrivacyPolicyClicked -> {
+                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(PRIVACY_POLICY_URL))
+                    context.startActivity(intent)
+                }
                 SettingsUiAction.OnPrivacyTermsClicked -> onNavigateToPrivacyPolicy()
                 SettingsUiAction.OnCommunityGuidelinesClicked -> onNavigateToCommunityGuidelines()
                 is SettingsUiAction.OnUpgradeSubscription -> onSubscriptionAction(
@@ -341,7 +356,7 @@ enum class SettingItems(
         SettingsCategory.CATEGORY_3
     ),
     PRIVACY_POLICY(
-        R.string.privacy_policy_tnc,
+        R.string.privacy_policy,
         Icons.Default.PrivacyTip,
         SettingsUiAction.OnPrivacyPolicyClicked,
         SettingsCategory.CATEGORY_4
@@ -354,6 +369,16 @@ enum class SettingItems(
     ),
 }
 
+
+fun openPlayStoreListing(context: Context) {
+    try {
+        context.startActivity(Intent(Intent.ACTION_VIEW,
+            Uri.parse("market://details?id=${context.packageName}")))
+    } catch (e: ActivityNotFoundException) {
+        context.startActivity(Intent(Intent.ACTION_VIEW,
+            Uri.parse("https://play.google.com/store/apps/details?id=${context.packageName}")))
+    }
+}
 
 @Preview(uiMode = Configuration.UI_MODE_NIGHT_YES or Configuration.UI_MODE_TYPE_NORMAL)
 @Composable

@@ -16,7 +16,10 @@ import com.zaed.chatbot.data.model.MessageAttachment
 import com.zaed.chatbot.data.source.local.ChatLocalDataSource
 import com.zaed.chatbot.data.source.remote.OpenAIRemoteDataSource
 import com.zaed.chatbot.ui.util.toMessageAttachments
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.flow
 import okio.Source
 
@@ -31,7 +34,7 @@ class ChatRepositoryImpl(
         chatQuery: ChatQuery,
         modelId: ModelId,
         isFirstMessage: Boolean
-    ): Flow<Result<ChatCompletion>> = flow {
+    ): Flow<Result<ChatCompletion>> = callbackFlow {
         chatRemoteDataSource.sendPrompt(chatQuery, isFirst = isFirstMessage, modelId).collect { result ->
             result.onSuccess { data ->
                 Log.d("ChatRepositoryImpl", "sendPrompt received data: $data")
@@ -63,12 +66,13 @@ class ChatRepositoryImpl(
                         }
                     }
                 }
-                emit(Result.success(data))
+                trySend(Result.success(data))
             }.onFailure {
                 Log.e("ChatRepositoryImpl", "sendPrompt: $it")
-                emit(Result.failure(it))
+                trySend(Result.failure(it))
             }
         }
+        awaitClose()
     }
 
     @OptIn(BetaOpenAI::class)
