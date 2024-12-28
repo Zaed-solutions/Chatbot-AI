@@ -93,7 +93,7 @@ fun NavigationHost(
                 onDecrementFreeTrialCount = onDecrementFreeTrialCount,
                 freeTrialCount = freeTrialCount,
                 chatId = args.chatId,
-                onNavigateToPersonalizationScreen = {/*TODO*/ },
+                onNavigateToPersonalizationScreen = {},
                 onNavigateToHistoryScreen = {
                     navController.navigate(HistoryRoute)
                 },
@@ -156,7 +156,6 @@ fun NavigationHost(
             HistoryScreen(
                 onBackPressed = { navController.popBackStack() },
                 onNavigateToChat = { chatId ->
-                    //todo: use chat id to load chat in main chat
                     navController.navigate(MainChatRoute(chatId))
                 }
             )

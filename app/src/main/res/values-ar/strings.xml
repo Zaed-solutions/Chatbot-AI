@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="privacy_policy">سياسة الخصوصية</string>
     <string name="app_name">روبوت الدردشة</string>
     <string name="pro">برو</string>
     <string name="gpt_4o_mini">GPT-4o Mini</string>
@@ -212,6 +213,41 @@
     <string name="change_language">تغيير اللغة</string>
     <string name="rate_us">قيمنا على المتجر</string>
     <string name="restore_purchase">اعادة الشراء</string>
+    <string name="no_internet_connection">لا يوجد اتصال بالانترنت</string>
+    <string name="how_can_i_become_an_influencer_in_my_niche">كيف يمكنني أن أصبح مؤثرًا في مجالي؟</string>
+    <string name="in_your_niche">في مجالك</string>
+    <string name="become_an_influencer">كن مؤثرًا</string>
+    <string name="monetize_social_media">استثمر وسائل التواصل الاجتماعي</string>
+    <string name="channels">قنوات</string>
+    <string name="monetize_social_media_prompt">أخبرني ببعض الطرق التي يمكنني استخدامها لاستثمار قنوات وسائل التواصل الاجتماعي.</string>
+    <string name="generate_post_ideas">ابتكر أفكارًا للمنشورات</string>
+    <string name="for_engagment">لزيادة التفاعل</string>
+    <string name="generate_post_ideas_prompt">اقترح بعض الأفكار الرائعة للمنشورات لزيادة التفاعل.</string>
+    <string name="strategically">بشكل استراتيجي</string>
+    <string name="plan_social_media_content">خطط محتوى وسائل التواصل الاجتماعي</string>
+    <string name="plan_social_media_content_prompt">كيف يمكنني تخطيط محتوى وسائل التواصل الاجتماعي بشكل استراتيجي؟</string>
+    <string name="improve_your_posts_prompt">كيف يمكنني تحسين منشوراتي لتحقيق تأثير أكبر؟</string>
+    <string name="for_impact">لتحقيق التأثير</string>
+    <string name="improve_your_posts">حسن منشوراتك</string>
+    <string name="write_an_essay">اكتب مقالًا</string>
+    <string name="effectively">بكفاءة</string>
+    <string name="write_an_essay_prompt">أريدك أن تكتب لي مقالاً.</string>
+    <string name="solve_a_math_problem">حل مسألة رياضية</string>
+    <string name="accurately">بدقة</string>
+    <string name="solve_a_math_problem_prompt"><![CDATA[أحتاج منك حل مسألة رياضية بدقة.]]></string>
+    <string name="paraphrase_a_paragraph">أعد صياغة فقرة</string>
+    <string name="clearly">بوضوح</string>
+    <string name="paraphrase_a_paragraph_prompt">أعد صياغة فقرة بطريقة واضحة.</string>
+    <string name="translate_an_article">ترجم مقالة</string>
+    <string name="instantly">بسرعة</string>
+    <string name="translate_an_article_prompt">أحتاجك لترجمة مقالة بدقة وسرعة قدر الإمكان.</string>
+    <string name="for_studying">للدراسة</string>
+    <string name="create_practice_tests">قم بإنشاء اختبارات تدريبية</string>
+    <string name="create_practice_tests_prompt">أنشئ بعض الاختبارات التدريبية لمساعدتي في الدراسة.</string>
+    <string name="develop_a_study_plan_prompt">ساعدني في تطوير خطة دراسة ألتزم بها.</string>
+    <string name="develop_a_study_plan">طور خطة دراسة</string>
+    <string name="write_code_propmt">هل يمكنك مساعدتي في كتابة كود لبعض مشاريعي؟</string>
+    <string name="for_projects">للمشاريع</string>
+    <string name="write_code">اكتب كود</string>
 
 </resources>
-

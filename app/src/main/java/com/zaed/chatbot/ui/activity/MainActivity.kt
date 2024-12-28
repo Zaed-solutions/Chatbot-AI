@@ -8,10 +8,13 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
@@ -34,7 +37,9 @@ import com.android.billingclient.api.QueryPurchaseHistoryParams
 import com.android.billingclient.api.QueryPurchasesParams
 import com.android.billingclient.api.queryProductDetails
 import com.android.billingclient.api.queryPurchaseHistory
+import com.google.android.play.core.review.ReviewManagerFactory
 import com.zaed.chatbot.app.navigation.NavigationHost
+import com.zaed.chatbot.ui.components.NoInternetScreen
 import com.zaed.chatbot.ui.theme.ChatbotTheme
 import com.zaed.chatbot.ui.theme.LocalFontScale
 import com.zaed.chatbot.ui.util.Constants
@@ -141,37 +146,48 @@ class MainActivity : ComponentActivity(), BillingClientStateListener {
             Log.d("tenoo", "mainActivity: ${state.isPro}")
             ChatbotTheme {
                 val navController = rememberNavController()
-                NavigationHost(modifier = Modifier
-                    .systemBarsPadding()
-                    .imePadding(),
-                    fontScale = fontScale,
-                    defaultChatMode = state.chatMode,
-                    onFontScaleChanged = {
-                        fontScale = it
-                        viewModel.handleAction(MainAction.OnSetFontScale(it))
-                    },
-                    navController = navController,
-                    onDefaultChatModeChanged = {
-                        viewModel.handleAction(MainAction.OnSetDefaultChatMode(it))
-                    },
-                    onSubscriptionAction = { action ->
-                        when (action) {
-                            SubscriptionAction.ManageSubscription -> manageSubscriptions()
-                            is SubscriptionAction.OnApplyPromoCode -> applyPromoCode(action.promoCode)
-                            SubscriptionAction.RestoreSubscription -> restoreSubscription()
-                            is SubscriptionAction.UpgradeSubscription -> upgradeSubscription(
-                                action.product
+                AnimatedContent(state.isConnected) { isConnected ->
+                    when{
+                        isConnected -> {
+                            LaunchedEffect (true) {
+                                showRateUsDialog()
+                            }
+                            NavigationHost(modifier = Modifier
+                                .systemBarsPadding()
+                                .imePadding(),
+                                fontScale = fontScale,
+                                defaultChatMode = state.chatMode,
+                                onFontScaleChanged = {
+                                    fontScale = it
+                                    viewModel.handleAction(MainAction.OnSetFontScale(it))
+                                },
+                                navController = navController,
+                                onDefaultChatModeChanged = {
+                                    viewModel.handleAction(MainAction.OnSetDefaultChatMode(it))
+                                },
+                                onSubscriptionAction = { action ->
+                                    when (action) {
+                                        SubscriptionAction.ManageSubscription -> manageSubscriptions()
+                                        is SubscriptionAction.OnApplyPromoCode -> applyPromoCode(action.promoCode)
+                                        SubscriptionAction.RestoreSubscription -> restoreSubscription()
+                                        is SubscriptionAction.UpgradeSubscription -> upgradeSubscription(
+                                            action.product
+                                        )
+                                    }
+                                },
+                                isPro = state.isPro,
+                                products = state.products,
+                                onDecrementFreeTrialCount = { viewModel.decrementFreeTrialCount() },
+                                freeTrialCount = state.freeTrialCount,
+                                imageFreeTrialCount = state.imageFreeTrialCount,
+                                subscriptionName = state.products.firstOrNull()?.name
                             )
                         }
-                    },
-                    isPro = state.isPro,
-                    products = state.products,
-                    onDecrementFreeTrialCount = { viewModel.decrementFreeTrialCount() },
-                    freeTrialCount = state.freeTrialCount,
-                    imageFreeTrialCount = state.imageFreeTrialCount,
-                    subscriptionName = state.products.firstOrNull()?.name
-
-                )
+                        else -> {
+                            NoInternetScreen(modifier = Modifier.fillMaxSize())
+                        }
+                    }
+                }
             }
         }
     }
@@ -399,6 +415,15 @@ class MainActivity : ComponentActivity(), BillingClientStateListener {
             }
             else -> {
                 Log.d(TAG, "Billing flow launch failed: ${billingResult.debugMessage}")
+            }
+        }
+    }
+
+    private fun showRateUsDialog(){
+        val reviewManager = ReviewManagerFactory.create(applicationContext)
+        reviewManager.requestReviewFlow().addOnCompleteListener {
+            if(it.isSuccessful){
+                reviewManager.launchReviewFlow(this, it.result)
             }
         }
     }

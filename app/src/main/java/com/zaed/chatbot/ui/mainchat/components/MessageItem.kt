@@ -11,6 +11,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -33,6 +35,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
@@ -42,6 +45,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import com.halilibo.richtext.commonmark.Markdown
+import com.halilibo.richtext.commonmark.MarkdownParseOptions
+import com.halilibo.richtext.ui.RichTextStyle
 import com.halilibo.richtext.ui.material3.RichText
 import com.zaed.chatbot.R
 import com.zaed.chatbot.data.model.MessageAttachment
@@ -149,14 +154,32 @@ private fun MessageItemPreview() {
 
 
 @Composable
-fun MarkdownViewer(markdownText: String) {
+fun MarkdownText(
+    modifier: Modifier = Modifier,
+    markdownText: String
+) {
     RichText(
-        modifier = Modifier.padding(16.dp)
+        modifier = modifier
+            .padding(16.dp)
+            .background(color = Color.Transparent),
     ) {
         Markdown(
             markdownText.trimIndent()
         )
     }
+}
+
+
+@Preview(showSystemUi = true, showBackground = true)
+@Composable
+private fun MarkdownTextPreview() {
+    MarkdownText(markdownText = """
+        <script
+          src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"
+          type="text/javascript">
+        </script>
+        Equation: ${'$'}\\frac{1}{2}${'$'}\n New Equation: ${'$'}${'$'}\\frac{3}{4}${'$'}${'$'}
+    """.trimIndent())
 }
 
 fun isArabic(text: String): Boolean {
@@ -166,6 +189,7 @@ fun isArabic(text: String): Boolean {
     return arabicCount > threshold
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun AnimatedText(
     text: String,
@@ -175,7 +199,7 @@ private fun AnimatedText(
 
     val breakIterator = remember(text) { BreakIterator.getCharacterInstance() }
 
-    val typingDelayInMs = 30L
+    val typingDelayInMs = 10L
 
     var substringText by remember {
         mutableStateOf("")
@@ -196,16 +220,58 @@ private fun AnimatedText(
         action(MainChatUiAction.OnStopAnimation)
     }
     CompositionLocalProvider(LocalLayoutDirection provides if (isArabic) LayoutDirection.Rtl else LayoutDirection.Ltr) {
-        RichText(
-            modifier = Modifier.fillMaxWidth().padding(start = 32.dp)
-        ) {
-            Markdown(
-                content = if (animating) {
+//        RichText(
+//            modifier = Modifier.fillMaxWidth().padding(start = 32.dp)
+//        ) {
+//            Markdown(
+//                content = if (animating) {
+//                    substringText.trimIndent()
+//                } else {
+//                    text.trimIndent()
+//                }
+//            )
+//        }
+//        LatexView(
+//            modifier = Modifier.fillMaxWidth().padding(start = 32.dp),
+//            latex = if (animating) {
+//                substringText.trimIndent()
+//            } else {
+//                text.trimIndent()
+//            }
+//        )
+        val segments = splitIntoSegments(if (animating) {
                     substringText.trimIndent()
                 } else {
                     text.trimIndent()
+                }.trimIndent()
+        )
+
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            segments.forEach { segment ->
+                when {
+                    segment.startsWith("\\[") && segment.endsWith("\\]") -> {
+                        LatexView(
+                            latex = segment.removeSurrounding("\\[", "\\]"),
+                            isBlock = true
+                        )
+                    }
+                    segment.startsWith("\\(") && segment.endsWith("\\)") -> {
+                        LatexView(
+                            latex = segment.removeSurrounding("\\(", "\\)"),
+                            isBlock = false
+                        )
+                    }
+                    else -> {
+                        MarkdownText(
+                            modifier = Modifier.fillMaxWidth(),
+                            markdownText = segment
+                        )
+                    }
                 }
-            )
+            }
         }
     }
 
@@ -249,3 +315,49 @@ fun PulsatingBubble(
     )
 }
 
+
+private fun splitIntoSegments(content: String): List<String> {
+    val segments = mutableListOf<String>()
+    var currentIndex = 0
+
+    while (currentIndex < content.length) {
+        // Find next LaTeX delimiter
+        val blockStart = content.indexOf("\\[", currentIndex)
+        val inlineStart = content.indexOf("\\(", currentIndex)
+
+        val nextLatexStart = when {
+            blockStart == -1 && inlineStart == -1 -> -1
+            blockStart == -1 -> inlineStart
+            inlineStart == -1 -> blockStart
+            else -> minOf(blockStart, inlineStart)
+        }
+
+        if (nextLatexStart == -1) {
+            // No more LaTeX segments
+            segments.add(content.substring(currentIndex))
+            break
+        }
+
+        // Add text before LaTeX if any
+        if (nextLatexStart > currentIndex) {
+            segments.add(content.substring(currentIndex, nextLatexStart))
+        }
+
+        // Find corresponding closing delimiter
+        val isBlock = content[nextLatexStart + 1] == '['
+        val closingDelimiter = if (isBlock) "\\]" else "\\)"
+        val end = content.indexOf(closingDelimiter, nextLatexStart)
+
+        if (end == -1) {
+            // No closing delimiter found
+            segments.add(content.substring(nextLatexStart))
+            break
+        }
+
+        // Add LaTeX segment
+        segments.add(content.substring(nextLatexStart, end + closingDelimiter.length))
+        currentIndex = end + closingDelimiter.length
+    }
+
+    return segments
+}

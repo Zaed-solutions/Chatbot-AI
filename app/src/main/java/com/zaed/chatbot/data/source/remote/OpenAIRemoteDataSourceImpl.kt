@@ -61,7 +61,7 @@ class OpenAIRemoteDataSourceImpl(
         chatQuery: ChatQuery,
         isFirst: Boolean,
         modelId: ModelId
-    ): Flow<Result<ChatCompletion>> = flow {
+    ): Flow<Result<ChatCompletion>> = callbackFlow {
         val messageHistory = chatHistoryMap.getOrPut(chatQuery.chatId) { mutableListOf() }
         try {
             Log.d("RemoteDataSourceImpl", "sendPrompt: $chatQuery")
@@ -120,11 +120,15 @@ class OpenAIRemoteDataSourceImpl(
 //                    content = chatQuery.prompt
 //                )
 //            )
-            emit(Result.success(chatCompletion))
+            trySend(Result.success(chatCompletion))
         } catch (e: InvalidRequestException) {
-            emit(Result.failure(e))
+            trySend(Result.failure(e))
             e.printStackTrace()
+        } catch(e: Exception) {
+            e.printStackTrace()
+            trySend(Result.failure(e))
         }
+        awaitClose{}
     }
 
     override fun uploadNewImage(uri: Uri): Flow<Result<String>> = callbackFlow {
@@ -162,7 +166,7 @@ class OpenAIRemoteDataSourceImpl(
         chatQuery: ChatQuery,
         n: Int,
         size: ImageSize
-    ): Flow<Result<List<ImageURL>>> = flow {
+    ): Flow<Result<List<ImageURL>>> = callbackFlow {
         try {
             val result = openAI.imageURL( // or openAI.imageJSON
                 creation = ImageCreation(
@@ -172,10 +176,10 @@ class OpenAIRemoteDataSourceImpl(
                     size = ImageSize.is1024x1024
                 )
             )
-            emit(Result.success(result))
+            trySend(Result.success(result))
         } catch (e: InvalidRequestException) {
             e.printStackTrace()
-            emit(Result.failure(e))
+            trySend(Result.failure(e))
             Log.d("RemoteDataSourceImpl12", "createImage: ${e.message}")
         }
     }
