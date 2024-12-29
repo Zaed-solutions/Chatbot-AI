@@ -1,5 +1,6 @@
 package com.zaed.chatbot.data.repository
 
+import com.android.billingclient.api.Purchase
 import kotlinx.coroutines.flow.Flow
 
 interface SettingsRepository {
@@ -7,5 +8,8 @@ interface SettingsRepository {
     suspend fun setDefaultFontScale(fontScale: Float)
     suspend fun getChatMode(): String
     suspend fun getFontScale(): Float
-    fun getUserFreeTrialCount(androidId: String): Flow<Int>
-    suspend fun incrementUserFreeTrialCount(androidId: String)}
+    suspend fun incrementUserFreeTrialCount(androidId: String)
+    fun getUserFreeTrialAndImageLimit(androidId: String, product: Purchase?): Flow<Pair<Int, Int>>
+    suspend fun decrementUserImageFreeTrialCount(androidId: String)
+
+}

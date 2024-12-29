@@ -34,9 +34,7 @@ import com.zaed.chatbot.ui.settings.guidelines.CommunityGuidelinesScreen
 import com.zaed.chatbot.ui.settings.mode.ChatModeScreen
 import com.zaed.chatbot.ui.settings.privacy.PrivacyPolicyScreen
 import com.zaed.chatbot.ui.settings.promocode.PromoCodeScreen
-import com.zaed.chatbot.ui.util.LanguagePreferenceManager
 import com.zaed.chatbot.ui.util.LocalStorage
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 import java.util.Locale
@@ -44,7 +42,7 @@ import java.util.Locale
 @Composable
 fun NavigationHost(
     modifier: Modifier = Modifier,
-    languageViewModel :LanguageViewModel = koinViewModel(),
+    languageViewModel: LanguageViewModel = koinViewModel(),
     navController: NavHostController,
     defaultChatMode: ChatModel,
     isPro: Boolean = false,
@@ -55,6 +53,9 @@ fun NavigationHost(
     onDefaultChatModeChanged: (ChatModel) -> Unit,
     onDecrementFreeTrialCount: () -> Unit,
     freeTrialCount: Int,
+    imageFreeTrialCount: Int,
+    subscriptionName: String? = null,
+    androidId: String
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -69,7 +70,6 @@ fun NavigationHost(
             resources.updateConfiguration(configuration, resources.displayMetrics)
         }
     }
-
     Log.d("tenoo", "naviHos: ${isPro}")
     NavHost(modifier = modifier,
         navController = navController,
@@ -98,11 +98,14 @@ fun NavigationHost(
                 onNavigateToHistoryScreen = {
                     navController.navigate(HistoryRoute)
                 },
+                imageFreeTrialCount = imageFreeTrialCount,
+                subscriptionName = subscriptionName,
                 isPro = isPro,
                 products = products,
                 onSubscriptionAction = onSubscriptionAction,
                 onNavigateToSettingsScreen = { navController.navigate(SettingsRoute) },
                 onNavigateToPrivacyAndTerms = { navController.navigate(PrivacyPolicyRoute) },
+                androidId = androidId,
 
             )
         }

@@ -28,7 +28,6 @@ class ChatRepositoryImpl(
     private val chatLocalDataSource: ChatLocalDataSource
 ) : ChatRepository {
     override fun uploadNewImage(uri: Uri): Flow<Result<String>> = chatRemoteDataSource.uploadNewImage(uri)
-    override fun uploadNewFile(attachment: MessageAttachment): Flow<Result<FileId>>  = chatRemoteDataSource.uploadNewFile(attachment)
 
     override suspend fun sendPrompt(
         chatQuery: ChatQuery,
@@ -75,10 +74,7 @@ class ChatRepositoryImpl(
         awaitClose()
     }
 
-    @OptIn(BetaOpenAI::class)
-    override fun createNewThread(): Flow<Result<Thread>> {
-        return chatRemoteDataSource.createNewThread()
-    }
+
 
     override suspend fun createImage(
         chatQuery: ChatQuery, n: Int, size: ImageSize, isFirstMessage: Boolean
@@ -124,7 +120,6 @@ class ChatRepositoryImpl(
         }
 }
 
-override suspend fun listModels(): List<Model> = chatRemoteDataSource.listModels()
 
 
 override suspend fun getChatById(chatId: String): Flow<Result<List<ChatQuery>>> {
@@ -147,13 +142,5 @@ override suspend fun createChatHistory(chatHistory: ChatHistory) {
     return chatLocalDataSource.createChatHistory(chatHistory)
 }
 
-    override suspend fun editImage(
-        modelId: String,
-        imageSource: Source,
-        maskSource: Source,
-        prompt: String
-    ): Result<List<ImageURL>> {
-        Log.d("mogo", "editImage in repo: $modelId, $imageSource, $maskSource, $prompt")
-        return chatRemoteDataSource.editImage(modelId, imageSource, maskSource, prompt)
-    }
+
 }
