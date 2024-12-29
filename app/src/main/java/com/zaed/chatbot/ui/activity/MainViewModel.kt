@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.android.billingclient.api.ProductDetails
+import com.android.billingclient.api.Purchase
 import com.zaed.chatbot.data.repository.SettingsRepository
 import com.zaed.chatbot.ui.mainchat.components.ChatModel
 import com.zaed.chatbot.ui.util.ConnectivityObserver
@@ -11,6 +12,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.serialization.Serializable
 
 class MainViewModel(
     private val settingsRepo: SettingsRepository,
@@ -23,7 +25,7 @@ class MainViewModel(
         Log.d(TAG, "init")
         initializePreferences(onInitialized)
         _uiState.update { it.copy(androidId = androidId) }
-        getFreeTrialCount()
+        getImageFreeTrialCount(null)
         checkInternetConnection()
     }
 
@@ -38,25 +40,14 @@ class MainViewModel(
         }
     }
 
-    private fun getFreeTrialCount() {
-        viewModelScope.launch {
-            settingsRepo.getUserFreeTrialCount(uiState.value.androidId).collect {result->
-                Log.d("MainViewModel", "getFreeTrialCount: $result")
-                _uiState.update { it.copy(freeTrialCount = result) }
-            }
-        }
-    }
+
 
     fun decrementFreeTrialCount() {
         viewModelScope.launch {
             settingsRepo.incrementUserFreeTrialCount(uiState.value.androidId)
         }
     }
-    fun decrementImageSubscriptionLimitCount() {
-        viewModelScope.launch {
-            settingsRepo.decrementUserImageFreeTrialCount(uiState.value.androidId)
-        }
-    }
+
 
     private fun initializePreferences(onInitialized: () -> Unit) {
         viewModelScope.launch {
@@ -79,29 +70,44 @@ class MainViewModel(
             is MainAction.OnSetDefaultChatMode -> setDefaultMode(action.chatModel)
             is MainAction.OnSetFontScale -> setFontScale(action.fontScale)
             is MainAction.OnUpdateProductsList -> updateProductsList(action.products)
-            is MainAction.OnUpdateSubscribedPlan -> updateSubscribedPlan(action.planId)
+            is MainAction.OnUpdateSubscribedPlan -> updateSubscribedPlan(action.plan)
         }
     }
 
-    private fun updateSubscribedPlan(planId: String) {
-        viewModelScope.launch {
-            Log.d(TAG, "updateSubscribedPlan: $planId")
-            _uiState.update {oldState->
-                oldState.copy(
-                    subscribedPlan = oldState.products.find { it.productId == planId }, isPro = true,
-                )
+    private fun updateSubscribedPlan(plan: Purchase?) {
+        when(plan!=null){
+            true -> {
+                viewModelScope.launch {
+                    Log.d(TAG, "updateSubscribedPlan: identifier${plan.accountIdentifiers}")
+                    Log.d(TAG, "updateSubscribedPlan: orderId${plan.orderId}")
+                    Log.d(TAG, "updateSubscribedPlan: purchaseToken${plan.purchaseToken}")
+                    _uiState.update { oldState ->
+                        oldState.copy(
+                            subscribedPlan = oldState.products.find { it.productId == plan.products.first() },
+                            isPro = true,
+                        )
+                    }
+                    getImageFreeTrialCount(plan)
+                    Log.d(TAG, "updateSubscribedPlan: ${uiState.value.isPro}")
+                }
             }
-            getImageFreeTrialCount(planId)
-            Log.d(TAG, "updateSubscribedPlan: ${uiState.value.isPro}")
+            false -> getImageFreeTrialCount(null)
         }
+
     }
 
-    private fun getImageFreeTrialCount(productId :String) {
+    private fun getImageFreeTrialCount(product: Purchase?) {
         viewModelScope.launch {
-            settingsRepo.getUserImageFreeTrialCount(uiState.value.androidId, productId).collect { result ->
-                Log.d("MainViewModel", "getImageFreeTrialCount: $result")
-                _uiState.update { it.copy(imageFreeTrialCount = result) }
-            }
+            settingsRepo.getUserFreeTrialAndImageLimit(uiState.value.androidId, product)
+                .collect { (freeTrialCount, imageFreeTrialCount) ->
+                    Log.d("MainViewModel", "getImageFreeTrialCount: $imageFreeTrialCount")
+                    _uiState.update {
+                        it.copy(
+                            imageFreeTrialCount = imageFreeTrialCount,
+                            freeTrialCount = freeTrialCount
+                        )
+                    }
+                }
         }
     }
 
@@ -133,7 +139,7 @@ sealed interface MainAction {
     data class OnSetFontScale(val fontScale: Float) : MainAction
     data class OnSetDefaultChatMode(val chatModel: ChatModel) : MainAction
     data class OnUpdateProductsList(val products: List<ProductDetails>) : MainAction
-    data class OnUpdateSubscribedPlan(val planId: String) : MainAction
+    data class OnUpdateSubscribedPlan(val plan: Purchase?) : MainAction
 }
 
 data class MainUiState(
@@ -144,8 +150,15 @@ data class MainUiState(
     val subscribedPlan: ProductDetails? = null,
     val isPro: Boolean = false,
     val androidId: String = "",
-    val freeTrialCount: Int = 5,
-    val imageFreeTrialCount: Int = 60,
-
-
+    val freeTrialCount: Int = 0,
+    val imageFreeTrialCount: Int = 0,
+)
+@Serializable
+data class CurrentUserPurchase(
+    val productId: String = "",
+    val purchaseToken: String = "",
+    val purchaseTime: Long = 0L,
+    val title: String = "",
+    val imageLimit: Int = 0,
+    val freeTrialCount: Int = 0
 )

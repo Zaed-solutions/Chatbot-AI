@@ -4,7 +4,6 @@ import android.Manifest
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
-import android.provider.Settings
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -15,6 +14,8 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -30,6 +31,7 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -44,19 +46,21 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.rememberAsyncImagePainter
 import com.android.billingclient.api.ProductDetails
+import com.zaed.chatbot.R
 import com.zaed.chatbot.data.model.ChatQuery
 import com.zaed.chatbot.data.model.FileType
 import com.zaed.chatbot.data.model.MessageAttachment
 import com.zaed.chatbot.ui.activity.SubscriptionAction
 import com.zaed.chatbot.ui.mainchat.components.ChatModel
 import com.zaed.chatbot.ui.mainchat.components.EmptyChat
-import com.zaed.chatbot.ui.mainchat.components.InfoDialog
 import com.zaed.chatbot.ui.mainchat.components.MainChatBottomBar
 import com.zaed.chatbot.ui.mainchat.components.MainChatTopBar
 import com.zaed.chatbot.ui.mainchat.components.ProSubscriptionBottomSheet
@@ -71,6 +75,8 @@ import com.zaed.chatbot.ui.util.readPdfContent
 import com.zaed.chatbot.ui.util.readWordContent
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
+import java.text.NumberFormat
+import java.util.Locale
 
 private val TAG = "MainChatScreen"
 
@@ -90,16 +96,17 @@ fun MainChatScreen(
     freeTrialCount: Int,
     imageFreeTrialCount: Int,
     subscriptionName: String?,
+    androidId: String,
 ) {
     val context = LocalContext.current
-    val androidId: String = Settings.Secure.getString(context.getContentResolver(), Settings.Secure.ANDROID_ID)
     Log.d("tenoo", "mainChatScreen: ${isPro}")
     Log.d("tenoo2", "mainChatScreen: $imageFreeTrialCount")
     Log.d("tenoo2", "mainChatScreen: $subscriptionName")
+    Log.d("tenoo2", "mainChatScreen: $androidId")
 
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     LaunchedEffect(true) {
-        viewModel.init(chatId,androidId)
+        viewModel.init(chatId, androidId)
     }
     val imagePicker =
         rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
@@ -196,14 +203,21 @@ fun MainChatScreen(
         modifier = modifier,
         onAction = { action ->
             when (action) {
-                is MainChatUiAction.OnChangeModel->{
+                is MainChatUiAction.OnChangeModel -> {
                     Log.d("tenoo2", "mainChatScreen: ${action.model}")
-                   if (action.model == ChatModel.AI_ART_GENERATOR && imageFreeTrialCount > 0){
-                       viewModel.handleAction(action)
-                   }else{
-                       //TODO: show toast LIMIT REACHED
-                   }
+                    if ((action.model == ChatModel.AI_ART_GENERATOR && imageFreeTrialCount > 0) || freeTrialCount > 0) {
+                        viewModel.handleAction(action)
+                    } else if (action.model != ChatModel.AI_ART_GENERATOR) {
+                        viewModel.handleAction(action)
+                    } else {
+                        Toast.makeText(
+                            context,
+                            "you exceeded your limit $imageFreeTrialCount",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
                 }
+
                 MainChatUiAction.OnAddFileClicked -> {
                     val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
                         type = "*/*" // Allow all files
@@ -212,10 +226,7 @@ fun MainChatScreen(
                             Intent.EXTRA_MIME_TYPES,
                             arrayOf(
                                 "application/pdf",
-//                                "application/msword",
-//                                "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-//                                "application/vnd.ms-excel",
-//                                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+
                             )
                         )
                     }
@@ -286,6 +297,7 @@ fun MainChatScreen(
         freeTrialCount = freeTrialCount,
         isError = state.error,
         onDecrementFreeTrialCount = onDecrementFreeTrialCount,
+        imageFreeTrialCount = imageFreeTrialCount,
     )
     if (recordingBottomSheetVisible) {
         SpeechRecognitionBottomSheet(
@@ -324,10 +336,13 @@ fun MainChatScreen(
                             }
                         }
                     },
-                    modifier = Modifier.align(Alignment.BottomEnd)
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
                         .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.surface
-                            .copy(alpha = 0.5f))
+                        .background(
+                            MaterialTheme.colorScheme.surface
+                                .copy(alpha = 0.5f)
+                        )
                 ) {
                     Icon(
                         imageVector = Icons.Default.Download,
@@ -358,7 +373,10 @@ fun MainChatScreenContent(
     isAnimating: Boolean = false,
     selectedModel: ChatModel = ChatModel.GPT_4O_MINI,
     attachments: List<MessageAttachment> = emptyList(),
-) {
+    imageFreeTrialCount: Int=0,
+
+
+    ) {
     Log.d("tenoo", "mainChatScreenContent: ${isPro}")
     var isBottomSheetVisible by remember { mutableStateOf(isPro) }
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -418,9 +436,21 @@ fun MainChatScreenContent(
         },
         modifier = modifier.systemBarsPadding(),
     ) { innerPadding ->
-        Box(
+        Column(
             modifier = Modifier.padding(innerPadding),
         ) {
+            androidx.compose.animation.AnimatedVisibility(isPro && selectedModel == ChatModel.AI_ART_GENERATOR) {
+                Row (
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ){
+                    Text(
+                        stringResource(R.string.remaining_quota),
+                        modifier = Modifier.weight(1f)
+                    )
+                    Text(NumberFormat.getInstance(Locale.getDefault()).format(imageFreeTrialCount))
+                }
+            }
             AnimatedContent(
                 targetState = isChatEmpty
             ) { state ->
@@ -479,17 +509,16 @@ fun MainChatScreenContent(
             }
         }
     }
-    if (!isConnected) {
-        InfoDialog(
-            title = "Whoops!",
-            desc = "No Internet Connection found.\n" +
-                    "Check your connection or try again.",
-            onDismiss = {
-                infoDialog.value = false
-            }
-        )
-
-    }
+//    if (!isConnected) {
+//        InfoDialog(
+//            title = "Whoops!",
+//            desc = "No Internet Connection found.\n" +
+//                    "Check your connection or try again.",
+//            onDismiss = {
+//                infoDialog.value = false
+//            }
+//        )
+//    }
 
 }
 

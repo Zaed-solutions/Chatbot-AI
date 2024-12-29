@@ -249,5 +249,6 @@
     <string name="write_code_propmt">هل يمكنك مساعدتي في كتابة كود لبعض مشاريعي؟</string>
     <string name="for_projects">للمشاريع</string>
     <string name="write_code">اكتب كود</string>
+    <string name="remaining_quota">الحصة المتبقية:</string>
 
 </resources>

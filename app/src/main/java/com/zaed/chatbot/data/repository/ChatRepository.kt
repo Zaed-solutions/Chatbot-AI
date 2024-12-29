@@ -19,22 +19,11 @@ import okio.Source
 interface ChatRepository {
     suspend fun sendPrompt(chatQuery: ChatQuery,modelId: ModelId,isFirstMessage: Boolean): Flow<Result<ChatCompletion>>
     suspend fun createImage(chatQuery:ChatQuery,n: Int = 1, size: ImageSize , isFirstMessage: Boolean): Flow<Result<List<ImageURL>>>
-    suspend fun listModels(): List<Model>
-
     suspend fun getChatById(chatId: String): Flow<Result<List<ChatQuery>>>
     suspend fun getChatHistories():  Result<List<ChatHistory>>
     suspend fun deleteChatHistory(chatId: String): Flow<Result<Unit>>
     suspend fun updateChatHistory(chatHistory: ChatHistory): Flow<Result<Unit>>
     suspend fun createChatHistory(chatHistory: ChatHistory)
     fun uploadNewImage(uri: Uri): Flow<Result<String>>
-    fun uploadNewFile(attachment: MessageAttachment): Flow<Result<FileId>>
-    @OptIn(BetaOpenAI::class)
-    fun createNewThread(): Flow<Result<Thread>>
-    suspend fun editImage(
-        modelId: String,
-        imageSource: Source,
-        maskSource: Source,
-        prompt: String
-    ): Result<List<ImageURL>>
 
 }

@@ -57,26 +57,30 @@ class MainChatViewModel(
     }
 
 
-    private suspend fun checkInternetConnection() {
-        connectivityObserver.isConnected
-            .collect { result ->
-                _uiState.update {
-                    it.copy(internetConnected = result)
+    private fun checkInternetConnection() {
+        viewModelScope.launch {
+            connectivityObserver.isConnected
+                .collect { result ->
+                    _uiState.update {
+                        it.copy(internetConnected = result)
+                    }
                 }
-            }
+        }
     }
 
-    }
-    fun decrementImageSubscriptionLimitCount() {
+    private fun decrementImageSubscriptionLimitCount() {
         viewModelScope.launch {
+            Log.d("MainChatViewModel", "decrementImageSubscriptionLimitCount: ${uiState.value.androidId}")
             settingsRepository.decrementUserImageFreeTrialCount(uiState.value.androidId)
         }
     }
 
     private fun fetchChat(chatId: String) {
+        checkInternetConnection()
+        if (!uiState.value.internetConnected) return
         viewModelScope.launch(Dispatchers.IO) {
             checkInternetConnection()
-            if (uiState.value.internetConnected){
+            if (uiState.value.internetConnected) {
                 chatRepository.getChatById(chatId).collect { result ->
                     result.onSuccess {
                         Log.d("MainChatViewModel", "fetchChat: $it")
@@ -108,12 +112,7 @@ class MainChatViewModel(
     }
 
 
-    private fun listModels() {
-        viewModelScope.launch(Dispatchers.IO) {
-            val models = chatRepository.listModels()
-            Log.d("MainChatViewModel", "listModels: $models")
-        }
-    }
+
 
     private fun stopAnimation() {
         viewModelScope.launch {
@@ -139,14 +138,13 @@ class MainChatViewModel(
     }
 
     private fun sendSuggestion(prompt: String) {
+        checkInternetConnection()
+        if (!uiState.value.internetConnected) return
         viewModelScope.launch(Dispatchers.IO) {
-            checkInternetConnection()
-            if (uiState.value.internetConnected){
-                _uiState.update {
-                    it.copy(currentPrompt = prompt)
-                }
-                sendPrompt()
+            _uiState.update {
+                it.copy(currentPrompt = prompt)
             }
+            sendPrompt()
         }
     }
 
@@ -212,29 +210,26 @@ class MainChatViewModel(
     }
 
     private fun sendPrompt() {
-        viewModelScope.launch {
-            checkInternetConnection()
-            if (uiState.value.internetConnected){
-
-                when (uiState.value.selectedModel) {
-                    ChatModel.GPT_4O_MINI -> createText(ChatModel.GPT_4O_MINI.modelId)
-                    ChatModel.GPT_4O -> createText(ChatModel.GPT_4O.modelId)
-                    ChatModel.AI_ART_GENERATOR -> {
-                        detectLanguage(uiState.value.currentPrompt) { languageCode ->
-                            if (languageCode == "ar") {
-                                translateToEnglish(uiState.value.currentPrompt) { translatedPrompt ->
-                                    createImages(translatedPrompt)
-                                }
-                            } else {
-                                createImages(uiState.value.currentPrompt)
-                            }
+        checkInternetConnection()
+        if (!uiState.value.internetConnected) return
+        when (uiState.value.selectedModel) {
+            ChatModel.GPT_4O_MINI -> createText(ChatModel.GPT_4O_MINI.modelId)
+            ChatModel.GPT_4O -> createText(ChatModel.GPT_4O.modelId)
+            ChatModel.AI_ART_GENERATOR -> {
+                detectLanguage(uiState.value.currentPrompt) { languageCode ->
+                    if (languageCode == "ar") {
+                        translateToEnglish(uiState.value.currentPrompt) { translatedPrompt ->
+                            createImages(translatedPrompt)
                         }
-
+                    } else {
+                        createImages(uiState.value.currentPrompt)
                     }
                 }
+
             }
         }
     }
+
 
     private fun createText(modelId: ModelId) {
         val isFirstMessage = uiState.value.queries.isEmpty()
@@ -397,6 +392,7 @@ class MainChatViewModel(
                 MainChatUiState(
                     selectedModel = selectedModel,
                     threadId = UUID.randomUUID().toString(),
+                    androidId = uiState.value.androidId
                 )
             }
         }
@@ -418,95 +414,10 @@ class MainChatViewModel(
         }
     }
 
-    private fun editImage() {
-        viewModelScope.launch(Dispatchers.IO) {
-            Log.d("mogo", "editImage: in vm")
-            val imageSource = downloadFileFromUrl()
-            val maskSource = downloadFileFromUrl()
 
-            if (imageSource == null) {
-                throw Exception("Failed to download image from Firebase")
-            }
-            chatRepository.editImage(
-                modelId = "dall-e-2",
-                imageSource = imageSource,
-                maskSource = maskSource ?: imageSource,
-                prompt = "convert the car to bmw"
-            )
-        }
 
-    }
 
-    suspend fun downloadFileFromUrl(): Source? {
-        return try {
-            // Create Ktor client
-            val client = HttpClient()
 
-            // Download the file
-            val response: HttpResponse =
-                client.get("https://cdn.pixabay.com/photo/2015/10/01/17/17/car-967387_1280.png")
-
-            // Read the response as byte array
-            val bytes = response.readBytes()
-
-            // Check the size of the file (optional)
-            if (bytes.size > 4 * 1024 * 1024) { // 4MB size limit
-                throw IOException("File size exceeds 4 MB")
-            }
-            val rgba = convertToRGBA(bytes)
-
-            // Convert to Source (buffered input stream)
-            val byteArrayOutputStream = ByteArrayOutputStream()
-            byteArrayOutputStream.write(rgba)
-
-            // Convert the byte array to a source
-            val bufferedSource = byteArrayOutputStream.toByteArray().inputStream().source().buffer()
-
-            // Close the client
-            client.close()
-
-            // Return the Source
-            bufferedSource
-        } catch (e: Exception) {
-            e.printStackTrace()
-            null
-        }
-    }
-
-    fun convertToRGBA(imageBytes: ByteArray): ByteArray? {
-        // Decode the byte array into a Bitmap
-        val originalBitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
-
-        if (originalBitmap == null) {
-            return null
-        }
-
-        // Create a new Bitmap with RGBA format (ARGB_8888 includes the Alpha channel)
-        val rgbaBitmap = Bitmap.createBitmap(
-            originalBitmap.width,
-            originalBitmap.height,
-            Bitmap.Config.ARGB_8888
-        )
-
-        // Create a Canvas to draw the original image onto the new Bitmap
-        val canvas = Canvas(rgbaBitmap)
-        val paint = Paint()
-        paint.isFilterBitmap = true
-
-        // Draw the original image on the new Bitmap (this converts it to RGBA)
-        canvas.drawBitmap(originalBitmap, 0f, 0f, paint)
-
-        // Convert the RGBA Bitmap to a byte array
-        val byteArrayOutputStream = ByteArrayOutputStream()
-        try {
-            rgbaBitmap.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStream)
-        } catch (e: IOException) {
-            e.printStackTrace()
-            return null
-        }
-
-        return byteArrayOutputStream.toByteArray()
-    }
 
 
 }

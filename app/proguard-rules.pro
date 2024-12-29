@@ -24,3 +24,4 @@
 
 -dontwarn com.tom_roush.pdfbox.filter.JPXFilter
 -dontwarn com.gemalto.jp2.**
+-keep class com.zaed.chatbot.ui.activity.CurrentUserPurchase{*;}

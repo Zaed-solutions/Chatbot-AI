@@ -55,6 +55,7 @@ fun NavigationHost(
     freeTrialCount: Int,
     imageFreeTrialCount: Int,
     subscriptionName: String? = null,
+    androidId: String
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -104,6 +105,7 @@ fun NavigationHost(
                 onSubscriptionAction = onSubscriptionAction,
                 onNavigateToSettingsScreen = { navController.navigate(SettingsRoute) },
                 onNavigateToPrivacyAndTerms = { navController.navigate(PrivacyPolicyRoute) },
+                androidId = androidId,
 
             )
         }

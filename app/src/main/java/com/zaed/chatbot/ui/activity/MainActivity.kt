@@ -108,10 +108,6 @@ class MainActivity : ComponentActivity(), BillingClientStateListener {
                 }
             }
         }
-    fun refreshUI() {
-        finish()
-        startActivity(intent)
-    }
     private lateinit var billingClient: BillingClient
     private val viewModel: MainViewModel by inject<MainViewModel>()
 
@@ -180,7 +176,8 @@ class MainActivity : ComponentActivity(), BillingClientStateListener {
                                 onDecrementFreeTrialCount = { viewModel.decrementFreeTrialCount() },
                                 freeTrialCount = state.freeTrialCount,
                                 imageFreeTrialCount = state.imageFreeTrialCount,
-                                subscriptionName = state.products.firstOrNull()?.name
+                                subscriptionName = state.products.firstOrNull()?.name,
+                                androidId = state.androidId
                             )
                         }
                         else -> {
@@ -256,6 +253,7 @@ class MainActivity : ComponentActivity(), BillingClientStateListener {
                 queryPurchases()
             }
         } else {
+            viewModel.handleAction(MainAction.OnUpdateSubscribedPlan(null))
             Log.d(TAG, "Billing client connection failed")
         }
     }
@@ -310,6 +308,7 @@ class MainActivity : ComponentActivity(), BillingClientStateListener {
     private suspend fun queryPurchases() {
         if(!billingClient.isReady){
             Log.e(TAG, "Billing client is not ready")
+            viewModel.handleAction(MainAction.OnUpdateSubscribedPlan(null))
             return
         }
         val queryPurchasesParams = QueryPurchasesParams.newBuilder()
@@ -331,6 +330,7 @@ class MainActivity : ComponentActivity(), BillingClientStateListener {
                     }
                 }
                 else -> {
+                    viewModel.handleAction(MainAction.OnUpdateSubscribedPlan(null))
                     Log.d(TAG, "Query purchases failed: ${billingResult.debugMessage}")
                 }
             }
@@ -350,9 +350,10 @@ class MainActivity : ComponentActivity(), BillingClientStateListener {
                         when(responseCode){
                             BillingClient.BillingResponseCode.OK -> {
                                 Log.d(TAG, "Purchase acknowledged")
-                                viewModel.handleAction(MainAction.OnUpdateSubscribedPlan(purchase.products.first()))
+                                viewModel.handleAction(MainAction.OnUpdateSubscribedPlan(purchase))
                             }
                             else -> {
+                                viewModel.handleAction(MainAction.OnUpdateSubscribedPlan(null))
                                 Log.d(TAG, "Purchase acknowledge failed: ${billingResult.debugMessage}")
                             }
                         }
@@ -360,9 +361,10 @@ class MainActivity : ComponentActivity(), BillingClientStateListener {
                 }
             } else {
                 Log.d(TAG, "Purchase already acknowledged")
-                viewModel.handleAction(MainAction.OnUpdateSubscribedPlan(purchase.products.first()))
+                viewModel.handleAction(MainAction.OnUpdateSubscribedPlan(purchase))
             }
         }else {
+            viewModel.handleAction(MainAction.OnUpdateSubscribedPlan(null))
             Log.d(TAG, "Purchase not acknowledged${purchase.purchaseState}")
         }
     }
