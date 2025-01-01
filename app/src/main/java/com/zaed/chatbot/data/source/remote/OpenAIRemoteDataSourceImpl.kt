@@ -11,6 +11,7 @@ import com.aallam.openai.api.exception.InvalidRequestException
 import com.aallam.openai.api.image.ImageCreation
 import com.aallam.openai.api.image.ImageSize
 import com.aallam.openai.api.image.ImageURL
+import com.aallam.openai.api.image.Quality
 import com.aallam.openai.api.model.ModelId
 import com.aallam.openai.client.OpenAI
 import com.google.firebase.storage.FirebaseStorage
@@ -26,8 +27,6 @@ class OpenAIRemoteDataSourceImpl(
     private val storage: FirebaseStorage
 ) : OpenAIRemoteDataSource {
     private val chatHistoryMap: MutableMap<String, MutableList<ChatMessage>> = mutableMapOf()
-
-
     override suspend fun sendPrompt(
         chatQuery: ChatQuery,
         isFirst: Boolean,
@@ -140,6 +139,7 @@ class OpenAIRemoteDataSourceImpl(
                     prompt = chatQuery.prompt,
                     model = ChatModel.AI_ART_GENERATOR.modelId,
                     n = 1,
+                    quality = Quality("standard"),
                     size = ImageSize.is1024x1024
                 )
             )

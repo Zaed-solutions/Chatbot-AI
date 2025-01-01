@@ -250,5 +250,6 @@
     <string name="for_projects">للمشاريع</string>
     <string name="write_code">اكتب كود</string>
     <string name="remaining_quota">الحصة المتبقية:</string>
+    <string name="message_reported_successfully">تم الأبلاغ عن الرسالة بنجاح</string>
 
 </resources>

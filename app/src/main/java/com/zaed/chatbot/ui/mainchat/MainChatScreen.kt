@@ -103,7 +103,7 @@ fun MainChatScreen(
     Log.d("tenoo2", "mainChatScreen: $imageFreeTrialCount")
     Log.d("tenoo2", "mainChatScreen: $subscriptionName")
     Log.d("tenoo2", "mainChatScreen: $androidId")
-
+    val snackbarHostState = remember { SnackbarHostState() }
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     LaunchedEffect(true) {
         viewModel.init(chatId, androidId)
@@ -201,8 +201,16 @@ fun MainChatScreen(
     MainChatScreenContent(
         isConnected = state.internetConnected,
         modifier = modifier,
+        snackbarHostState = snackbarHostState,
         onAction = { action ->
             when (action) {
+                is MainChatUiAction.ReportMessage -> {
+                    viewModel.handleAction(action.copy(onSuccess = {
+                        scope.launch { 
+                            snackbarHostState.showSnackbar(context.getString(R.string.message_reported_successfully))
+                        }
+                    }))
+                }
                 is MainChatUiAction.OnChangeModel -> {
                     Log.d("tenoo2", "mainChatScreen: ${action.model}")
                     if ((action.model == ChatModel.AI_ART_GENERATOR && imageFreeTrialCount > 0) || freeTrialCount > 0) {
@@ -374,14 +382,12 @@ fun MainChatScreenContent(
     selectedModel: ChatModel = ChatModel.GPT_4O_MINI,
     attachments: List<MessageAttachment> = emptyList(),
     imageFreeTrialCount: Int=0,
-
-
+    snackbarHostState: SnackbarHostState
     ) {
     Log.d("tenoo", "mainChatScreenContent: ${isPro}")
     var isBottomSheetVisible by remember { mutableStateOf(isPro) }
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val infoDialog = remember { mutableStateOf(false) }
-    val snackbarHostState = remember { SnackbarHostState() }
     LaunchedEffect(isError) {
         if (isError.isNotBlank()) {
             snackbarHostState.showSnackbar(isError)
@@ -441,7 +447,9 @@ fun MainChatScreenContent(
         ) {
             androidx.compose.animation.AnimatedVisibility(isPro && selectedModel == ChatModel.AI_ART_GENERATOR) {
                 Row (
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 4.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ){
                     Text(
@@ -509,17 +517,6 @@ fun MainChatScreenContent(
             }
         }
     }
-//    if (!isConnected) {
-//        InfoDialog(
-//            title = "Whoops!",
-//            desc = "No Internet Connection found.\n" +
-//                    "Check your connection or try again.",
-//            onDismiss = {
-//                infoDialog.value = false
-//            }
-//        )
-//    }
-
 }
 
 @Preview(showSystemUi = false, showBackground = true)
@@ -545,8 +542,7 @@ private fun MainChatScreenContentPreview() {
             prompt = "",
             isLoading = false,
             onAction = {},
-
-
+            snackbarHostState = SnackbarHostState()
             )
     }
 }

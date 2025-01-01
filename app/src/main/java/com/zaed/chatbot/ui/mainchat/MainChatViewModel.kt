@@ -42,6 +42,7 @@ class MainChatViewModel(
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(MainChatUiState())
     val uiState = _uiState.asStateFlow()
+    private val TAG = "MainChatViewModel"
 
     fun init(chatId: String, androidId: String) {
         if (chatId.isNotBlank()) {
@@ -107,11 +108,24 @@ class MainChatViewModel(
             is MainChatUiAction.OnSendSuggestion -> sendSuggestion(action.suggestionPrompt)
             is MainChatUiAction.OnUpdatePrompt -> updatePrompt(action.text)
             is MainChatUiAction.OnStopAnimation -> stopAnimation()
+            is MainChatUiAction.ReportMessage -> reportMessage(action.query, action.onSuccess)
             else -> Unit
         }
     }
 
-
+    private fun reportMessage(query: ChatQuery, onSuccess: () -> Unit) {
+        viewModelScope.launch(Dispatchers.IO) {
+            _uiState.update { oldState ->
+                oldState.copy(queries = oldState.queries.filter { q -> q != query }.toMutableList())
+            }
+            settingsRepository.reportMessage(query).onSuccess {
+                onSuccess()
+            }.onFailure { e ->
+                Log.e(TAG, "reportMessage: ${e.message}", )
+                e.printStackTrace()
+            }
+        }
+    }
 
 
     private fun stopAnimation() {

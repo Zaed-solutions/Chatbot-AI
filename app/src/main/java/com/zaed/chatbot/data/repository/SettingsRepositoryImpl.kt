@@ -1,6 +1,7 @@
 package com.zaed.chatbot.data.repository
 
 import com.android.billingclient.api.Purchase
+import com.zaed.chatbot.data.model.ChatQuery
 import com.zaed.chatbot.data.source.local.SettingsKeyValueStorage
 import com.zaed.chatbot.data.source.remote.RemoteConfigSource
 import kotlinx.coroutines.flow.Flow
@@ -38,5 +39,9 @@ class SettingsRepositoryImpl(
 
     override suspend fun decrementUserImageFreeTrialCount(androidId: String) {
         return remoteConfigSource.decrementUserImageFreeTrialCount(androidId)
+    }
+
+    override suspend fun reportMessage(query: ChatQuery): Result<Boolean> {
+        return remoteConfigSource.reportMessage(query)
     }
 }

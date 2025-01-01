@@ -59,7 +59,8 @@ fun EmptyChat(
             modifier = Modifier.padding(end = 16.dp),
             message = stringResource(welcomeMessageRes),
             hasAttachments = false,
-            isPrompt = false
+            isPrompt = false,
+            isWelcomeMessage = true
         )
         if (selectedModel != ChatModel.AI_ART_GENERATOR) {
             Button(

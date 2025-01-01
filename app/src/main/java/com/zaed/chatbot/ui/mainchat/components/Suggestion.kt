@@ -54,7 +54,7 @@ enum class SuggestionCategory(val titleRes: Int, val suggestions: List<Suggestio
 //        R.string.learn_a_language,
 //        emptyList()
 //    ),
-//    UTILITY(
+//    UTILITY(muhammed
 //        R.string.utility,
 //        emptyList()
 //    ),

@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -21,6 +20,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.ReportProblem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -45,8 +45,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import com.halilibo.richtext.commonmark.Markdown
-import com.halilibo.richtext.commonmark.MarkdownParseOptions
-import com.halilibo.richtext.ui.RichTextStyle
 import com.halilibo.richtext.ui.material3.RichText
 import com.zaed.chatbot.R
 import com.zaed.chatbot.data.model.MessageAttachment
@@ -59,6 +57,7 @@ import java.text.StringCharacterIterator
 @Composable
 fun MessageItem(
     modifier: Modifier = Modifier,
+    isWelcomeMessage: Boolean = false,
     isPrompt: Boolean = true,
     isLoading: Boolean = false,
     message: String,
@@ -66,6 +65,7 @@ fun MessageItem(
     action: (MainChatUiAction) -> Unit = {},
     hasAttachments: Boolean,
     attachments: List<MessageAttachment> = emptyList(),
+    onReport: () -> Unit = {}
 ) {
     val clipboardManager = LocalClipboardManager.current
     Column(
@@ -87,19 +87,40 @@ fun MessageItem(
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier.padding(start = 8.dp)
             )
-            AnimatedVisibility(!isPrompt) {
-                IconButton({
-                    clipboardManager.setText(
-                        annotatedString = androidx.compose.ui.text.AnnotatedString(
-                            message
+            AnimatedVisibility(!isPrompt && !isLoading && !isWelcomeMessage) {
+                Row(
+                    modifier = Modifier.padding(start = 24.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    IconButton(
+                        onClick = {
+                            clipboardManager.setText(
+                                annotatedString = androidx.compose.ui.text.AnnotatedString(
+                                    message
+                                )
+                            )
+                        },
+                        modifier = Modifier.size(24.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.ContentCopy,
+                            contentDescription = "Copy Icon",
+                            modifier = Modifier.size(18.dp),
                         )
-                    )
-                }) {
-                    Icon(
-                        imageVector = Icons.Default.ContentCopy,
-                        contentDescription = "Copy Icon",
-                        modifier = Modifier.size(18.dp),
-                    )
+                    }
+                    IconButton(
+                        onClick = { onReport() },
+                        modifier = Modifier.size(24.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.ReportProblem,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.size(18.dp),
+                        )
+                    }
+
                 }
             }
         }
@@ -141,7 +162,7 @@ fun MessageItem(
 private fun MessageItemPreview() {
     ChatbotTheme {
         MessageItem(
-            isPrompt = true,
+            isPrompt = false,
             message = "hello test test test",
             hasAttachments = true,
             attachments = listOf(
@@ -170,17 +191,19 @@ fun MarkdownText(
 }
 
 
-@Preview(showSystemUi = true, showBackground = true)
-@Composable
-private fun MarkdownTextPreview() {
-    MarkdownText(markdownText = """
-        <script
-          src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"
-          type="text/javascript">
-        </script>
-        Equation: ${'$'}\\frac{1}{2}${'$'}\n New Equation: ${'$'}${'$'}\\frac{3}{4}${'$'}${'$'}
-    """.trimIndent())
-}
+//@Preview(showSystemUi = true, showBackground = true)
+//@Composable
+//private fun MarkdownTextPreview() {
+//    MarkdownText(
+//        markdownText = """
+//        <script
+//          src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"
+//          type="text/javascript">
+//        </script>
+//        Equation: ${'$'}\\frac{1}{2}${'$'}\n New Equation: ${'$'}${'$'}\\frac{3}{4}${'$'}${'$'}
+//    """.trimIndent()
+//    )
+//}
 
 fun isArabic(text: String): Boolean {
     val arabicRange = Regex("[\\u0600-\\u06FF]")
@@ -199,7 +222,7 @@ private fun AnimatedText(
 
     val breakIterator = remember(text) { BreakIterator.getCharacterInstance() }
 
-    val typingDelayInMs = 10L
+    val typingDelayInMs = 3L
 
     var substringText by remember {
         mutableStateOf("")
@@ -239,11 +262,12 @@ private fun AnimatedText(
 //                text.trimIndent()
 //            }
 //        )
-        val segments = splitIntoSegments(if (animating) {
-                    substringText.trimIndent()
-                } else {
-                    text.trimIndent()
-                }.trimIndent()
+        val segments = splitIntoSegments(
+            if (animating) {
+                substringText.trimIndent()
+            } else {
+                text.trimIndent()
+            }.trimIndent()
         )
 
         Column(
@@ -258,12 +282,14 @@ private fun AnimatedText(
                             isBlock = true
                         )
                     }
+
                     segment.startsWith("\\(") && segment.endsWith("\\)") -> {
                         LatexView(
                             latex = segment.removeSurrounding("\\(", "\\)"),
                             isBlock = false
                         )
                     }
+
                     else -> {
                         MarkdownText(
                             modifier = Modifier.fillMaxWidth(),
@@ -274,9 +300,7 @@ private fun AnimatedText(
             }
         }
     }
-
 }
-//}
 
 @Composable
 fun LoadingBubble(modifier: Modifier = Modifier) {

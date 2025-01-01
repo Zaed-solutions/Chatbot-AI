@@ -68,7 +68,8 @@ fun QueryItem(
             message = query.response,
             animating = query.animateResponse,
             hasAttachments = query.responseAttachments.isNotEmpty(),
-            attachments = query.responseAttachments
+            attachments = query.responseAttachments,
+            onReport = { action(MainChatUiAction.ReportMessage(query)) }
         )
     }
 }

@@ -4,11 +4,13 @@ import android.util.Log
 import com.android.billingclient.api.Purchase
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
+import com.zaed.chatbot.data.model.ChatQuery
 import com.zaed.chatbot.ui.activity.CurrentUserPurchase
 import com.zaed.chatbot.ui.util.Constants
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.tasks.await
 
 
 class RemoteConfigSourceImpl(
@@ -128,6 +130,15 @@ class RemoteConfigSourceImpl(
             e.printStackTrace()
         }
         awaitClose { }
+    }
+
+    override suspend fun reportMessage(query: ChatQuery): Result<Boolean> {
+        return try {
+            remoteConfig.collection("reports").add(query).await()
+            Result.success(true)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
     }
 
     override suspend fun decrementUserFreeTrialCount(androidId: String) {

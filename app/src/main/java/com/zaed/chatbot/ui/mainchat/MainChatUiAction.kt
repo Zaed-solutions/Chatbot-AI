@@ -2,6 +2,7 @@ package com.zaed.chatbot.ui.mainchat
 
 import android.net.Uri
 import com.android.billingclient.api.ProductDetails
+import com.zaed.chatbot.data.model.ChatQuery
 import com.zaed.chatbot.data.model.MessageAttachment
 import com.zaed.chatbot.ui.mainchat.components.ChatModel
 
@@ -27,4 +28,5 @@ sealed interface MainChatUiAction {
     data class OnAddAttachment(val attachment: MessageAttachment,val fileContent:String): MainChatUiAction
     data class OnImageClicked(val imageUri: Uri): MainChatUiAction
     data class DownloadImage(val imageUri: Uri): MainChatUiAction
+    data class ReportMessage(val query: ChatQuery, val onSuccess: () -> Unit = {}): MainChatUiAction
 }

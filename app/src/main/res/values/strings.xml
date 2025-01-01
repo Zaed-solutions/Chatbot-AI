@@ -221,4 +221,5 @@
     <string name="for_projects">for projects</string>
     <string name="write_code">Write code</string>
     <string name="remaining_quota">Remaining quota:</string>
+    <string name="message_reported_successfully">Message reported successfully</string>
 </resources>
